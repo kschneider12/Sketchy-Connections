@@ -4,6 +4,48 @@
 
 global screen
 
+# Testing - Mat added
+
+import pygame
+
+DRAWING_GRID_HEIGHT = 256
+DRAWING_GRID_WIDTH = 256
+GRID_SQUARE = 1
+PIXEL_HEIGHT = DRAWING_GRID_HEIGHT * GRID_SQUARE
+PIXEL_WIDTH = DRAWING_GRID_WIDTH * GRID_SQUARE
+
+COLORS = {
+    'pen' : (0, 0, 0),
+    'window' : (252, 252, 252)
+}
+
+# A cell in a grid - allows it to be drawn?
+class GridCell:
+    def __init__(self, row, col):
+        self.row = row
+        self.col = col
+        self.color = COLORS['window']
+        self.neighbors = []
+
+    def position(self):
+        return self.row, self.col
+
+    def draw(self, window):
+        pygame.draw.rect(window, self.color,
+                         (self.row, self.col, GRID_SQUARE, GRID_SQUARE))
+
+    def update(self, grid):
+        pass
+
+# Needed to build grid
+class Grid:
+    def __init__(self):
+        pass
+
+
+# Legacy - Kent added
+
+
 def welcome():
     #This is the game loop for the welcome screen
     return

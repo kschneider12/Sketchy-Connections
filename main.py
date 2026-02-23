@@ -1,24 +1,8 @@
 # Sketchy Connections
 # CS3050 Final Project
 # Kent Schneider, Mathew Neves, James LeMahieu, Joe Liotta
-
-global screen
-
-def welcome():
-    #This is the game loop for the welcome screen
-    return
-
-def draw():
-    #This is the game loop for the drawing screen
-    return
-
-def guess():
-    #This is the game loop for the guessing screen
-    return
-
-def game_over():
-    #This is the game loop for the game over screen
-    return
+import pygame
+from Engine import Engine
 
 # We will need plenty of other screens, but this is a proof of concept for simple structure
 '''
@@ -33,17 +17,13 @@ and for organizational purposes.
 
 '''
 if __name__ == '__main__':
-    screen = "welcome"
-    while True:
-        #MAIN GAME LOOP
-        #Global var storing which phase of the game we are in
-        match screen:
-            case "welcome":
-                welcome()
-            case "draw":
-                draw()
-            case "guess":
-                guess()
-            case "game_over":
-                game_over()
+    # Init Pygame
+    pygame.init()
+    pygame.mixer.init()
+    screen = pygame.display.set_mode((800, 600))
+    pygame.display.set_caption("Sketchy Connections")
+
+    # Create and run game
+    engine = Engine()
+    engine.run()
 

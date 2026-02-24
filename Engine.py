@@ -1,6 +1,5 @@
 import pygame
 
-
 class Engine():
     def __init__(self):
         # Init Pygame and Audio
@@ -63,6 +62,17 @@ class Engine():
 
     def draw(self):
         print("DRAWING!")
+        '''
+        Notes on data structure:
+            [[index, colorID], [],[],...] in order of pixels added
+            index is 0 -> length*width
+            -----------------
+            -0              -
+            -               -
+            -            255-
+            -----------------
+            Keep brush type as a settable variable for easy switching when buttons implemented (including eraser)
+        '''
         # This is the game loop for the drawing screen
         if self.key_status[pygame.K_w]:
             self.scene = "guess"

@@ -18,8 +18,6 @@ if __name__ == '__main__':
     # Init Pygame
     pygame.init()
     pygame.mixer.init()
-    screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption("Sketchy Connections")
 
     # Create and run game
     engine = Engine()
@@ -41,7 +39,7 @@ if __name__ == '__main__':
     Drawing rectangle objects:
         
         create rectangle
-            ground = pygame.Rect(0, 400, 960, 50)
+            ground = pygame.Rect(0, 400, 960, 50) 
         
         in game loop:
             pygame.draw.rect(screen, (100, 255, 0), ground)

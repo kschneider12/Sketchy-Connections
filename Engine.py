@@ -1,5 +1,6 @@
 import pygame
 from Button import Button
+from TypeBox import TypeBox
 
 class Engine():
     def __init__(self):
@@ -21,6 +22,7 @@ class Engine():
         self.mouse_buttons = [False, False]
         self.mouse_buttons_last_frame = [False, False]
         self.mouse_pos = [0, 0]
+        self.keystrokes = []
 
         # UI Management
         self.active_buttons = []
@@ -52,10 +54,13 @@ class Engine():
             self.clock.tick(60)
 
     def getInputs(self):
+        self.keystrokes = []
         self.mouse_pos = pygame.mouse.get_pos()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.exit = True
+            if event.type == pygame.TEXTINPUT:
+                self.keystrokes.append(event.text)
             elif event.type == pygame.KEYDOWN:
                 if event.key in self.key_status:
                     self.key_status[event.key] = True
@@ -82,18 +87,21 @@ class Engine():
         just_clicked = [not self.mouse_buttons_last_frame[0] and self.mouse_buttons[0],
                         not self.mouse_buttons_last_frame[1] and self.mouse_buttons[1]]
         for button in self.active_buttons:
-            command = button.behave(self.mouse_pos, just_clicked)
-            if command:
-                command()
+            output = button.behave(self.mouse_pos, just_clicked, self.keystrokes)
+            if isinstance(output, str):
+                print(output)
+            if callable(output):
+                output()
 
 
     def welcome(self):
         # This is the game loop for the welcome screen
-        print("WELCOMING!")
         if self.key_status[pygame.K_SPACE]:
+            print("Draw!")
             self.scene = "draw"
-            self.active_buttons = [Button((100,100), (50,30), "C:/Users/Kentd/OneDrive/Desktop/project/assets/photos/block.png", self.switchToGuessing),
-                                   Button((250,100), (100,100), "C:/Users/Kentd/OneDrive/Desktop/project/assets/photos/block.png", self.switchToWelcome)]
+            self.active_buttons = [Button((100,100), (50,30), "assets/textures/default_texture.png", self.switchToGuessing),
+                                   Button((250,100), (100,100), "assets/textures/default_texture.png", self.switchToWelcome),
+                                   TypeBox((250, 250), (500, 100))]
 
     def draw(self):
         #print("DRAWING!")
@@ -112,11 +120,9 @@ class Engine():
         return
 
     def guess(self):
-        print("GUESSING!")
         if self.key_status[pygame.K_s]:
-            self.scene = "welcome"
-            self.active_buttons = []
-        # This is the game loop for the guessing screen
+            print("Welcome!")
+            self.scene = "welcome"        # This is the game loop for the guessing screen
         return
 
     def game_over(self):

@@ -1,6 +1,11 @@
 import pygame
+from pygame.constants import K_KP_ENTER, K_BACKSPACE, K_RETURN
+
 from Button import Button
-from TypeBox import TypeBox
+from TypeBox import TypeBox, CHARACTER_LIMIT
+
+SCREEN_LEN = 1920
+SCREEN_HT = 1080
 
 class Engine():
     def __init__(self):
@@ -8,7 +13,7 @@ class Engine():
         self.exit = False
 
         #pygame info
-        self.screen = pygame.display.set_mode((800, 600))
+        self.screen = pygame.display.set_mode((SCREEN_LEN, SCREEN_HT))
         pygame.display.set_caption("Sketchy Connections")
         self.clock = pygame.time.Clock()
 
@@ -17,12 +22,16 @@ class Engine():
         self.key_status = {
             pygame.K_s: False,
             pygame.K_w: False,
-            pygame.K_SPACE: False
+            pygame.K_SPACE: False,
+            pygame.K_BACKSPACE: False,
+            pygame.K_RETURN: False,
+            pygame.K_ESCAPE: False
         }
         self.mouse_buttons = [False, False]
         self.mouse_buttons_last_frame = [False, False]
         self.mouse_pos = [0, 0]
         self.keystrokes = []
+        self.type_text_draws = []
 
         # UI Management
         self.active_buttons = []
@@ -30,6 +39,7 @@ class Engine():
 
     def run(self):
         while True:
+            self.type_text_draws = []
             self.mouse_buttons_last_frame[0] = self.mouse_buttons[0]
             self.mouse_buttons_last_frame[1] = self.mouse_buttons[1]
             self.getInputs()
@@ -55,6 +65,8 @@ class Engine():
 
     def getInputs(self):
         self.keystrokes = []
+        self.key_status[K_KP_ENTER] = False
+        #self.key_status[K_BACKSPACE] = False
         self.mouse_pos = pygame.mouse.get_pos()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -77,19 +89,29 @@ class Engine():
                     self.mouse_buttons[0] = False
                 elif event.button == 3:
                     self.mouse_buttons[1] = False
+        if self.key_status[pygame.K_RETURN]:
+            self.keystrokes.append("enter")
+        if self.key_status[pygame.K_BACKSPACE]:
+            self.keystrokes.append("backspace")
+        if self.key_status[pygame.K_ESCAPE]:
+            self.exit = True
 
     def drawUI(self):
-        self.screen.fill((0, 0, 0))
+        self.screen.fill((50, 100, 100))
         for button in self.active_buttons:
             button.draw(self.screen)
+        for data in self.type_text_draws:
+            # NEED TO SEPARATE FROM NORMAL DRAWS! TWO DIFFERENT VECTORS
+            self.drawTypingText(data)
 
     def manageButtons(self):
         just_clicked = [not self.mouse_buttons_last_frame[0] and self.mouse_buttons[0],
                         not self.mouse_buttons_last_frame[1] and self.mouse_buttons[1]]
         for button in self.active_buttons:
             output = button.behave(self.mouse_pos, just_clicked, self.keystrokes)
-            if isinstance(output, str):
-                print(output)
+            if isinstance(output, list):
+                #output[:-1] is the return value- store when the submit button is pressed
+                self.type_text_draws.append(output)
             if callable(output):
                 output()
 
@@ -101,7 +123,8 @@ class Engine():
             self.scene = "draw"
             self.active_buttons = [Button((100,100), (50,30), "assets/textures/default_texture.png", self.switchToGuessing),
                                    Button((250,100), (100,100), "assets/textures/default_texture.png", self.switchToWelcome),
-                                   TypeBox((250, 250), (500, 100))]
+                                   TypeBox((SCREEN_LEN / 2, SCREEN_HT - 200), (1300, 70), "assets/textures/text_box_5.png", "Type A Response"),
+                                   TypeBox((300, 300), (200, 50),"assets/textures/text_box_4.png")]
 
     def draw(self):
         #print("DRAWING!")
@@ -141,3 +164,20 @@ class Engine():
     def switchToWelcome(self):
         self.scene = "welcome"
         self.active_buttons = []
+
+    def drawText(self, vec):
+        if len(vec) == 4:
+            text = vec[0]
+            pos = vec[1]
+            font = vec[2]
+            color = vec[3]
+            text_surface = font.render(text, True, color)
+            # SO I NEED TO KNOW THE SIZE OF THE TEXT BEFORE I BLIT IT, BUT AFTER I MAKE IT???!!
+            self.screen.blit(text_surface, pos)
+
+    def drawTypingText(self, vec):
+        if (len(vec[-1]) > 0):
+            self.drawText([str(CHARACTER_LIMIT - len(vec[-1])), (vec[-2], vec[1][1]), vec[2], (100,100,100)])
+
+        self.drawText(vec[:-2])
+        #(self.pos[0] - self.width / 2.2, self.pos[1] - self.height / 3)

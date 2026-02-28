@@ -57,10 +57,6 @@ if __name__ == '__main__':
     The mixer is already initialized, so it super straightforward.
     quack = pygame.mixer.Sound("assets\sounds\Quack Sound Effect.mp3")
     quack.play()
-
-
-
-        
         
     
     

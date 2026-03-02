@@ -7,7 +7,7 @@ PIXEL_WIDTH = GRID_CELL_SIZE * GRID_WIDTH
 PIXEL_HEIGHT = GRID_CELL_SIZE * GRID_HEIGHT
 
 COLORS = {
-    'background': (250, 250, 250),
+    'background': (240, 240, 240),
     'black_pen' : (0, 0, 0),
     'green_pen': (0, 255, 0),
     'blue_pen': (0, 0, 255),
@@ -19,7 +19,7 @@ COLORS = {
     'sky_blue_pen': (135, 206, 235),
     'brown_pen': (139, 69, 19),
     'white_pen': (255, 255, 255),
-    'eraser': (250, 250, 250)
+    'eraser': (240, 240, 240)
 
 }
 
@@ -76,9 +76,10 @@ class Grid:
     def draw_brush(self, row, col, color, radius=1):
         for r in range(row - radius, row + radius + 1):
             for c in range(col - radius, col + radius + 1):
-                cell = self.get_cell(r, c)
-                if cell:
-                    cell.drawing(color)
+                if (r - row) ** 2 + (c - col) ** 2 <= radius ** 2:
+                    cell = self.get_cell(r, c)
+                    if cell:
+                        cell.drawing(color)
 
     def draw_line_cells(self, start, end, color, radius=2):
         x1, y1 = start
@@ -93,6 +94,32 @@ class Grid:
             row, col = get_clicked_pos((x, y))
             self.draw_brush(row, col, color, radius)
 
+    # fill tool!
+    def fill_tool(self, start_row, start_col, new_color):
+        start_cell = self.get_cell(start_row, start_col)
+        if not start_cell:
+            return
+
+        target_color = start_cell.color
+
+        if target_color == new_color:
+            return
+
+        update_stack = [(start_row, start_col)]
+
+        while update_stack:
+            row, col = update_stack.pop()
+            cell = self.get_cell(row, col)
+
+            if cell and cell.color == target_color:
+                cell.drawing(new_color)
+
+                update_stack.append((row + 1, col))
+                update_stack.append((row - 1, col))
+                update_stack.append((row, col + 1))
+                update_stack.append((row, col - 1))
+
+
     def update_cells(self):
         for row in self.cells:
             for cell in row:
@@ -103,6 +130,7 @@ class Grid:
             for cell in row:
                 cell.draw(window)
 
+    # also unnecessary
     def erasing(self):
         self.cells = self._create_cells()
 
@@ -135,16 +163,24 @@ def run(window):
     last_pos = None
     brush_radius = 1
     color = None
+
+    # font variables
     pygame.font.init()
     font = pygame.font.SysFont('Consola', 18)
+
+    # color variables
     color_index = 0
     current_color_name, current_color = pen_colors[color_index]
+
+    # brush type variables
+    current_tool = "brush"
 
     while run:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
 
+            # brush width
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_1:
                     brush_radius = 1
@@ -157,11 +193,31 @@ def run(window):
                 if event.key == pygame.K_5:
                     brush_radius = 16
 
+            # change color
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_TAB:
                     color_index = (color_index + 1) % len(pen_colors)
                     current_color_name, current_color = pen_colors[color_index]
 
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_f:
+                    current_tool = "fill"
+                if event.key == pygame.K_b:
+                    current_tool = "brush"
+
+            # draw if clicked
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    pos = pygame.mouse.get_pos()
+                    row, col = get_clicked_pos(pos)
+
+                    if current_tool == "brush":
+                        grid.draw_brush(row, col, current_color_name, brush_radius)
+                        last_pos = pos
+                    elif current_tool == "fill":
+                        grid.fill_tool(row, col, current_color)
+
+            # draw when held
             if pygame.mouse.get_pressed()[0]:
                 pos = pygame.mouse.get_pos()
 
@@ -176,9 +232,11 @@ def run(window):
 
         text_surface = font.render(f"Brush size (press 1-4 to change): {brush_radius}", True, (0, 0, 0))
         text_surface2 = font.render(f"Color (press TAB to cycle): {current_color_name}", True, (0, 0, 0))
+        text_surface3 = font.render(f"Brush type (press f or b to cycle): {current_tool}", True, (0, 0, 0))
 
         window.blit(text_surface, (10, 10))
         window.blit(text_surface2, (10, 20))
+        window.blit(text_surface3, (10, 30))
 
         pygame.display.update()
 

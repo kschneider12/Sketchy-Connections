@@ -36,14 +36,15 @@ class GridCell:
     def get_position(self):
         return self.row, self.col
 
-    # Could be used to help with saving drawn pixels
+    # could be used to help with saving drawn pixels
     def is_drawn(self):
         return self.color == COLORS['pen']
 
-    # Could be used to help with saving erased pixels
+    # could be used to help with saving erased pixels
     def is_erased(self):
         return self.color == COLORS['background']
 
+    # unnecessary I think - using the "pseudo-erase" pen color
     def erasing(self):
         self.color = COLORS['background']
 
@@ -173,8 +174,8 @@ def run(window):
         window.fill(COLORS['background'])
         grid.draw(window)
 
-        text_surface = font.render(f"Brush size: {brush_radius}", True, (0, 0, 0))
-        text_surface2 = font.render(f"Color: {current_color_name}", True, (0, 0, 0))
+        text_surface = font.render(f"Brush size (press 1-4 to change): {brush_radius}", True, (0, 0, 0))
+        text_surface2 = font.render(f"Color (press TAB to cycle): {current_color_name}", True, (0, 0, 0))
 
         window.blit(text_surface, (10, 10))
         window.blit(text_surface2, (10, 20))

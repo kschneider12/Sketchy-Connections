@@ -75,8 +75,3 @@ class TypeBox(Button):
                 self.color, # color
                 (self.pos[0] + self.width / 2) - self.font.size("00")[0] - 10, # position for top corner counter
                 self.curr_string]
-
-
-
-
-

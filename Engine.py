@@ -35,10 +35,15 @@ class Engine():
 
         # UI Management
         self.active_buttons = []
+        self.active_animations = []
+        self.frame = 0
 
 
     def run(self):
         while True:
+            self.frame += 1
+            if self.frame > 2147483645: # approaching integer limit
+                self.frame = 0
             self.type_text_draws = []
             self.mouse_buttons_last_frame[0] = self.mouse_buttons[0]
             self.mouse_buttons_last_frame[1] = self.mouse_buttons[1]
@@ -154,7 +159,7 @@ class Engine():
 
 
 #------------------------------------------------------------------------------------------------
-#Button Commands listed below (Nothing else under this line!)
+#Button Commands listed below
 #------------------------------------------------------------------------------------------------
 
     def switchToGuessing(self):
@@ -172,12 +177,16 @@ class Engine():
             font = vec[2]
             color = vec[3]
             text_surface = font.render(text, True, color)
-            # SO I NEED TO KNOW THE SIZE OF THE TEXT BEFORE I BLIT IT, BUT AFTER I MAKE IT???!!
             self.screen.blit(text_surface, pos)
 
     def drawTypingText(self, vec):
-        if (len(vec[-1]) > 0):
+        if len(vec[-1]) > 0 and CHARACTER_LIMIT - len(vec[-1]) < CHARACTER_LIMIT / 2 + 1: # ONLY SHOWS UP IF YOU'RE CLOSE
             self.drawText([str(CHARACTER_LIMIT - len(vec[-1])), (vec[-2], vec[1][1]), vec[2], (100,100,100)])
 
         self.drawText(vec[:-2])
         #(self.pos[0] - self.width / 2.2, self.pos[1] - self.height / 3)
+
+
+#------------------------------------------------------------------------------------------------
+#Animation Commands listed below
+#------------------------------------------------------------------------------------------------

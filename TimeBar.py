@@ -7,7 +7,7 @@ class TimeBar(DefaultUI):
         img = "assets/textures/time_bar.png"
         self.bar_pos = position
         self.start_time = time
-        self.time = time
+        self.time = time * 60
         super().__init__(position, size, img)
         self.bar_img = pygame.image.load("assets/textures/time_line.png")
         self.bar_img = pygame.transform.scale(self.bar_img, (size[0] * 9/10, 10))
@@ -20,7 +20,8 @@ class TimeBar(DefaultUI):
         for val in color:
             if val < 0 or val > 255:
                 color = (0,0,0)
-        pygame.draw.rect(screen, color, pygame.Rect(self.pos[0] - self.width / 2 + 6, self.bar_pos[1] + 5, self.width * 9/10, self.height * 4.08/3 - self.bar_pos[1] + 5))
+        #TODO FIX ALL GRAPHICS TO BE PROPORTIONAL TO WINDOW SIZE! (CREATE NORMALIZATION?)
+        #pygame.draw.rect(screen, color, pygame.Rect(self.pos[0] - self.width / 2 + 6, self.bar_pos[1] + 5, self.width * 9/10, self.height * 4.08/3 - self.bar_pos[1] + 5))
         screen.blit(self.bar_img, self.bar_pos)
         screen.blit(self.img, (self.pos[0] - self.width / 2, self.pos[1] - self.height / 2))
 
@@ -29,8 +30,6 @@ class TimeBar(DefaultUI):
 
     def time_up(self):
         self.time -= 1
-        print(self.time)
         if self.time == 0:
-            print("SWITCHING")
             return True
         return False

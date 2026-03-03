@@ -61,7 +61,10 @@ class GridCell:
 
 # the grid for the drawing window
 class Grid:
-    def __init__(self):
+    def __init__(self, pos, size, pixel_size):
+        self.pos = pos
+        self.size = size
+        self.pixel_size = pixel_size
         self.cells = self._create_cells()
 
     @staticmethod
@@ -158,7 +161,7 @@ def run(window):
         ("Erasing", COLORS['eraser'])
     ]
     # variables to get started
-    grid = Grid()
+    grid = Grid((0,0), (0,0), 2)
     run = True
     last_pos = None
     brush_radius = 1

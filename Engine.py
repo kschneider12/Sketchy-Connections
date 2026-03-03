@@ -1,18 +1,22 @@
 import pygame
-from pygame.constants import K_KP_ENTER, K_BACKSPACE, K_RETURN
+from pygame.constants import K_KP_ENTER
 
 from Button import Button
 from DefaultUI import DefaultUI
 from TimeBar import TimeBar
+from draw_window import Grid
+from model import GamePhase, GameState, Player, Book, RoomPhase, Room, Entry, EntryType
 from TypeBox import TypeBox, CHARACTER_LIMIT
+import pyautogui
 
-SCREEN_LEN = 1920
-SCREEN_HT = 1080
+SCREEN_LEN = pyautogui.size()[0]
+SCREEN_HT = pyautogui.size()[1]
 
 class Engine():
     def __init__(self):
         # flags
         self.exit = False
+        self.drawing = False
 
         #pygame info
         self.screen = pygame.display.set_mode((SCREEN_LEN, SCREEN_HT))
@@ -39,6 +43,7 @@ class Engine():
         self.active_ui = []
         self.active_buttons = []
         self.active_animations = []
+        self.active_drawings = []
         self.frame = 0
 
 
@@ -46,7 +51,7 @@ class Engine():
         self.switchToWelcome()
         while True:
             self.frame += 1
-            if self.frame > 2147483645: # approaching integer limit
+            if self.frame > 65535:
                 self.frame = 0
             self.type_text_draws = []
             self.mouse_buttons_last_frame[0] = self.mouse_buttons[0]
@@ -124,6 +129,9 @@ class Engine():
             # NEED TO SEPARATE FROM NORMAL DRAWS! TWO DIFFERENT VECTORS
             self.drawTypingText(data)
 
+        for canvas in self.active_drawings:
+            canvas.draw(self.screen)
+
     def manageButtons(self):
         just_clicked = [not self.mouse_buttons_last_frame[0] and self.mouse_buttons[0],
                         not self.mouse_buttons_last_frame[1] and self.mouse_buttons[1]]
@@ -167,22 +175,31 @@ class Engine():
             case "guess":
                 self.switchToWelcome()
 
+    # normalize position as a percent (0-100) for distance across screen
+    def np(self, x, y):
+        return x * SCREEN_LEN / 100, y * SCREEN_HT / 100
+    # normalize scale in relation to screen size
+    def ns(self, x, y):
+        return x * SCREEN_LEN / 1000, y * SCREEN_LEN / 1000
+
 #------------------------------------------------------------------------------------------------
 #Button Commands listed below
 #------------------------------------------------------------------------------------------------
+
     def switchToWriting(self):
         self.scene = "write"
-        self.active_ui = [TimeBar((SCREEN_LEN - (SCREEN_LEN / 10), SCREEN_HT - 600), (60 * 2, 270 * 2), 10 * 60)]
-        self.active_buttons = [TypeBox((SCREEN_LEN / 2, SCREEN_HT / 2), (1300, 110), "assets/textures/text_box_5.png", "Enter A Prompt")]
+        #self.active_ui = [TimeBar((SCREEN_LEN - (SCREEN_LEN / 10), SCREEN_HT - 600), (60 * 2, 270 * 2), 10)]
+        self.active_ui = [TimeBar(self.np(90,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
+        self.active_buttons = [TypeBox(self.np(45,50), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", "Enter A Prompt")]
 
     def switchToGuessing(self):
         self.scene = "guess"
-        self.active_ui = [TimeBar((SCREEN_LEN - (SCREEN_LEN / 10), SCREEN_HT - 600),(60 * 2, 270 * 2), 10 * 60)]
-        self.active_buttons = [TypeBox((SCREEN_LEN / 2, SCREEN_HT - 300), (1300, 70), "assets/textures/text_box_5.png", "Type A Response")]
+        self.active_ui = [TimeBar(self.np(90, 80),self.ns(60 * 2, 270 * 2), 10 * 60)]
+        self.active_buttons = [TypeBox(self.np(50, 80), self.ns(1300 * 0.6, 70 * 0.6), "assets/textures/text_box_5.png", "Type A Response")]
 
     def switchToWelcome(self):
         self.scene = "welcome"
-        self.active_ui = [DefaultUI((SCREEN_LEN / 2, SCREEN_HT - 750),(169 * 6, 97 * 6),"assets/textures/title.png")]
+        self.active_ui = [DefaultUI(self.np(50, 30),self.ns(169 * 3.5, 97 * 3.5),"assets/textures/title.png")]
         self.active_buttons = [Button((SCREEN_LEN / 3 - 50, SCREEN_HT - 250), (int(115 * 3.5), int(51 * 3.5)), "assets/textures/host.png", self.switchToWriting),
                                Button((SCREEN_LEN - (SCREEN_LEN / 3 - 50), SCREEN_HT - 250), (int(115 * 3.5), int(51 * 3.5)), "assets/textures/join.png", self.switchToWriting)]
 
@@ -190,6 +207,7 @@ class Engine():
         self.scene = "draw"
         self.active_ui = [TimeBar((SCREEN_LEN - (SCREEN_LEN / 10), SCREEN_HT - 600),(60 * 2, 270 * 2), 10 * 60)]
         self.active_buttons = []
+        self.active_drawings = [Grid((170,250), (100,100), 4)]
 
     def drawText(self, vec):
         if len(vec) == 4:

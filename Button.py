@@ -44,5 +44,3 @@ class Button:
 
     def hovering(self, mouse_pos):
         return abs(mouse_pos[0] - self.pos[0]) <= self.width / 2 and abs(mouse_pos[1] - self.pos[1]) <= self.height / 2
-
-

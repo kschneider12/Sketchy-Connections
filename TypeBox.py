@@ -13,7 +13,7 @@ class TypeBox(Button):
         self.default_message = default_message
         img = img
         funct = 0
-        super().__init__(position, size, img, funct)
+        super().__init__(position, size, img, funct, False)
         self.text_size = int(self.height * 2/3.3)
         self.font = pygame.font.Font(FONT_PATH, self.text_size)
 

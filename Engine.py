@@ -2,6 +2,8 @@ import pygame
 from pygame.constants import K_KP_ENTER, K_BACKSPACE, K_RETURN
 
 from Button import Button
+from DefaultUI import DefaultUI
+from TimeBar import TimeBar
 from TypeBox import TypeBox, CHARACTER_LIMIT
 
 SCREEN_LEN = 1920
@@ -34,12 +36,14 @@ class Engine():
         self.type_text_draws = []
 
         # UI Management
+        self.active_ui = []
         self.active_buttons = []
         self.active_animations = []
         self.frame = 0
 
 
     def run(self):
+        self.switchToWelcome()
         while True:
             self.frame += 1
             if self.frame > 2147483645: # approaching integer limit
@@ -54,12 +58,16 @@ class Engine():
             match self.scene:
                 case "welcome":
                     self.welcome()
+                case "lobby":
+                    self.lobby()
+                case "write":
+                    self.writing()
                 case "draw":
                     self.draw()
                 case "guess":
                     self.guess()
-                case "game_over":
-                    self.game_over()
+                case "results":
+                    self.results()
             if self.exit:
                 pygame.quit()
                 break
@@ -105,6 +113,13 @@ class Engine():
         self.screen.fill((50, 100, 100))
         for button in self.active_buttons:
             button.draw(self.screen)
+        for ui in self.active_ui:
+            if isinstance(ui, TimeBar):
+                #TIMER IS UP! (WHAT DO WE DO HERE!?) (SWITCH SCENE PROBABLY YEAH?)
+                if ui.time_up():
+                    self.time_up()
+            ui.draw(self.screen)
+
         for data in self.type_text_draws:
             # NEED TO SEPARATE FROM NORMAL DRAWS! TWO DIFFERENT VECTORS
             self.drawTypingText(data)
@@ -123,51 +138,57 @@ class Engine():
 
     def welcome(self):
         # This is the game loop for the welcome screen
-        if self.key_status[pygame.K_SPACE]:
-            print("Draw!")
-            self.scene = "draw"
-            self.active_buttons = [Button((100,100), (50,30), "assets/textures/default_texture.png", self.switchToGuessing),
-                                   Button((250,100), (100,100), "assets/textures/default_texture.png", self.switchToWelcome),
-                                   TypeBox((SCREEN_LEN / 2, SCREEN_HT - 200), (1300, 70), "assets/textures/text_box_5.png", "Type A Response"),
-                                   TypeBox((300, 300), (200, 50),"assets/textures/text_box_4.png")]
+        return
+
+    def lobby(self):
+        return
+
+    def writing(self):
+        return
 
     def draw(self):
-        #print("DRAWING!")
-        '''
-        Notes on data structure:
-            [[index, colorID], [],[],...] in order of pixels added
-            index is 0 -> length*width
-            -----------------
-            -0              -
-            -               -
-            -            255-
-            -----------------
-            Keep brush type as a settable variable for easy switching when buttons implemented (including eraser)
-        '''
-        # This is the game loop for the drawing screen
         return
 
     def guess(self):
-        if self.key_status[pygame.K_s]:
-            print("Welcome!")
-            self.scene = "welcome"        # This is the game loop for the guessing screen
         return
 
-    def game_over(self):
+    def results(self):
         # This is the game loop for the game over screen
         return
 
 
+    # When any timer in the game runs out, figure out which timer it was and behave accordingly
+    def time_up(self):
+        match self.scene:
+            case "write":
+                self.switchToDraw()
+            case "draw":
+                self.switchToGuessing()
+            case "guess":
+                self.switchToWelcome()
+
 #------------------------------------------------------------------------------------------------
 #Button Commands listed below
 #------------------------------------------------------------------------------------------------
+    def switchToWriting(self):
+        self.scene = "write"
+        self.active_ui = [TimeBar((SCREEN_LEN - (SCREEN_LEN / 10), SCREEN_HT - 600), (60 * 2, 270 * 2), 10 * 60)]
+        self.active_buttons = [TypeBox((SCREEN_LEN / 2, SCREEN_HT / 2), (1300, 110), "assets/textures/text_box_5.png", "Enter A Prompt")]
 
     def switchToGuessing(self):
         self.scene = "guess"
-        self.active_buttons = []
+        self.active_ui = [TimeBar((SCREEN_LEN - (SCREEN_LEN / 10), SCREEN_HT - 600),(60 * 2, 270 * 2), 10 * 60)]
+        self.active_buttons = [TypeBox((SCREEN_LEN / 2, SCREEN_HT - 300), (1300, 70), "assets/textures/text_box_5.png", "Type A Response")]
 
     def switchToWelcome(self):
         self.scene = "welcome"
+        self.active_ui = [DefaultUI((SCREEN_LEN / 2, SCREEN_HT - 750),(169 * 6, 97 * 6),"assets/textures/title.png")]
+        self.active_buttons = [Button((SCREEN_LEN / 3 - 50, SCREEN_HT - 250), (int(115 * 3.5), int(51 * 3.5)), "assets/textures/host.png", self.switchToWriting),
+                               Button((SCREEN_LEN - (SCREEN_LEN / 3 - 50), SCREEN_HT - 250), (int(115 * 3.5), int(51 * 3.5)), "assets/textures/join.png", self.switchToWriting)]
+
+    def switchToDraw(self):
+        self.scene = "draw"
+        self.active_ui = [TimeBar((SCREEN_LEN - (SCREEN_LEN / 10), SCREEN_HT - 600),(60 * 2, 270 * 2), 10 * 60)]
         self.active_buttons = []
 
     def drawText(self, vec):

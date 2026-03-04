@@ -8,6 +8,7 @@ from draw_window import Grid
 from model import GamePhase, GameState, Player, Book, RoomPhase, Room, Entry, EntryType
 from TypeBox import TypeBox
 from draw_window import DrawingWindow
+# from draw_window import AnimationWindow
 import pyautogui
 
 SCREEN_LEN = pyautogui.size()[0]
@@ -18,6 +19,9 @@ class Engine:
         # flags
         self.exit = False
         self.drawing = False
+
+        # print(SCREEN_LEN)
+        # print(SCREEN_HT)
 
         #pygame info
         self.screen = pygame.display.set_mode((SCREEN_LEN, SCREEN_HT))
@@ -201,7 +205,7 @@ class Engine:
         return x * SCREEN_LEN / 100, y * SCREEN_HT / 100
     # normalize scale in relation to screen size
     def ns(self, x, y):
-        return x * SCREEN_LEN / 1000, y * SCREEN_LEN / 1000
+        return x * SCREEN_LEN / 1000, y * SCREEN_HT / 1000 * 16 / 10
 
 #------------------------------------------------------------------------------------------------
 #Button Commands listed below
@@ -280,3 +284,4 @@ class Engine:
 #------------------------------------------------------------------------------------------------
 #Animation Commands listed below
 #------------------------------------------------------------------------------------------------
+# Will figure out how to send animation soon

@@ -24,7 +24,6 @@ class Button:
         #else:
             #self.img = pygame.transform.scale(self.img, (self.width, self.height))
         if self.clicked(mouse_pos, just_clicked):
-            print("CLICKED!")
             return self.command
         else:
             return False

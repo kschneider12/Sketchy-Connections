@@ -1,11 +1,11 @@
 import pygame
 from Button import Button
-CHARACTER_LIMIT = 60
 FONT_PATH = f"assets/fonts/MoreSugar-Regular.ttf"
 
 class TypeBox(Button):
-    def __init__(self,  position, size, img, default_message = ""):
+    def __init__(self,  position, size, img, default_message = "", character_limit = 60):
         self.selected = False
+        self.character_limit = character_limit
         self.accum = 0
         self.backspace_hold = 0
         self.curr_string = ""
@@ -52,14 +52,15 @@ class TypeBox(Button):
         #if len(self.curr_string) > int(self.width / 4):
             #self.curr_string = self.curr_string[:int(self.width / 4)]
                 # physical text
-        if len(self.curr_string) > CHARACTER_LIMIT:
-            self.curr_string = self.curr_string[:CHARACTER_LIMIT]
+        if len(self.curr_string) > self.character_limit:
+            self.curr_string = self.curr_string[:self.character_limit]
         if self.curr_string == "" and not self.selected:
             # return default gray message
             return [self.default_message,  # written text
                     (self.pos[0] - self.width / 2.2, self.pos[1] - self.height / 3),  # position for main text
                     self.font,
                     (100,100,100),
+                    self.character_limit,
                     (self.pos[0] + self.width / 2) - self.font.size("00")[0] - 10,  # position for top corner counter
                     # position for top corner counter
                     ""]
@@ -73,5 +74,6 @@ class TypeBox(Button):
                 (self.pos[0] - self.width / 2.2, self.pos[1] - self.height / 3), # position for main text
                 self.font, # font
                 self.color, # color
+                self.character_limit,
                 (self.pos[0] + self.width / 2) - self.font.size("00")[0] - 10, # position for top corner counter
                 self.curr_string]

@@ -109,9 +109,11 @@ class Engine():
                 elif event.button == 3:
                     self.mouse_buttons[1] = False
 
+            # added by Mat for drawing window
             if self.scene == "draw":
                 for drawing_win in self.active_drawings:
                     drawing_win.handle_clicks(event)
+
         if self.key_status[pygame.K_RETURN]:
             self.keystrokes.append("enter")
         if self.key_status[pygame.K_BACKSPACE]:
@@ -160,6 +162,7 @@ class Engine():
         return
 
     def draw(self):
+        # added by Mat for drawing window
         keys = pygame.key.get_pressed()
         for drawing_win in self.active_drawings:
             drawing_win.update(
@@ -219,6 +222,7 @@ class Engine():
         self.scene = "draw"
         self.active_ui = [TimeBar((SCREEN_LEN - (SCREEN_LEN / 10), SCREEN_HT - 600),(60 * 2, 270 * 2), 10 * 60)]
         self.active_buttons = []
+        # Mat changed this line
         self.active_drawings = [DrawingWindow((170, 250))]
 
     def drawText(self, vec):

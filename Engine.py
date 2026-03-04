@@ -1,5 +1,6 @@
 import pygame
 from pygame.constants import K_KP_ENTER
+from win32con import NULL
 
 from Button import Button
 from DefaultUI import DefaultUI
@@ -13,7 +14,7 @@ import pyautogui
 SCREEN_LEN = pyautogui.size()[0]
 SCREEN_HT = pyautogui.size()[1]
 
-class Engine():
+class Engine:
     def __init__(self):
         # flags
         self.exit = False
@@ -25,7 +26,6 @@ class Engine():
         self.clock = pygame.time.Clock()
 
         # Input management
-        self.scene = "welcome"
         self.key_status = {
             pygame.K_s: False,
             pygame.K_w: False,
@@ -41,12 +41,19 @@ class Engine():
         self.type_text_draws = []
 
         # UI Management
+        self.scene = "welcome"
         self.active_ui = []
         self.active_buttons = []
         self.active_animations = []
         self.active_drawings = []
         self.frame = 0
 
+        #backend game state management
+
+        #TODO: ASK ABOUT THIS!
+        self.room = Room
+        self.last_submission = ""
+        self.player_id = 0
 
     def run(self):
         self.switchToWelcome()
@@ -146,6 +153,7 @@ class Engine():
             output = button.behave(self.mouse_pos, just_clicked, self.keystrokes)
             if isinstance(output, list):
                 #output[:-1] is the return value- store when the submit button is pressed
+                self.last_submission = output[-1]
                 self.type_text_draws.append(output)
             if callable(output):
                 output()
@@ -203,27 +211,42 @@ class Engine():
     def switchToWriting(self):
         self.scene = "write"
         #self.active_ui = [TimeBar((SCREEN_LEN - (SCREEN_LEN / 10), SCREEN_HT - 600), (60 * 2, 270 * 2), 10)]
-        self.active_ui = [TimeBar(self.np(90,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
-        self.active_buttons = [TypeBox(self.np(45,50), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", "Enter A Prompt")]
+        self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
+        self.active_buttons = [TypeBox(self.np(45,50), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", "Enter A Prompt"),
+                               Button(self.np(50,90), (self.ns(140 * 2.2, 51 * 2.2)), "assets/textures/submit.png", self.switchToDraw)]
 
     def switchToGuessing(self):
         self.scene = "guess"
-        self.active_ui = [TimeBar(self.np(90, 80),self.ns(60 * 2, 270 * 2), 10 * 60)]
+        self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
         self.active_buttons = [TypeBox(self.np(50, 80), self.ns(1300 * 0.6, 70 * 0.6), "assets/textures/text_box_5.png", "Type A Response")]
 
     def switchToWelcome(self):
         self.scene = "welcome"
         self.active_ui = [DefaultUI(self.np(50, 30),self.ns(169 * 3.5, 97 * 3.5),"assets/textures/title.png")]
-        self.active_buttons = [Button((SCREEN_LEN / 3 - 50, SCREEN_HT - 250), (int(115 * 3.5), int(51 * 3.5)), "assets/textures/host.png", self.switchToWriting),
-                               Button((SCREEN_LEN - (SCREEN_LEN / 3 - 50), SCREEN_HT - 250), (int(115 * 3.5), int(51 * 3.5)), "assets/textures/join.png", self.switchToWriting)]
+        self.active_buttons = [Button(self.np(30,70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/host.png", self.startRoom),
+                               Button(self.np(70,70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/join.png", self.joinRoom),
+                               TypeBox(self.np(50,90), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", "Enter A Name", 25)]
+
+    def switchToLobby(self):
+        self.scene = "lobby"
+        self.active_ui = [DefaultUI(self.np(10, 5),self.ns(130 * 1.5, 50 * 1),"assets/textures/players.png"),
+                          DefaultUI(self.np(80, 18),self.ns(169 * 2.0, 97 * 2.0),"assets/textures/title.png"),
+                          DefaultUI(self.np(4, 55),self.ns(30 * 2.4, 241 * 2.4),"assets/textures/players_tab.png")]
+        self.active_buttons = [Button(self.np(88,90), (self.ns(115 * 1.8, 51 * 1.8)), "assets/textures/play.png", self.startGame),
+                               Button(self.np(65,90), (self.ns(115 * 1.8, 51 * 1.8)), "assets/textures/options.png", self.startGame)]
 
     def switchToDraw(self):
         # note from Mat - this makes the drawing window displayable, but it does not fully work...it is just there for now.
         self.scene = "draw"
-        self.active_ui = [TimeBar((SCREEN_LEN - (SCREEN_LEN / 10), SCREEN_HT - 600),(60 * 2, 270 * 2), 10 * 60)]
+        self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
         self.active_buttons = []
         # Mat changed this line
         self.active_drawings = [DrawingWindow((170, 250))]
+
+    def startGame(self):
+        self.switchToWriting()
+        #self.room.start_game(str(self.player_id))
+        return
 
     def drawText(self, vec):
         if len(vec) == 4:
@@ -235,12 +258,25 @@ class Engine():
             self.screen.blit(text_surface, pos)
 
     def drawTypingText(self, vec):
-        if len(vec[-1]) > 0 and CHARACTER_LIMIT - len(vec[-1]) < CHARACTER_LIMIT / 2 + 1: # ONLY SHOWS UP IF YOU'RE CLOSE
-            self.drawText([str(CHARACTER_LIMIT - len(vec[-1])), (vec[-2], vec[1][1]), vec[2], (100,100,100)])
+        if len(vec[-1]) > 0 and vec[4] - len(vec[-1]) < vec[4] / 2 + 1: # ONLY SHOWS UP IF YOU'RE CLOSE
+            self.drawText([str(vec[4] - len(vec[-1])), (vec[-2], vec[1][1]), vec[2], (100,100,100)])
 
-        self.drawText(vec[:-2])
+        self.drawText(vec[:-3])
         #(self.pos[0] - self.width / 2.2, self.pos[1] - self.height / 3)
 
+    def startRoom(self):
+        #would be nice to have index passed in too, so client already knows what their ID is, to easily access themselves inside Room
+        if len(self.last_submission) > 0:
+            self.room = Room("ROOM CODE", self.last_submission)
+            print("ROOM STARTED BY " + self.last_submission)
+            self.switchToLobby()
+
+    def joinRoom(self):
+        if len(self.last_submission) > 0:
+            #TODO and the room code is valid!
+            self.switchToLobby()
+            #need a new constructor to create a room where you're not the host. I.E. takes in a preexisting room (from the server)
+            #self.room = Room("ROOM CODE", self.last_submission)
 
 #------------------------------------------------------------------------------------------------
 #Animation Commands listed below

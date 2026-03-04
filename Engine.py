@@ -202,7 +202,7 @@ class Engine:
         return x * SCREEN_LEN / 100, y * SCREEN_HT / 100
     # normalize scale in relation to screen size
     def ns(self, x, y):
-        return x * SCREEN_LEN / 1000, y * SCREEN_HT / 1000 * SCREEN_LEN/SCREEN_HT
+        return x * SCREEN_LEN / 1000, y * SCREEN_HT / 1000 * 16/10
 
 #------------------------------------------------------------------------------------------------
 #Button Commands listed below

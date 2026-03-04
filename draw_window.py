@@ -98,8 +98,8 @@ class Grid:
 
         for i in range(steps + 1):
             t = i / steps if steps != 0 else 0
-            x = int(x1 + t * (x2 - x1) * t)
-            y = int(y1 + t * (y2 - y1) * t)
+            x = int(x1 + t * (x2 - x1))
+            y = int(y1 + t * (y2 - y1))
             row, col = get_clicked_pos((x, y))
             drawn_pixels += self.draw_brush(row, col, color, radius)
 
@@ -154,6 +154,98 @@ class Grid:
     # also unnecessary
     def erasing(self):
         self.cells = self._create_cells()
+
+
+class DrawingWindow:
+    def __init__(self, pos):
+        self.grid = Grid(pos, (0, 0), 2)
+        self.pos = pos
+        self.brush_radius = 1
+        self.current_color = COLORS['black_pen']
+        self.current_tool = "brush"
+        self.last_pos = None
+        self.pen_colors = [
+            ("Black", COLORS['black_pen']),
+            ("Green", COLORS['green_pen']),
+            ("Blue", COLORS['blue_pen']),
+            ("Purple", COLORS['purple_pen']),
+            ("Red", COLORS['red_pen']),
+            ("Orange", COLORS['orange_pen']),
+            ("Yellow", COLORS['yellow_pen']),
+            ("Grey", COLORS['grey_pen']),
+            ("Sky Blue", COLORS['sky_blue_pen']),
+            ("Brown", COLORS['brown_pen']),
+            ("White", COLORS['white_pen']),
+            ("Erasing", COLORS['eraser'])
+        ]
+        self.color_index = 0
+
+    def update(self, mouse_pos, mouse_pressed, key_pressed):
+        this_x = mouse_pos[0] - self.pos[0]
+        this_y = mouse_pos[1] - self.pos[1]
+
+        if this_x < 0 or this_y < 0:
+            return
+
+        row = this_y // GRID_CELL_SIZE
+        col = this_x // GRID_CELL_SIZE
+
+        if mouse_pressed:
+            if self.current_tool == "brush":
+                if self.last_pos:
+                    self.grid.draw_line_cells(
+                        self.last_pos,
+                        (this_x, this_y),
+                        self.current_color,
+                        self.brush_radius)
+                else:
+                    self.grid.draw_brush(row, col, self.current_color, self.brush_radius)
+                self.last_pos = (this_x, this_y)
+            elif self.current_tool == "fill":
+                self.grid.fill_tool(row, col, self.current_color)
+        else:
+            self.last_pos = None
+
+    def draw(self, screen):
+        for row in self.grid.cells:
+            for cell in row:
+                rect = pygame.Rect(
+                    self.pos[0] + cell.x,
+                    self.pos[1] + cell.y,
+                    GRID_CELL_SIZE,
+                    GRID_CELL_SIZE)
+                pygame.draw.rect(screen, cell.color, rect)
+
+        font = pygame.font.SysFont("Consolas", 18)
+
+        text_surface = font.render(f"Brush size (press 1-4 to change): {self.brush_radius}", True, (0, 0, 0))
+        text_surface2 = font.render(f"Color (press TAB to cycle): {self.color_index}", True, (0, 0, 0))
+        text_surface3 = font.render(f"Brush type (press f or b to cycle): {self.current_tool}", True, (0, 0, 0))
+
+        screen.blit(text_surface, (10, 10))
+        screen.blit(text_surface2, (10, 20))
+        screen.blit(text_surface3, (10, 30))
+
+    def color_switch(self):
+        self.color_index = (self.color_index +1) % len(self.pen_colors)
+        name, color = self.pen_colors[self.color_index]
+        self.current_color = color
+
+    def handle_clicks(self, click):
+        if click.type == pygame.KEYDOWN:
+            if click.key == pygame.K_TAB:
+                self.color_switch()
+            elif click.key == pygame.K_1:
+                self.brush_radius = 1
+            elif click.key == pygame.K_2:
+                self.brush_radius = 2
+            elif click.key == pygame.K_3:
+                self.brush_radius = 4
+            elif click.key == pygame.K_f:
+                self.current_tool = "fill"
+            elif click.key == pygame.K_b:
+                self.current_tool = "brush"
+
 
 def get_clicked_pos(position):
     x, y = position
@@ -326,10 +418,13 @@ def run_animation(window, drawn_pixels):
                 waiting = False
 
 
+
+
 if __name__ == '__main__':
+    '''
     w = pygame.display.set_mode((PIXEL_WIDTH, PIXEL_HEIGHT))
     try:
         pixels = run_drawing(w)
         run_animation(w, pixels)
-    finally:
-        pygame.quit()
+    finally: pygame.quit()
+    '''

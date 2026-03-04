@@ -421,10 +421,8 @@ def run_animation(window, drawn_pixels):
 
 
 if __name__ == '__main__':
-    '''
     w = pygame.display.set_mode((PIXEL_WIDTH, PIXEL_HEIGHT))
     try:
         pixels = run_drawing(w)
         run_animation(w, pixels)
     finally: pygame.quit()
-    '''

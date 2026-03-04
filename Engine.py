@@ -1,13 +1,12 @@
 import pygame
 from pygame.constants import K_KP_ENTER
-from win32con import NULL
 
 from Button import Button
 from DefaultUI import DefaultUI
 from TimeBar import TimeBar
 from draw_window import Grid
 from model import GamePhase, GameState, Player, Book, RoomPhase, Room, Entry, EntryType
-from TypeBox import TypeBox, CHARACTER_LIMIT
+from TypeBox import TypeBox
 from draw_window import DrawingWindow
 import pyautogui
 

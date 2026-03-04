@@ -1,5 +1,6 @@
 # Sketchy-Connections
 CS3050 Final Project
+
 James LeMahieu, Joe Liotta, Mathew Neves, Kent Schneider
 
 Welcome to Sketchy Connections!

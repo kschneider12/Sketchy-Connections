@@ -7,6 +7,7 @@ from TimeBar import TimeBar
 from draw_window import Grid
 from model import GamePhase, GameState, Player, Book, RoomPhase, Room, Entry, EntryType
 from TypeBox import TypeBox
+from draw_window import DrawingWindow
 import pyautogui
 
 SCREEN_LEN = pyautogui.size()[0]
@@ -113,6 +114,12 @@ class Engine:
                     self.mouse_buttons[0] = False
                 elif event.button == 3:
                     self.mouse_buttons[1] = False
+
+            # added by Mat for drawing window
+            if self.scene == "draw":
+                for drawing_win in self.active_drawings:
+                    drawing_win.handle_clicks(event)
+
         if self.key_status[pygame.K_RETURN]:
             self.keystrokes.append("enter")
         if self.key_status[pygame.K_BACKSPACE]:
@@ -162,7 +169,14 @@ class Engine:
         return
 
     def draw(self):
-        return
+        # added by Mat for drawing window
+        keys = pygame.key.get_pressed()
+        for drawing_win in self.active_drawings:
+            drawing_win.update(
+                self.mouse_pos,
+                self.mouse_buttons[0],
+                keys
+            )
 
     def guess(self):
         return
@@ -220,10 +234,12 @@ class Engine:
                                Button(self.np(65,90), (self.ns(115 * 1.8, 51 * 1.8)), "assets/textures/options.png", self.startGame)]
 
     def switchToDraw(self):
+        # note from Mat - this makes the drawing window displayable, but it does not fully work...it is just there for now.
         self.scene = "draw"
         self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
         self.active_buttons = []
-        self.active_drawings = [Grid((170,250), (100,100), 4)]
+        # Mat changed this line
+        self.active_drawings = [DrawingWindow((170, 250))]
 
     def startGame(self):
         self.switchToWriting()

@@ -1,6 +1,5 @@
 import pygame
 from pygame.constants import K_KP_ENTER
-from win32con import NULL
 
 from Button import Button
 from DefaultUI import DefaultUI
@@ -188,7 +187,7 @@ class Engine:
         return x * SCREEN_LEN / 100, y * SCREEN_HT / 100
     # normalize scale in relation to screen size
     def ns(self, x, y):
-        return x * SCREEN_LEN / 1000, y * SCREEN_LEN / 1000
+        return x * SCREEN_LEN / 1000, y * SCREEN_HT / 1000 * SCREEN_LEN/SCREEN_HT
 
 #------------------------------------------------------------------------------------------------
 #Button Commands listed below
@@ -196,7 +195,6 @@ class Engine:
 
     def switchToWriting(self):
         self.scene = "write"
-        #self.active_ui = [TimeBar((SCREEN_LEN - (SCREEN_LEN / 10), SCREEN_HT - 600), (60 * 2, 270 * 2), 10)]
         self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
         self.active_buttons = [TypeBox(self.np(45,50), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", "Enter A Prompt"),
                                Button(self.np(50,90), (self.ns(140 * 2.2, 51 * 2.2)), "assets/textures/submit.png", self.switchToDraw)]

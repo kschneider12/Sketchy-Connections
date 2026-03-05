@@ -20,8 +20,8 @@ COLORS = {
     'brown_pen': (139, 69, 19),
     'white_pen': (255, 255, 255),
     'eraser': (240, 240, 240)
-
 }
+
 
 # cells on the grid
 class GridCell:
@@ -31,33 +31,13 @@ class GridCell:
         self.x = col * GRID_CELL_SIZE
         self.y = row * GRID_CELL_SIZE
         self.color = COLORS['background']
-        self.neighbors = []
 
     def get_position(self):
         return self.row, self.col
 
-    # could be used to help with saving drawn pixels
-    def is_drawn(self):
-        return self.color == COLORS['pen']
-
-    # could be used to help with saving erased pixels
-    def is_erased(self):
-        return self.color == COLORS['background']
-
-    # unnecessary I think - using the "pseudo-erase" pen color
-    def erasing(self):
-        self.color = COLORS['background']
-
     def drawing(self, color):
         self.color = color
 
-    def draw(self, win):
-        pygame.draw.rect(win,
-                         self.color,
-                         (self.x, self.y, GRID_CELL_SIZE, GRID_CELL_SIZE))
-
-    def update_cells(self):
-        self.neighbors = []
 
 # the grid for the drawing window
 class Grid:
@@ -66,6 +46,13 @@ class Grid:
         self.size = size
         self.pixel_size = pixel_size
         self.cells = self._create_cells()
+        # for optimization
+        self.surface = pygame.Surface((GRID_WIDTH, GRID_HEIGHT))
+        self.surface.fill(COLORS['background'])
+
+        self.brush_cache = {}
+        for r in [1, 2, 4]:
+            self.brush_cache[r] = self.brush_offsets(r)
 
     @staticmethod
     def _create_cells():
@@ -76,18 +63,32 @@ class Grid:
             return self.cells[row][col]
         return None
 
+    def set_pixel(self, row, col, color):
+        if 0 <= row < GRID_HEIGHT and 0 <= col < GRID_WIDTH:
+            self.cells[row][col].color = color
+            self.surface.set_at((col, row), color)
+
+    def brush_offsets(self, radius):
+        offsets = []
+        for r in range(-radius, radius + 1):
+            for c in range(-radius, radius + 1):
+                if r * r + c * c <= radius * radius:
+                    offsets.append((r, c))
+        return offsets
+
     def draw_brush(self, row, col, color, radius=1):
         drawn_pixels =[]
-        for r in range(row - radius, row + radius + 1):
-            for c in range(col - radius, col + radius + 1):
-                if (r - row) ** 2 + (c - col) ** 2 <= radius ** 2:
-                    cell = self.get_cell(r, c)
-                    if cell:
-                        cell.drawing(color)
-                        drawn_pixels.append((r, c, color))
+
+        offsets = self.brush_cache.get(radius, self.brush_offsets(radius))
+
+        for dr, dc in offsets:
+            r = row + dr
+            c = col + dc
+            if 0 <= r < GRID_HEIGHT and 0 <= c < GRID_WIDTH:
+                self.set_pixel(r, c, color)
+                drawn_pixels.append((r, c, color))
 
         return drawn_pixels
-
 
     def draw_line_cells(self, start, end, color, radius=2):
         drawn_pixels = []
@@ -130,7 +131,7 @@ class Grid:
             cell = self.get_cell(row, col)
 
             if cell and cell.color == target_color:
-                cell.drawing(new_color)
+                self.set_pixel(row, col, new_color)
 
                 drawn_pixels.append((row, col, new_color))
 
@@ -141,21 +142,15 @@ class Grid:
 
         return drawn_pixels
 
-    def update_cells(self):
-        for row in self.cells:
-            for cell in row:
-                cell.update_cells(self)
-
     def draw(self, window):
-        for row in self.cells:
-            for cell in row:
-                cell.draw(window)
-
-    # also unnecessary
-    def erasing(self):
-        self.cells = self._create_cells()
+        scaled_surface = pygame.transform.scale(
+            self.surface,
+            (GRID_WIDTH * GRID_CELL_SIZE, GRID_HEIGHT * GRID_CELL_SIZE)
+        )
+        window.blit(scaled_surface, self.pos)
 
 
+# for rendering the drawing window in engine
 class DrawingWindow:
     def __init__(self, pos):
         self.grid = Grid(pos, (0, 0), 2)
@@ -164,6 +159,8 @@ class DrawingWindow:
         self.current_color = COLORS['black_pen']
         self.current_tool = "brush"
         self.last_pos = None
+        self.last_mouse = False
+        self.font = pygame.font.SysFont("Consolas", 18)
         self.pen_colors = [
             ("Black", COLORS['black_pen']),
             ("Green", COLORS['green_pen']),
@@ -202,21 +199,17 @@ class DrawingWindow:
                     self.grid.draw_brush(row, col, self.current_color, self.brush_radius)
                 self.last_pos = (this_x, this_y)
             elif self.current_tool == "fill":
-                self.grid.fill_tool(row, col, self.current_color)
+                if not self.last_mouse:
+                    self.grid.fill_tool(row, col, self.current_color)
         else:
             self.last_pos = None
 
-    def draw(self, screen):
-        for row in self.grid.cells:
-            for cell in row:
-                rect = pygame.Rect(
-                    self.pos[0] + cell.x,
-                    self.pos[1] + cell.y,
-                    GRID_CELL_SIZE,
-                    GRID_CELL_SIZE)
-                pygame.draw.rect(screen, cell.color, rect)
+        self.last_mouse = mouse_pressed
 
-        font = pygame.font.SysFont("Consolas", 18)
+    def draw(self, screen):
+        self.grid.draw(screen)
+
+        font = self.font
 
         text_surface = font.render(f"Brush size (press 1-4 to change): {self.brush_radius}", True, (0, 0, 0))
         text_surface2 = font.render(f"Color (press TAB to cycle): {self.color_index}", True, (0, 0, 0))
@@ -246,14 +239,14 @@ class DrawingWindow:
             elif click.key == pygame.K_b:
                 self.current_tool = "brush"
 
-
+# may replace soon
 def get_clicked_pos(position):
     x, y = position
     col = x // GRID_CELL_SIZE
     row = y // GRID_CELL_SIZE
     return row, col
 
-# runs the window
+# runs the window for debug
 def run_drawing(window):
     # pen colors
     pen_colors = [
@@ -340,10 +333,6 @@ def run_drawing(window):
             else:
                 last_pos= None
 
-            if event.type == pygame.QUIT:
-                run = False
-
-
         window.fill(COLORS['background'])
         grid.draw(window)
 
@@ -360,6 +349,7 @@ def run_drawing(window):
 
     return drawn_pixels
 
+# animates the window for debug
 def run_animation(window, drawn_pixels):
     grid = Grid((0,0), (0,0), 2)
     clock = pygame.time.Clock()
@@ -394,16 +384,12 @@ def run_animation(window, drawn_pixels):
 
             if action_type == "fill":
                 for row, col, color in pixel_list:
-                    cell = grid.get_cell(row, col)
-                    if cell:
-                        cell.drawing(color)
+                    grid.set_pixel(row, col, color)
                 index += 1
 
             else:
                 for row, col, color in pixel_list:
-                    cell = grid.get_cell(row, col)
-                    if cell:
-                        cell.drawing(color)
+                    grid.set_pixel(row, col, color)
                 index += 1
                 break
 
@@ -416,8 +402,6 @@ def run_animation(window, drawn_pixels):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 waiting = False
-
-
 
 
 if __name__ == '__main__':

@@ -220,7 +220,9 @@ class DrawingWindow:
         screen.blit(text_surface2, (10, 20))
         screen.blit(text_surface3, (10, 30))
 
-    def color_switch(self):
+    def color_switch(self, input_color = None):
+        if input_color:
+            self.current_color = input_color
         self.color_index = (self.color_index +1) % len(self.pen_colors)
         name, color = self.pen_colors[self.color_index]
         self.current_color = color

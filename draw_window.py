@@ -47,7 +47,7 @@ class Grid:
         self.pixel_size = pixel_size
         self.cells = self._create_cells()
         # for optimization
-        self.surface = pygame.Surface((GRID_WIDTH, GRID_HEIGHT))
+        self.surface = pygame.Surface((GRID_WIDTH * GRID_CELL_SIZE, GRID_HEIGHT * GRID_CELL_SIZE))
         self.surface.fill(COLORS['background'])
 
         self.brush_cache = {}
@@ -66,7 +66,9 @@ class Grid:
     def set_pixel(self, row, col, color):
         if 0 <= row < GRID_HEIGHT and 0 <= col < GRID_WIDTH:
             self.cells[row][col].color = color
-            self.surface.set_at((col, row), color)
+            pygame.draw.rect(self.surface, color,
+                        (col * GRID_CELL_SIZE, row * GRID_CELL_SIZE,
+                            GRID_CELL_SIZE, GRID_CELL_SIZE))
 
     def brush_offsets(self, radius):
         offsets = []
@@ -79,7 +81,7 @@ class Grid:
     def draw_brush(self, row, col, color, radius=1):
         drawn_pixels =[]
 
-        offsets = self.brush_cache.get(radius, self.brush_offsets(radius))
+        offsets = self.brush_cache[radius]
 
         for dr, dc in offsets:
             r = row + dr
@@ -96,12 +98,15 @@ class Grid:
         x2, y2 = end
 
         steps = max(abs(x1 - x2), abs(y1 - y2))
+        if steps == 0:
+            return self.draw_brush(y1 // GRID_CELL_SIZE, x1 // GRID_CELL_SIZE, color, radius)
 
         for i in range(steps + 1):
             t = i / steps if steps != 0 else 0
             x = int(x1 + t * (x2 - x1))
             y = int(y1 + t * (y2 - y1))
-            row, col = get_clicked_pos((x, y))
+            row = y // GRID_CELL_SIZE
+            col = x // GRID_CELL_SIZE
             drawn_pixels += self.draw_brush(row, col, color, radius)
 
         return drawn_pixels
@@ -143,11 +148,7 @@ class Grid:
         return drawn_pixels
 
     def draw(self, window):
-        scaled_surface = pygame.transform.scale(
-            self.surface,
-            (GRID_WIDTH * GRID_CELL_SIZE, GRID_HEIGHT * GRID_CELL_SIZE)
-        )
-        window.blit(scaled_surface, self.pos)
+        window.blit(self.surface, self.pos)
 
 
 # for rendering the drawing window in engine
@@ -189,7 +190,7 @@ class DrawingWindow:
 
         if mouse_pressed:
             if self.current_tool == "brush":
-                if self.last_pos:
+                if self.last_pos and (this_x, this_y) != self.last_pos:
                     self.grid.draw_line_cells(
                         self.last_pos,
                         (this_x, this_y),
@@ -360,10 +361,10 @@ def run_animation(window, drawn_pixels):
 
     # trying to fix animation timing - it is still slow
     max_seconds = 3
-    fps = 60
+    fps = 120
     total_pixels = len(drawn_pixels)
 
-    pixels_per_frame = max(1, total_pixels // (fps * max_seconds))
+    pixels_per_frame = max(5, total_pixels // (fps * max_seconds))
 
     index = 0
     running = True
@@ -391,7 +392,6 @@ def run_animation(window, drawn_pixels):
                 for row, col, color in pixel_list:
                     grid.set_pixel(row, col, color)
                 index += 1
-                break
 
         window.fill(COLORS['background'])
         grid.draw(window)

@@ -15,14 +15,11 @@ class Button:
         else:
             self.hover_img = self.img
 
-    def behave(self, mouse_pos, just_clicked, keystrokes):
+    def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state):
         if self.hovering(mouse_pos):
             self.curr_hover = True
         else:
             self.curr_hover = False
-            #self.img = pygame.transform.scale(self.img, (self.width + 10, self.height + 10))
-        #else:
-            #self.img = pygame.transform.scale(self.img, (self.width, self.height))
         if self.clicked(mouse_pos, just_clicked):
             return self.command
         else:

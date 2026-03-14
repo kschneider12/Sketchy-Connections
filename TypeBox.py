@@ -17,7 +17,7 @@ class TypeBox(Button):
         self.text_size = int(self.height * 2/3.3)
         self.font = pygame.font.Font(FONT_PATH, self.text_size)
 
-    def behave(self, mouse_pos, just_clicked, keystrokes):
+    def behave(self, mouse_pos, just_clicked, keystrokes, mouse_status):
         if self.clicked(mouse_pos, just_clicked):
             self.selected = True
 

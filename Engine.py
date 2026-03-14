@@ -7,7 +7,9 @@ from TimeBar import TimeBar
 from draw_window import Grid
 from model import GamePhase, GameState, Player, Book, RoomPhase, Room, Entry, EntryType
 from TypeBox import TypeBox
+from SliderButton import SliderButton
 from draw_window import DrawingWindow
+from ColorWheel import ColorWheel
 # from draw_window import AnimationWindow
 import pyautogui
 
@@ -47,10 +49,10 @@ class Engine:
         self.active_animations = []
         self.active_drawings = []
         self.frame = 0
+        self.curr_color = None
 
         #backend game state management
 
-        #TODO: ASK ABOUT THIS!
         self.room = Room
         self.last_submission = ""
         self.player_id = 0
@@ -146,15 +148,24 @@ class Engine:
         for canvas in self.active_drawings:
             canvas.draw(self.screen)
 
+    #TODO: SETTINGS NEED TO BE PRESERVED WHEN BUTTONS DIE! (STORE IN ENGINE AND IMPORT UPON CREATION!)
     def manageButtons(self):
         just_clicked = [not self.mouse_buttons_last_frame[0] and self.mouse_buttons[0],
                         not self.mouse_buttons_last_frame[1] and self.mouse_buttons[1]]
         for button in self.active_buttons:
-            output = button.behave(self.mouse_pos, just_clicked, self.keystrokes)
+            output = button.behave(self.mouse_pos, just_clicked, self.keystrokes, self.mouse_buttons)
             if isinstance(output, list):
-                #output[:-1] is the return value- store when the submit button is pressed
-                self.last_submission = output[-1]
-                self.type_text_draws.append(output)
+                if len(output) == 2:
+                    #slider bar
+                    output[0](output[1])
+                elif len(output) == 3:
+                    #color!
+                    self.curr_color = output
+                    #TODO: Color bar that changes brightness too!
+                else:
+                    #output[:-1] is the return value- store when the submit button is pressed
+                    self.last_submission = output[-1]
+                    self.type_text_draws.append(output)
             if callable(output):
                 output()
 
@@ -173,6 +184,7 @@ class Engine:
         # added by Mat for drawing window
         keys = pygame.key.get_pressed()
         for drawing_win in self.active_drawings:
+            drawing_win.color = self.curr_color
             drawing_win.update(
                 self.mouse_pos,
                 self.mouse_buttons[0],
@@ -199,7 +211,7 @@ class Engine:
 
     # normalize position as a percent (0-100) for distance across screen
     def np(self, x, y):
-        return x * SCREEN_LEN / 100, y * SCREEN_HT / 100
+        return int(x * SCREEN_LEN / 100), int(y * SCREEN_HT / 100)
     # normalize scale in relation to screen size
     def ns(self, x, y):
         return x * SCREEN_LEN / 1000, y * SCREEN_HT / 1000 * 16/10
@@ -212,7 +224,8 @@ class Engine:
         self.scene = "write"
         self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
         self.active_buttons = [TypeBox(self.np(45,50), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", "Enter A Prompt"),
-                               Button(self.np(50,90), (self.ns(140 * 2.2, 51 * 2.2)), "assets/textures/submit.png", self.switchToDraw)]
+                               Button(self.np(50,90), (self.ns(140 * 2.2, 51 * 2.2)), "assets/textures/submit.png", self.switchToDraw),
+                               SliderButton(self.np(20, 20), self.ns(300,30),0, 100, self.setSoundEffectsVolume)]
 
     def switchToGuessing(self):
         self.scene = "guess"
@@ -225,6 +238,7 @@ class Engine:
         self.active_buttons = [Button(self.np(30,70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/host.png", self.startRoom),
                                Button(self.np(70,70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/join.png", self.joinRoom),
                                TypeBox(self.np(50,90), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", "Enter A Name", 25)]
+        self.active_drawings = []
 
     def switchToLobby(self):
         self.scene = "lobby"
@@ -233,14 +247,15 @@ class Engine:
                           DefaultUI(self.np(4, 55),self.ns(30 * 2.4, 241 * 2.4),"assets/textures/players_tab.png")]
         self.active_buttons = [Button(self.np(88,90), (self.ns(115 * 1.8, 51 * 1.8)), "assets/textures/play.png", self.startGame),
                                Button(self.np(65,90), (self.ns(115 * 1.8, 51 * 1.8)), "assets/textures/options.png", self.startGame)]
+        self.active_drawings = []
 
     def switchToDraw(self):
         # note from Mat - this makes the drawing window displayable, but it does not fully work...it is just there for now.
         self.scene = "draw"
         self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
-        self.active_buttons = []
+        self.active_buttons = [ColorWheel(self.np(50,85), (self.ns(180,180)))]
         # Mat changed this line
-        self.active_drawings = [DrawingWindow((170, 250))]
+        self.active_drawings = [DrawingWindow(self.np(10,10))]
 
     def startGame(self):
         self.switchToWriting()
@@ -277,7 +292,32 @@ class Engine:
             #need a new constructor to create a room where you're not the host. I.E. takes in a preexisting room (from the server)
             #self.room = Room("ROOM CODE", self.last_submission)
 
-#------------------------------------------------------------------------------------------------
-#Animation Commands listed below
-#------------------------------------------------------------------------------------------------
-# Will figure out how to send animation soon
+    #------------------------------------------------------------------------------------------------
+    #Animation and Audio listed below
+    #------------------------------------------------------------------------------------------------
+    # Will figure out how to send animation soon
+
+    def setSoundEffectsVolume(self, volume):
+        return
+
+    def setMusicVolume(self, volume):
+        return
+
+    def setGlobalVolume(self, volume):
+        return
+    #Kent's to-dos
+    #TODO: COLOR BUTTONS
+    #DONE: COLOR WHEEL
+    #TODO: COLOR BRIGHTNESS BAR
+    #TODO: LIST PLAYERS UI FIX
+    #TODO: PEN SIZE BUTTONS
+    #DONE: SLIDER SETTINGS BUTTON TYPE
+    #TODO: SELECT OPTIONS TYPE OF BUTTON (SETTINGS)
+    #TODO: REARRANGE BUTTONS ON SCREEN
+    #TODO: SLIDER WITH SCROLL WHEEL FOR RESULTS
+    #TODO: RESULTS DEFAULT DATA
+    #TODO: SOUND BOARD/SFX/MUSIC
+    #TODO: MORE ART
+    #TODO: OPTIONS MENU COMPLETE
+    #TODO: SHOP OPTIONS/SCORING
+    #TODO: VOTING UI?

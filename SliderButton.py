@@ -33,7 +33,7 @@ class SliderButton(Button):
             self.rel_pos[0] = self.bounds[1]
         return [self.command, self.max - (self.rel_pos[0] - self.bounds[0]) * (self.max - self.min) / (self.bounds[1] - self.bounds[0])]
 
-    def draw(self, screen):
+    def draw(self, screen, curr_color):
         self.bkg.draw(screen)
         if self.curr_hover or self.dragging:
             image = self.hover_img

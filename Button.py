@@ -25,7 +25,7 @@ class Button:
         else:
             return False
 
-    def draw(self, screen):
+    def draw(self, screen, curr_color):
         if self.curr_hover:
             image = self.hover_img
         else:

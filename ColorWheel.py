@@ -5,16 +5,14 @@ from DefaultUI import DefaultUI
 import math
 
 class ColorWheel(Button):
-    def __init__(self,  position, size):
+    def __init__(self,  position, size, funct):
         self.rel_pos = [position[0], position[1]]
         self.bkg_size = size
         self.dragging = False
         self.color = [255,255,255]
         img = 'assets/textures/slider_ball.png'
-        self.bkg = DefaultUI(position, size, 'assets/textures/test_circle.png')
         self.bkg2 = DefaultUI(position, size, 'assets/textures/colorwheel_bkg.png')
-        super().__init__(position, (size[0] / 20, size[1] / 20), img, 0)
-        self.surface = pygame.Surface((size[0], size[1]))
+        super().__init__(position, (size[0] / 20, size[1] / 20), img, funct)
         '''
         step = 1
         for x in range(int(self.bkg_size[0] / step)):
@@ -94,11 +92,10 @@ class ColorWheel(Button):
         rad = 1 - rad / self.bkg_size[0] * 2
         for i in range(3):
             self.color[i] += int((255 - self.color[i]) * rad)
-        return self.color
+        return [self.command, self.color]
 
-    def draw(self, screen):
+    def draw(self, screen, curr_color):
         self.bkg2.draw(screen)
-        #self.bkg.draw(screen)
         if self.curr_hover or self.dragging:
             image = self.hover_img
         else:

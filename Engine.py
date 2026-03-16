@@ -2,8 +2,10 @@ import pygame
 from pygame.constants import K_KP_ENTER
 
 from Button import Button
+from BrightnessSlider import BrightnessSlider
 from DefaultUI import DefaultUI
 from TimeBar import TimeBar
+from ColorButton import ColorButton
 from draw_window import Grid
 from model import GamePhase, GameState, Player, Book, RoomPhase, Room, Entry, EntryType
 from TypeBox import TypeBox
@@ -133,7 +135,7 @@ class Engine:
     def drawUI(self):
         self.screen.fill((50, 100, 100))
         for button in self.active_buttons:
-            button.draw(self.screen)
+            button.draw(self.screen, self.curr_color)
         for ui in self.active_ui:
             if isinstance(ui, TimeBar):
                 #TIMER IS UP! (WHAT DO WE DO HERE!?) (SWITCH SCENE PROBABLY YEAH?)
@@ -158,9 +160,6 @@ class Engine:
                 if len(output) == 2:
                     #slider bar
                     output[0](output[1])
-                elif len(output) == 3:
-                    #color!
-                    self.curr_color = output
                     #TODO: Color bar that changes brightness too!
                 else:
                     #output[:-1] is the return value- store when the submit button is pressed
@@ -219,6 +218,25 @@ class Engine:
 #------------------------------------------------------------------------------------------------
 #Button Commands listed below
 #------------------------------------------------------------------------------------------------
+    def switchToWelcome(self):
+        self.scene = "welcome"
+        self.active_ui = [DefaultUI(self.np(50, 30), self.ns(169 * 3.5, 97 * 3.5), "assets/textures/title.png")]
+        self.active_buttons = [
+            Button(self.np(30, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/host.png", self.startRoom),
+            Button(self.np(70, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/join.png", self.joinRoom),
+            TypeBox(self.np(50, 90), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", "Enter A Name",25),
+            BrightnessSlider(self.np(70, 70), (self.ns(1 * 50, 4 * 50)), self.setColor)]
+        self.active_drawings = []
+
+    def switchToLobby(self):
+        self.scene = "lobby"
+        self.active_ui = [DefaultUI(self.np(10, 5), self.ns(130 * 1.5, 50 * 1), "assets/textures/players.png"),
+                          DefaultUI(self.np(80, 18), self.ns(169 * 2.0, 97 * 2.0), "assets/textures/title.png"),
+                          DefaultUI(self.np(4, 55), self.ns(30 * 2.4, 241 * 2.4), "assets/textures/players_tab.png")]
+        self.active_buttons = [
+            Button(self.np(88, 90), (self.ns(115 * 1.8, 51 * 1.8)), "assets/textures/play.png", self.startGame),
+            Button(self.np(65, 90), (self.ns(115 * 1.8, 51 * 1.8)), "assets/textures/options.png", self.startGame)]
+        self.active_drawings = []
 
     def switchToWriting(self):
         self.scene = "write"
@@ -232,28 +250,14 @@ class Engine:
         self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
         self.active_buttons = [TypeBox(self.np(50, 80), self.ns(1300 * 0.6, 70 * 0.6), "assets/textures/text_box_5.png", "Type A Response")]
 
-    def switchToWelcome(self):
-        self.scene = "welcome"
-        self.active_ui = [DefaultUI(self.np(50, 30),self.ns(169 * 3.5, 97 * 3.5),"assets/textures/title.png")]
-        self.active_buttons = [Button(self.np(30,70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/host.png", self.startRoom),
-                               Button(self.np(70,70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/join.png", self.joinRoom),
-                               TypeBox(self.np(50,90), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", "Enter A Name", 25)]
-        self.active_drawings = []
-
-    def switchToLobby(self):
-        self.scene = "lobby"
-        self.active_ui = [DefaultUI(self.np(10, 5),self.ns(130 * 1.5, 50 * 1),"assets/textures/players.png"),
-                          DefaultUI(self.np(80, 18),self.ns(169 * 2.0, 97 * 2.0),"assets/textures/title.png"),
-                          DefaultUI(self.np(4, 55),self.ns(30 * 2.4, 241 * 2.4),"assets/textures/players_tab.png")]
-        self.active_buttons = [Button(self.np(88,90), (self.ns(115 * 1.8, 51 * 1.8)), "assets/textures/play.png", self.startGame),
-                               Button(self.np(65,90), (self.ns(115 * 1.8, 51 * 1.8)), "assets/textures/options.png", self.startGame)]
-        self.active_drawings = []
-
     def switchToDraw(self):
         # note from Mat - this makes the drawing window displayable, but it does not fully work...it is just there for now.
         self.scene = "draw"
         self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
-        self.active_buttons = [ColorWheel(self.np(50,85), (self.ns(180,180)))]
+        self.active_buttons = [
+            ColorWheel(self.np(50, 85), (self.ns(180, 180)), self.setColor)]
+        #   ColorButton(self.np(10, 80), self.ns(40, 40), self.setColor, "red"),
+        #   ColorWheel(self.np(50,85), (self.ns(180,180)), self.setColor)
         # Mat changed this line
         self.active_drawings = [DrawingWindow(self.np(10,10))]
 
@@ -305,8 +309,12 @@ class Engine:
 
     def setGlobalVolume(self, volume):
         return
+
+    def setColor(self, color):
+        self.curr_color = color
+
     #Kent's to-dos
-    #TODO: COLOR BUTTONS
+    #DONE: COLOR BUTTONS
     #DONE: COLOR WHEEL
     #TODO: COLOR BRIGHTNESS BAR
     #TODO: LIST PLAYERS UI FIX

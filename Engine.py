@@ -259,7 +259,7 @@ class Engine:
         #   ColorButton(self.np(10, 80), self.ns(40, 40), self.setColor, "red"),
         #   ColorWheel(self.np(50,85), (self.ns(180,180)), self.setColor)
         # Mat changed this line
-        self.active_drawings = [DrawingWindow(self.np(10,10))]
+        self.active_drawings = [DrawingWindow(self.np(40,40), self.ns(845, 455))]
 
     def startGame(self):
         self.switchToWriting()

@@ -1,10 +1,7 @@
 import pygame
 
-GRID_CELL_SIZE = 4
 GRID_WIDTH = 325
 GRID_HEIGHT = 175
-PIXEL_WIDTH = GRID_CELL_SIZE * GRID_WIDTH
-PIXEL_HEIGHT = GRID_CELL_SIZE * GRID_HEIGHT
 
 COLORS = {
     'background': (240, 240, 240),
@@ -25,11 +22,12 @@ COLORS = {
 
 # cells on the grid
 class GridCell:
-    def __init__(self, row, col):
+    def __init__(self, row, col, cell_size):
         self.row = row
         self.col = col
-        self.x = col * GRID_CELL_SIZE
-        self.y = row * GRID_CELL_SIZE
+        self.cell_size = cell_size
+        self.x = col * cell_size
+        self.y = row * cell_size
         self.color = COLORS['background']
 
     def get_position(self):
@@ -41,22 +39,26 @@ class GridCell:
 
 # the grid for the drawing window
 class Grid:
-    def __init__(self, pos, size, pixel_size):
+    def __init__(self, pos, cell_size):
         self.pos = pos
-        self.size = size
-        self.pixel_size = pixel_size
-        self.cells = self._create_cells()
+        self.cell_size = cell_size
+        self.cells = self.create_cells()
+
         # for optimization
-        self.surface = pygame.Surface((GRID_WIDTH * GRID_CELL_SIZE, GRID_HEIGHT * GRID_CELL_SIZE))
+        self.surface = pygame.Surface(
+            (GRID_WIDTH * self.cell_size, GRID_HEIGHT * self.cell_size)
+        )
         self.surface.fill(COLORS['background'])
 
         self.brush_cache = {}
         for r in [1, 2, 4]:
             self.brush_cache[r] = self.brush_offsets(r)
 
-    @staticmethod
-    def _create_cells():
-        return [[GridCell(row, col) for col in range(GRID_WIDTH)] for row in range(GRID_HEIGHT)]
+    def create_cells(self):
+        return [
+            [GridCell(row, col, self.cell_size) for col in range(GRID_WIDTH)]
+            for row in range(GRID_HEIGHT)
+        ]
 
     def get_cell(self, row, col):
         if 0 <= row < GRID_HEIGHT and 0 <= col < GRID_WIDTH:
@@ -67,8 +69,8 @@ class Grid:
         if 0 <= row < GRID_HEIGHT and 0 <= col < GRID_WIDTH:
             self.cells[row][col].color = color
             pygame.draw.rect(self.surface, color,
-                        (col * GRID_CELL_SIZE, row * GRID_CELL_SIZE,
-                            GRID_CELL_SIZE, GRID_CELL_SIZE))
+                        (col * self.cell_size, row * self.cell_size,
+                            self.cell_size, self.cell_size))
 
     def brush_offsets(self, radius):
         offsets = []
@@ -99,14 +101,14 @@ class Grid:
 
         steps = max(abs(x1 - x2), abs(y1 - y2))
         if steps == 0:
-            return self.draw_brush(y1 // GRID_CELL_SIZE, x1 // GRID_CELL_SIZE, color, radius)
+            return self.draw_brush(y1 // self.cell_size, x1 // self.cell_size, color, radius)
 
         for i in range(steps + 1):
             t = i / steps if steps != 0 else 0
             x = int(x1 + t * (x2 - x1))
             y = int(y1 + t * (y2 - y1))
-            row = y // GRID_CELL_SIZE
-            col = x // GRID_CELL_SIZE
+            row = y // self.cell_size
+            col = x // self.cell_size
             drawn_pixels += self.draw_brush(row, col, color, radius)
 
         return drawn_pixels
@@ -153,9 +155,24 @@ class Grid:
 
 # for rendering the drawing window in engine
 class DrawingWindow:
-    def __init__(self, pos):
-        self.grid = Grid(pos, (0, 0), 2)
-        self.pos = pos
+    def __init__(self, center_pos, size):
+        self.center = center_pos
+        self.size = size
+
+        self.cell_width = size[0] / GRID_WIDTH
+        self.cell_height = size[1] / GRID_HEIGHT
+
+        self.cell_size = int(min((self.cell_width, self.cell_height)))
+
+        self.pixel_width = self.cell_size * GRID_WIDTH
+        self.pixel_height = self.cell_size * GRID_HEIGHT
+
+        self.pos = (
+            self.center[0] - self.pixel_width // 2,
+            self.center[1] - self.pixel_height // 2
+        )
+
+        self.grid = Grid(self.pos, self.cell_size)
         self.brush_radius = 1
         self.current_color = COLORS['black_pen']
         self.current_tool = "brush"
@@ -185,8 +202,8 @@ class DrawingWindow:
         if this_x < 0 or this_y < 0:
             return
 
-        row = this_y // GRID_CELL_SIZE
-        col = this_x // GRID_CELL_SIZE
+        row = this_y // self.grid.cell_size
+        col = this_x // self.grid.cell_size
 
         if mouse_pressed:
             if self.current_tool == "brush":
@@ -243,10 +260,10 @@ class DrawingWindow:
                 self.current_tool = "brush"
 
 # may replace soon
-def get_clicked_pos(position):
+def get_clicked_pos(position, cell_size):
     x, y = position
-    col = x // GRID_CELL_SIZE
-    row = y // GRID_CELL_SIZE
+    col = x // cell_size
+    row = y // cell_size
     return row, col
 
 # runs the window for debug
@@ -267,7 +284,7 @@ def run_drawing(window):
         ("Erasing", COLORS['eraser'])
     ]
     # variables to get started
-    grid = Grid((0,0), (0,0), 2)
+    grid = Grid((0,0), 4)
     run = True
     last_pos = None
     brush_radius = 1
@@ -315,7 +332,7 @@ def run_drawing(window):
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     pos = pygame.mouse.get_pos()
-                    row, col = get_clicked_pos(pos)
+                    row, col = get_clicked_pos(pos, grid.cell_size)
 
                     if current_tool == "brush":
                         drawing = grid.draw_brush(row, col, current_color, brush_radius)
@@ -349,12 +366,11 @@ def run_drawing(window):
         window.blit(text_surface3, (10, 30))
 
         pygame.display.update()
-
     return drawn_pixels
 
 # animates the window for debug
 def run_animation(window, drawn_pixels):
-    grid = Grid((0,0), (0,0), 2)
+    grid = Grid((0,0), 4)
     clock = pygame.time.Clock()
 
     total_pixels = len(drawn_pixels)
@@ -407,8 +423,9 @@ def run_animation(window, drawn_pixels):
 
 
 if __name__ == '__main__':
-    w = pygame.display.set_mode((PIXEL_WIDTH, PIXEL_HEIGHT))
+    w = pygame.display.set_mode((1200, 800))
     try:
         pixels = run_drawing(w)
+        run_animation(w, pixels)
         run_animation(w, pixels)
     finally: pygame.quit()

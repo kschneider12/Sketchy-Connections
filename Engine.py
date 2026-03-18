@@ -53,6 +53,10 @@ class Engine:
         self.frame = 0
         self.curr_color = [120,250,250]
         self.curr_shade = [0,0,0]
+        self.curr_brush = 1
+        self.brush_index = 0
+        self.curr_tool = "brush"
+        self.tool_index = 0
 
         #backend game state management
 
@@ -190,7 +194,8 @@ class Engine:
                 self.mouse_pos,
                 self.mouse_buttons[0],
                 self.curr_shade,
-                None
+                self.curr_brush,
+                self.curr_tool
             )
 
     def guess(self):
@@ -258,9 +263,11 @@ class Engine:
         self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
         self.active_buttons = [
             ColorWheel(self.np(50, 85), (self.ns(180, 180)), self.setColor),
-            BrightnessSlider(self.np(70, 80), (self.ns(1 * 50, 4 * 50)), self.setBrightness)]
+            BrightnessSlider(self.np(70, 80), (self.ns(1 * 50, 4 * 50)), self.setBrightness),
         #   ColorButton(self.np(10, 80), self.ns(40, 40), self.setColor, "red"),
         #   ColorWheel(self.np(50,85), (self.ns(180,180)), self.setColor)
+            Button(self.np(80, 95), self.ns(60, 60), "assets/textures/submit.png", self.setBrushThickness),
+            Button(self.np(90, 95), self.ns(60, 60), "assets/textures/submit.png", self.setCurrentTool)]
         # Mat changed this line
         self.active_drawings = [DrawingWindow(self.np(40,40), self.ns(845, 455))]
 
@@ -322,6 +329,18 @@ class Engine:
         self.curr_shade[1] = self.curr_color[1] * val
         self.curr_shade[2] = self.curr_color[2] * val
         print(self.curr_shade)
+
+    def setBrushThickness(self):
+        thickness = [1, 2, 4]
+        self.brush_index = (self.brush_index + 1) % len(thickness)
+        self.curr_brush = thickness[self.brush_index]
+        print("Brush thickness:", self.curr_brush)
+
+    def setCurrentTool(self):
+        tools = ["brush", "fill"]
+        self.tool_index = (self.tool_index + 1) % len(tools)
+        self.curr_tool = tools[self.tool_index]
+        print("Current tool:", self.curr_tool)
 
     #Kent's to-dos
     #DONE: COLOR BUTTONS

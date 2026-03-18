@@ -209,7 +209,7 @@ class DrawingWindow:
         ]
         self.color_index = 0
 
-    def update(self, mouse_pos, mouse_pressed, curr_color, brush_radius):
+    def update(self, mouse_pos, mouse_pressed, curr_color, brush_radius, current_tool):
         this_x = mouse_pos[0] - self.pos[0]
         this_y = mouse_pos[1] - self.pos[1]
 
@@ -220,7 +220,7 @@ class DrawingWindow:
         col = this_x // self.grid.cell_size
 
         if mouse_pressed:
-            if self.current_tool == "brush":
+            if current_tool == "brush":
                 if self.last_pos and (this_x, this_y) != self.last_pos:
                     self.drawn_pixels = self.grid.draw_line_cells(
                         self.last_pos,
@@ -230,7 +230,7 @@ class DrawingWindow:
                 else:
                     self.drawn_pixels = self.grid.draw_brush(row, col, curr_color, brush_radius)
                 self.last_pos = (this_x, this_y)
-            elif self.current_tool == "fill":
+            elif current_tool == "fill":
                 if not self.last_mouse:
                     self.drawn_pixels = self.grid.fill_tool(row, col, curr_color)
         else:
@@ -240,14 +240,6 @@ class DrawingWindow:
 
     def draw(self, screen):
         self.grid.draw(screen)
-
-        font = self.font
-
-        text_surface = font.render(f"Brush size (press 1-4 to change): {self.brush_radius}", True, (0, 0, 0))
-        text_surface3 = font.render(f"Brush type (press f or b to cycle): {self.current_tool}", True, (0, 0, 0))
-
-        screen.blit(text_surface, (10, 10))
-        screen.blit(text_surface3, (10, 30))
 
     def color_switch(self, input_color = None):
         if input_color:

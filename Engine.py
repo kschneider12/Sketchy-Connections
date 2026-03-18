@@ -51,7 +51,8 @@ class Engine:
         self.active_animations = []
         self.active_drawings = []
         self.frame = 0
-        self.curr_color = None
+        self.curr_color = [120,250,250]
+        self.curr_shade = [0,0,0]
 
         #backend game state management
 
@@ -150,6 +151,8 @@ class Engine:
         for canvas in self.active_drawings:
             canvas.draw(self.screen)
 
+        pygame.draw.rect(self.screen, self.curr_shade, pygame.Rect(100,100, 100, 100))
+
     #TODO: SETTINGS NEED TO BE PRESERVED WHEN BUTTONS DIE! (STORE IN ENGINE AND IMPORT UPON CREATION!)
     def manageButtons(self):
         just_clicked = [not self.mouse_buttons_last_frame[0] and self.mouse_buttons[0],
@@ -183,7 +186,7 @@ class Engine:
         # added by Mat for drawing window
         keys = pygame.key.get_pressed()
         for drawing_win in self.active_drawings:
-            drawing_win.color = self.curr_color
+            drawing_win.color = self.curr_shade
             drawing_win.update(
                 self.mouse_pos,
                 self.mouse_buttons[0],
@@ -224,8 +227,7 @@ class Engine:
         self.active_buttons = [
             Button(self.np(30, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/host.png", self.startRoom),
             Button(self.np(70, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/join.png", self.joinRoom),
-            TypeBox(self.np(50, 90), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", "Enter A Name",25),
-            BrightnessSlider(self.np(70, 70), (self.ns(1 * 50, 4 * 50)), self.setColor)]
+            TypeBox(self.np(50, 90), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", "Enter A Name",25)]
         self.active_drawings = []
 
     def switchToLobby(self):
@@ -255,7 +257,8 @@ class Engine:
         self.scene = "draw"
         self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
         self.active_buttons = [
-            ColorWheel(self.np(50, 85), (self.ns(180, 180)), self.setColor)]
+            ColorWheel(self.np(50, 85), (self.ns(180, 180)), self.setColor),
+            BrightnessSlider(self.np(70, 80), (self.ns(1 * 50, 4 * 50)), self.setBrightness)]
         #   ColorButton(self.np(10, 80), self.ns(40, 40), self.setColor, "red"),
         #   ColorWheel(self.np(50,85), (self.ns(180,180)), self.setColor)
         # Mat changed this line
@@ -312,6 +315,13 @@ class Engine:
 
     def setColor(self, color):
         self.curr_color = color
+
+    def setBrightness(self, val):
+        print(val)
+        self.curr_shade[0] = self.curr_color[0] * val
+        self.curr_shade[1] = self.curr_color[1] * val
+        self.curr_shade[2] = self.curr_color[2] * val
+        print(self.curr_shade)
 
     #Kent's to-dos
     #DONE: COLOR BUTTONS

@@ -11,6 +11,7 @@ from model import GamePhase, GameState, Player, Book, RoomPhase, Room, Entry, En
 from TypeBox import TypeBox
 from SliderButton import SliderButton
 from draw_window import DrawingWindow
+from draw_window import AnimationWindow
 from ColorWheel import ColorWheel
 # from draw_window import AnimationWindow
 import pyautogui
@@ -155,6 +156,10 @@ class Engine:
         for canvas in self.active_drawings:
             canvas.draw(self.screen)
 
+        # Mat added
+        for animation in self.active_animations:
+            animation.draw(self.screen)
+
         pygame.draw.rect(self.screen, self.curr_shade, pygame.Rect(100,100, 100, 100))
 
     #TODO: SETTINGS NEED TO BE PRESERVED WHEN BUTTONS DIE! (STORE IN ENGINE AND IMPORT UPON CREATION!)
@@ -203,7 +208,8 @@ class Engine:
 
     def results(self):
         # This is the game loop for the game over screen
-        return
+        for animation in self.active_animations:
+            animation.update()
 
 
     # When any timer in the game runs out, figure out which timer it was and behave accordingly
@@ -214,7 +220,9 @@ class Engine:
             case "draw":
                 self.switchToGuessing()
             case "guess":
-                self.switchToWelcome()
+                # self.switchToWelcome()
+                # Switching to do animation debug
+                self.switchToResults()
 
     # normalize position as a percent (0-100) for distance across screen
     def np(self, x, y):
@@ -237,6 +245,7 @@ class Engine:
 
     def switchToLobby(self):
         self.scene = "lobby"
+        self.active_animations = []
         self.active_ui = [DefaultUI(self.np(10, 5), self.ns(130 * 1.5, 50 * 1), "assets/textures/players.png"),
                           DefaultUI(self.np(80, 18), self.ns(169 * 2.0, 97 * 2.0), "assets/textures/title.png"),
                           DefaultUI(self.np(4, 55), self.ns(30 * 2.4, 241 * 2.4), "assets/textures/players_tab.png")]
@@ -270,6 +279,21 @@ class Engine:
             Button(self.np(90, 95), self.ns(60, 60), "assets/textures/submit.png", self.setCurrentTool)]
         # Mat changed this line
         self.active_drawings = [DrawingWindow(self.np(40,40), self.ns(845, 455))]
+
+    def switchToResults(self):
+        self.scene = "results"
+        self.active_ui = []
+        self.active_buttons = [
+            Button(self.np(80, 95), self.ns(60, 60), "assets/textures/submit.png", self.switchToLobby)
+        ]
+        pixels = []
+        if self.active_drawings:
+            pixels = self.active_drawings[0].get_drawn_pixels()
+
+        self.active_animations = [
+            AnimationWindow(self.np(50, 50), self.ns(845, 455), pixels)
+        ]
+        self.active_drawings = []
 
     def startGame(self):
         self.switchToWriting()

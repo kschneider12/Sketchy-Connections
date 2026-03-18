@@ -90,7 +90,7 @@ class Grid:
             c = col + dc
             if 0 <= r < GRID_HEIGHT and 0 <= c < GRID_WIDTH:
                 self.set_pixel(r, c, color)
-                drawn_pixels.append((r, c, color))
+                drawn_pixels.append((r, c, tuple(color)))
 
         return drawn_pixels
 
@@ -140,7 +140,7 @@ class Grid:
             if cell and cell.color == target_color:
                 self.set_pixel(row, col, new_color)
 
-                drawn_pixels.append((row, col, new_color))
+                drawn_pixels.append((row, col, tuple(new_color)))
 
                 update_stack.append((row + 1, col))
                 update_stack.append((row - 1, col))
@@ -222,17 +222,20 @@ class DrawingWindow:
         if mouse_pressed:
             if current_tool == "brush":
                 if self.last_pos and (this_x, this_y) != self.last_pos:
-                    self.drawn_pixels = self.grid.draw_line_cells(
+                    drawing = self.grid.draw_line_cells(
                         self.last_pos,
                         (this_x, this_y),
                         curr_color,
                         brush_radius)
+                    self.drawn_pixels.append(("pixels", drawing))
                 else:
-                    self.drawn_pixels = self.grid.draw_brush(row, col, curr_color, brush_radius)
+                    drawing = self.grid.draw_brush(row, col, curr_color, brush_radius)
+                    self.drawn_pixels.append(("pixels", drawing))
                 self.last_pos = (this_x, this_y)
             elif current_tool == "fill":
                 if not self.last_mouse:
-                    self.drawn_pixels = self.grid.fill_tool(row, col, curr_color)
+                    drawing = self.grid.fill_tool(row, col, curr_color)
+                    self.drawn_pixels.append(("fill", drawing))
         else:
             self.last_pos = None
 
@@ -266,54 +269,59 @@ class DrawingWindow:
     def get_drawn_pixels(self):
         return self.drawn_pixels
 
-    def update_draw_animation(self, animated=False):
-        window = pygame.display.set_mode((1200, 800))
-        grid = Grid((0, 0), 4)
-        clock = pygame.time.Clock()
+class AnimationWindow:
+    def __init__(self, center_pos, size, drawn_pixels):
+        self.center = center_pos
+        self.size = size
 
-        total_pixels = len(self.drawn_pixels)
-        if total_pixels == 0:
+        self.cell_width = size[0] / GRID_WIDTH
+        self.cell_height = size[1] / GRID_HEIGHT
+        self.cell_size = int(min(self.cell_width, self.cell_height))
+
+        self.pixel_width = self.cell_size * GRID_WIDTH
+        self.pixel_height = self.cell_size * GRID_HEIGHT
+
+        self.pos = (
+            self.center[0] - self.pixel_width // 2,
+            self.center[1] - self.pixel_height // 2
+        )
+
+        self.grid = Grid(self.pos, self.cell_size)
+        self.drawn_pixels = drawn_pixels
+        self.index = 0
+        self.fps = 24
+        self.max_seconds = 3
+        self.clock = pygame.time.Clock()
+
+        total_pixels = len(drawn_pixels)
+
+        self.pixels_per_frame = max(20, total_pixels // (self.fps * self.max_seconds))
+        self.done = False
+
+    def update(self):
+        if self.done:
             return
+        self.clock.tick(self.fps)
+        for i in range(self.pixels_per_frame):
+            if self.index >= len(self.drawn_pixels):
+                self.done = True
+                break
 
-        # trying to fix animation timing - it is still slow
-        max_seconds = 3
-        fps = 120
-        total_pixels = len(self.drawn_pixels)
-        if animated:
-            pixels_per_frame = max(5, total_pixels // (fps * max_seconds))
-        else:
-            pixels_per_frame = total_pixels
+            action_type, pixel_list = self.drawn_pixels[self.index]
 
-        index = 0
-        running = True
+            if action_type == "fill":
+                for row, col, color in pixel_list:
+                    self.grid.set_pixel(row, col, color)
+                self.index += 1
 
-        while running:
-            clock.tick(fps)
+            else:
+                for row, col, color in pixel_list:
+                    self.grid.set_pixel(row, col, color)
+                self.index += 1
 
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    return
+    def draw(self, screen):
+        self.grid.draw(screen)
 
-            for i in range(pixels_per_frame):
-                if index >= total_pixels:
-                    running = False
-                    break
-
-                action_type, pixel_list = self.drawn_pixels[index]
-
-                if action_type == "fill":
-                    for row, col, color in pixel_list:
-                        grid.set_pixel(row, col, color)
-                    index += 1
-
-                else:
-                    for row, col, color in pixel_list:
-                        grid.set_pixel(row, col, color)
-                    index += 1
-
-            window.fill(COLORS['background'])
-            grid.draw(window)
-            pygame.display.update()
 
 # may replace soon
 def get_clicked_pos(position, cell_size):

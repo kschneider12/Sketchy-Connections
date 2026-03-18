@@ -186,11 +186,11 @@ class Engine:
         # added by Mat for drawing window
         keys = pygame.key.get_pressed()
         for drawing_win in self.active_drawings:
-            drawing_win.color = self.curr_shade
             drawing_win.update(
                 self.mouse_pos,
                 self.mouse_buttons[0],
-                keys
+                self.curr_shade,
+                None
             )
 
     def guess(self):

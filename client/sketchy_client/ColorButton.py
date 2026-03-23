@@ -1,5 +1,7 @@
-from Button import Button
 import pygame
+
+from .Button import Button
+from .paths import resolve_asset_path
 
 COLORS = {
     'background': (240, 240, 240),
@@ -25,7 +27,7 @@ class ColorButton(Button):
         self.color = COLORS[color]
         img = 'assets/textures/color_button.png'
         super().__init__(position, size, img, funct)
-        self.img_select = pygame.image.load('assets/textures/color_button_select.png')
+        self.img_select = pygame.image.load(resolve_asset_path('assets/textures/color_button_select.png'))
         self.img_select = pygame.transform.scale(self.img_select, size)
 
     def behave(self, mouse_pos, just_clicked, keystrokes, mouse_status):
@@ -48,4 +50,3 @@ class ColorButton(Button):
             image = self.img_select
         pygame.draw.rect(screen, self.color, pygame.Rect(self.pos[0] - self.width / 2, self.pos[1] - self.height / 2, self.width, self.height))
         screen.blit(image, (self.pos[0] - self.width / 2, self.pos[1] - self.height / 2))
-

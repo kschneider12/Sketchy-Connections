@@ -1,13 +1,11 @@
 import asyncio
 from collections import defaultdict
-from pathlib import Path
-import sys
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-
-from model import RoomManager
+from sketchy_server.model import RoomManager
+from sketchy_shared.types import PlayerRegistrationData
 
 
 class PlayerRegistrationRequest(BaseModel):
@@ -97,12 +95,20 @@ def to_http_exception(exc: ValueError) -> HTTPException:
 
 
 def build_registration_response(room, player_id: str) -> PlayerRegistrationResponse:
-    return PlayerRegistrationResponse(
+    registration = PlayerRegistrationData(
         room_code=room.room_id,
         player_id=player_id,
         host_id=room.host_id,
         websocket_path=f"/ws/{room.room_id}/{player_id}",
-        room=room.to_dict(player_id),
+        room=room.to_data(player_id),
+    )
+
+    return PlayerRegistrationResponse(
+        room_code=registration.room_code,
+        player_id=registration.player_id,
+        host_id=registration.host_id,
+        websocket_path=registration.websocket_path,
+        room=registration.room.to_dict(),
     )
 
 

@@ -1,8 +1,8 @@
 import pygame
-
-from Button import Button
-from DefaultUI import DefaultUI
 import math
+
+from .Button import Button
+from .DefaultUI import DefaultUI
 
 class ColorWheel(Button):
     def __init__(self,  position, size, funct):
@@ -117,4 +117,3 @@ class ColorWheel(Button):
 
     def get_angle(self):
         return math.atan2(-1 * (self.pos[1] - self.rel_pos[1]), self.pos[0] - self.rel_pos[0])
-

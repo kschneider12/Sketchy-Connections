@@ -1,18 +1,20 @@
 import pygame
 from pygame.constants import K_KP_ENTER
 
-from Button import Button
-from BrightnessSlider import BrightnessSlider
-from DefaultUI import DefaultUI
-from TimeBar import TimeBar
-from ColorButton import ColorButton
-from draw_window import Grid
-from model import GamePhase, GameState, Player, Book, RoomPhase, Room, Entry, EntryType
-from TypeBox import TypeBox
-from SliderButton import SliderButton
-from draw_window import DrawingWindow
-from draw_window import AnimationWindow
-from ColorWheel import ColorWheel
+from .Button import Button
+from .BrightnessSlider import BrightnessSlider
+from .DefaultUI import DefaultUI
+from .TimeBar import TimeBar
+from .ColorButton import ColorButton
+from .draw_window import Grid
+#from sketchy_shared import GamePhase, GameStateData, PlayerData, BookData, RoomPhase, RoomData, EntryData, EntryType
+from sketchy_server.model import Room
+from .TypeBox import TypeBox
+from .SliderButton import SliderButton
+from .draw_window import DrawingWindow
+from .draw_window import AnimationWindow
+from .ColorWheel import ColorWheel
+#from .NetworkClient import NetworkClient
 # from draw_window import AnimationWindow
 import pyautogui
 
@@ -61,7 +63,7 @@ class Engine:
 
         #backend game state management
 
-        self.room = Room
+        self.room = None
         self.last_submission = ""
         self.player_id = 0
 

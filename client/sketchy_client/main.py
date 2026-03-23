@@ -2,7 +2,8 @@
 # CS3050 Final Project
 # Kent Schneider, Mathew Neves, James LeMahieu, Joe Liotta
 import pygame
-from Engine import Engine
+
+from .Engine import Engine
 
 # We will need plenty of other screens, but this is a proof of concept for simple structure
 '''
@@ -14,7 +15,7 @@ Also, many screens will reuse code, so we will absolutely have different functio
 But I still think the core loop should be independent for each screen because they need to behave differently,
 and for organizational purposes.
 '''
-if __name__ == '__main__':
+def main():
     # Init Pygame
     pygame.init()
     pygame.mixer.init()
@@ -22,6 +23,10 @@ if __name__ == '__main__':
     # Create and run game
     engine = Engine()
     engine.run()
+
+
+if __name__ == '__main__':
+    main()
 
     '''
     PYGAME DOCUMENTATION:
@@ -64,4 +69,3 @@ if __name__ == '__main__':
     
     
     '''
-

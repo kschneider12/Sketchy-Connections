@@ -1,5 +1,5 @@
-from Button import Button
-from DefaultUI import DefaultUI
+from .Button import Button
+from .DefaultUI import DefaultUI
 
 class SliderButton(Button):
     def __init__(self,  position, size, mn, mx, funct):
@@ -43,4 +43,3 @@ class SliderButton(Button):
 
     def hovering(self, mouse_pos):
         return abs(mouse_pos[0] - self.rel_pos[0]) <= self.width / 2 and abs(mouse_pos[1] - self.rel_pos[1]) <= self.height / 2
-

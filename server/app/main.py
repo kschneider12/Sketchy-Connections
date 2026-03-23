@@ -7,12 +7,6 @@ from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnec
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-CURRENT_FILE = Path(__file__).resolve()
-for candidate in (CURRENT_FILE.parents[2], CURRENT_FILE.parents[1]):
-    if (candidate / "model.py").exists():
-        sys.path.insert(0, str(candidate))
-        break
-
 from model import RoomManager
 
 
@@ -180,6 +174,7 @@ async def root():
             "POST /rooms",
             "POST /rooms/{room_code}/players",
             "GET /rooms/{room_code}",
+            "POST /rooms/{room_code}/end"
         ],
         "websocket_endpoint": "/ws/{room_code}/{player_id}",
     }
@@ -198,6 +193,12 @@ async def create_room(request: PlayerRegistrationRequest):
 
     return response
 
+@app.post("/rooms/{room_code}/end", status_code=status.HTTP_200_OK)
+async def delete_room(room_code: str):
+    async with runtime.lock:
+        runtime.rooms.remove_room(room_code)
+
+    return {"detail": f"Room {room_code} removed"}
 
 @app.post("/rooms/{room_code}/players", response_model=PlayerRegistrationResponse)
 async def join_room(room_code: str, request: PlayerRegistrationRequest):

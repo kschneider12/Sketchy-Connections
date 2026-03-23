@@ -293,16 +293,20 @@ class AnimationWindow:
         self.max_seconds = 3
         self.clock = pygame.time.Clock()
 
-        total_pixels = len(drawn_pixels)
+        self.total_pixels = len(drawn_pixels)
 
-        self.pixels_per_frame = max(20, total_pixels // (self.fps * self.max_seconds))
+        self.pixels_per_frame = max(20, self.total_pixels // (self.fps * self.max_seconds))
         self.done = False
 
-    def update(self):
+    def update(self, animated):
         if self.done:
             return
         self.clock.tick(self.fps)
-        for i in range(self.pixels_per_frame):
+        if animated:
+            p = self.pixels_per_frame
+        else:
+            p = self.total_pixels
+        for i in range(p):
             if self.index >= len(self.drawn_pixels):
                 self.done = True
                 break

@@ -209,7 +209,7 @@ class Engine:
     def results(self):
         # This is the game loop for the game over screen
         for animation in self.active_animations:
-            animation.update()
+            animation.update(False)
 
 
     # When any timer in the game runs out, figure out which timer it was and behave accordingly

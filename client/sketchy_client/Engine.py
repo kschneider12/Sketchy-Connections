@@ -8,7 +8,7 @@ from .TimeBar import TimeBar
 from .ColorButton import ColorButton
 from .draw_window import Grid
 #from sketchy_shared import GamePhase, GameStateData, PlayerData, BookData, RoomPhase, RoomData, EntryData, EntryType
-from sketchy_server.model import Room
+from .NetworkClient import NetworkClient, NetworkClientError
 from .TypeBox import TypeBox
 from .SliderButton import SliderButton
 from .draw_window import DrawingWindow
@@ -63,9 +63,14 @@ class Engine:
 
         #backend game state management
 
-        self.room = None
+        self.network = NetworkClient()
+        self.player_name = None
+        self.room_code = None
+        self.player_id = None
+        self.room_state = None
+        self.network_error = None
         self.last_submission = ""
-        self.player_id = 0
+
 
     def run(self):
         self.switchToWelcome()
@@ -320,10 +325,25 @@ class Engine:
 
     def startRoom(self):
         #would be nice to have index passed in too, so client already knows what their ID is, to easily access themselves inside Room
-        if len(self.last_submission) > 0:
-            self.room = Room("ROOM CODE", self.last_submission)
-            print("ROOM STARTED BY " + self.last_submission)
-            self.switchToLobby()
+        player_name = self.last_submission.strip()
+        if not player_name:
+          self.network_error = "Enter a name first."
+          return
+
+        try:
+          registration = self.network.create_room(player_name)
+        except NetworkClientError as exc:
+          self.network_error = str(exc)
+          return
+
+        self.player_name = player_name
+        self.room_code = registration.room_code
+        self.player_id = registration.player_id
+        self.room_state = registration.room
+        self.network_error = None
+
+        print(f"ROOM STARTED BY {self.player_name} ({self.room_code})")
+        self.switchToLobby()
 
     def joinRoom(self):
         if len(self.last_submission) > 0:

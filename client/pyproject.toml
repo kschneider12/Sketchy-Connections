@@ -1,0 +1,22 @@
+[project]
+name = "sketchy-client"
+version = "0.1.0"
+description = "Pygame client for Sketchy Connections"
+requires-python = ">=3.12"
+dependencies = [
+    "aiohttp>=3.13.3",
+    "cython>=3.2.4",
+    "pyautogui>=0.9.54",
+    "pygame>=2.6.1",
+    "sketchy-shared",
+]
+
+[tool.uv.sources]
+sketchy-shared = { workspace = true }
+
+[project.scripts]
+sketchy-client = "sketchy_client.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

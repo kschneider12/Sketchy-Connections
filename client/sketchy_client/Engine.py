@@ -2,6 +2,8 @@ import pygame
 from pygame.constants import K_KP_ENTER
 
 from .Button import Button
+from .CheckboxButton import CheckboxButton
+from .ChoicesButton import ChoicesButton
 from .BrightnessSlider import BrightnessSlider
 from .DefaultUI import DefaultUI
 from .TimeBar import TimeBar
@@ -43,7 +45,7 @@ class Engine:
         }
         self.mouse_buttons = [False, False]
         self.mouse_buttons_last_frame = [False, False]
-        self.mouse_pos = [0, 0]
+        self.mouse_pos = (0, 0)
         self.keystrokes = []
         self.type_text_draws = []
 
@@ -179,7 +181,6 @@ class Engine:
                 if len(output) == 2:
                     #slider bar
                     output[0](output[1])
-                    #TODO: Color bar that changes brightness too!
                 else:
                     #output[:-1] is the return value- store when the submit button is pressed
                     self.last_submission = output[-1]
@@ -216,7 +217,7 @@ class Engine:
     def results(self):
         # This is the game loop for the game over screen
         for animation in self.active_animations:
-            animation.update()
+            animation.update(False)
 
 
     # When any timer in the game runs out, figure out which timer it was and behave accordingly
@@ -247,7 +248,9 @@ class Engine:
         self.active_buttons = [
             Button(self.np(30, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/host.png", self.startRoom),
             Button(self.np(70, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/join.png", self.joinRoom),
-            TypeBox(self.np(50, 90), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", "Enter A Name",25)]
+            TypeBox(self.np(50, 90), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", "Enter A Name",25),
+            CheckboxButton(self.np(50,50), self.ns(40, 40), self.checkBoxTest, "HIII"),
+            ChoicesButton(self.np(70,50), self.ns(80,40), self.checkBoxTest, [0,1,'NICO','RYAN','KENT','LAUREL', 'SOPHIE'])]
         self.active_drawings = []
 
     def switchToLobby(self):
@@ -285,7 +288,7 @@ class Engine:
             Button(self.np(80, 95), self.ns(60, 60), "assets/textures/submit.png", self.setBrushThickness),
             Button(self.np(90, 95), self.ns(60, 60), "assets/textures/submit.png", self.setCurrentTool)]
         # Mat changed this line
-        self.active_drawings = [DrawingWindow(self.np(40,40), self.ns(845, 455))]
+        self.active_drawings = [DrawingWindow(self.np(50,50), self.ns(845 * 0.5, 455 * 0.5))]
 
     def switchToResults(self):
         self.scene = "results"
@@ -375,6 +378,9 @@ class Engine:
         self.curr_shade[1] = self.curr_color[1] * val
         self.curr_shade[2] = self.curr_color[2] * val
         print(self.curr_shade)
+
+    def checkBoxTest(self, val):
+        print(val)
 
     def setBrushThickness(self):
         thickness = [1, 2, 4]

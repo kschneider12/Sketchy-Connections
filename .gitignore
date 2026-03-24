@@ -1,5 +1,4 @@
 .python-version
 __pycache__/
-pyproject.toml
 uv.lock
 UML_class.pdf

@@ -1,20 +1,22 @@
 import pygame
 from pygame.constants import K_KP_ENTER
 
-from Button import Button
-from BrightnessSlider import BrightnessSlider
-from DefaultUI import DefaultUI
-from TimeBar import TimeBar
-from CheckboxButton import CheckboxButton
-from ChoicesButton import ChoicesButton
-from ColorButton import ColorButton
-from draw_window import Grid
-from model import GamePhase, GameState, Player, Book, RoomPhase, Room, Entry, EntryType
-from TypeBox import TypeBox
-from SliderButton import SliderButton
-from draw_window import DrawingWindow
-from draw_window import AnimationWindow
-from ColorWheel import ColorWheel
+from .Button import Button
+from .CheckboxButton import CheckboxButton
+from .ChoicesButton import ChoicesButton
+from .BrightnessSlider import BrightnessSlider
+from .DefaultUI import DefaultUI
+from .TimeBar import TimeBar
+from .ColorButton import ColorButton
+from .draw_window import Grid
+#from sketchy_shared import GamePhase, GameStateData, PlayerData, BookData, RoomPhase, RoomData, EntryData, EntryType
+from .NetworkClient import NetworkClient, NetworkClientError
+from .TypeBox import TypeBox
+from .SliderButton import SliderButton
+from .draw_window import DrawingWindow
+from .draw_window import AnimationWindow
+from .ColorWheel import ColorWheel
+#from .NetworkClient import NetworkClient
 # from draw_window import AnimationWindow
 import pyautogui
 
@@ -43,7 +45,7 @@ class Engine:
         }
         self.mouse_buttons = [False, False]
         self.mouse_buttons_last_frame = [False, False]
-        self.mouse_pos = [0, 0]
+        self.mouse_pos = (0, 0)
         self.keystrokes = []
         self.type_text_draws = []
 
@@ -63,9 +65,14 @@ class Engine:
 
         #backend game state management
 
-        self.room = Room
+        self.network = NetworkClient()
+        self.player_name = None
+        self.room_code = None
+        self.player_id = None
+        self.room_state = None
+        self.network_error = None
         self.last_submission = ""
-        self.player_id = 0
+
 
     def run(self):
         self.switchToWelcome()
@@ -321,10 +328,25 @@ class Engine:
 
     def startRoom(self):
         #would be nice to have index passed in too, so client already knows what their ID is, to easily access themselves inside Room
-        if len(self.last_submission) > 0:
-            self.room = Room("ROOM CODE", self.last_submission)
-            print("ROOM STARTED BY " + self.last_submission)
-            self.switchToLobby()
+        player_name = self.last_submission.strip()
+        if not player_name:
+          self.network_error = "Enter a name first."
+          return
+
+        try:
+          registration = self.network.create_room(player_name)
+        except NetworkClientError as exc:
+          self.network_error = str(exc)
+          return
+
+        self.player_name = player_name
+        self.room_code = registration.room_code
+        self.player_id = registration.player_id
+        self.room_state = registration.room
+        self.network_error = None
+
+        print(f"ROOM STARTED BY {self.player_name} ({self.room_code})")
+        self.switchToLobby()
 
     def joinRoom(self):
         if len(self.last_submission) > 0:

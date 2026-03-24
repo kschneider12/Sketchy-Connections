@@ -1,6 +1,10 @@
 import pygame
-from Button import Button
-FONT_PATH = f"assets/fonts/MoreSugar-Regular.ttf"
+
+from .Button import Button
+from .paths import asset_path
+
+
+FONT_PATH = asset_path("fonts", "MoreSugar-Regular.ttf")
 
 class TypeBox(Button):
     def __init__(self,  position, size, img, default_message = "", character_limit = 60):

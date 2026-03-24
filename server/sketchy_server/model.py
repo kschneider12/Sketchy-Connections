@@ -1,88 +1,22 @@
-from dataclasses import dataclass, field
-from enum import Enum
 import random
 import string
 
-
-class RoomPhase(Enum):
-    LOBBY = "lobby"
-    PLAYING = "playing"
-    RESULTS = "results"
-
-
-class GamePhase(Enum):
-    WRITING = "writing"
-    DRAWING = "drawing"
-    GUESSING = "guessing"
-
-
-class EntryType(Enum):
-    DRAWING = "drawing"
-    PROMPT = "prompt"
-
-
-@dataclass
-class Entry:
-    author_id: str
-    type: EntryType
-    content: str | list
-
-    def to_dict(self) -> dict:
-        return {
-            "author_id": self.author_id,
-            "type": self.type.value,
-            "content": self.content,
-        }
-
-
-@dataclass
-class Book:
-    owner_id: str
-    entries: list[Entry] = field(default_factory=list)
-
-    @property
-    def next_entry_type(self) -> EntryType:
-        if len(self.entries) == 0:
-            return EntryType.PROMPT
-        last = self.entries[-1].type
-        if last is EntryType.DRAWING:
-            return EntryType.PROMPT
-        else:
-            return EntryType.DRAWING
-
-    @property
-    def last_entry(self) -> Entry | None:
-        if len(self.entries) == 0:
-            return None
-        else:
-            return self.entries[-1]
-
-    def to_dict(self) -> dict:
-        return {
-            "owner_id": self.owner_id,
-            "entries": [entry.to_dict() for entry in self.entries],
-        }
-
-
-@dataclass
-class Player:
-    id: str
-    name: str
-    has_submitted: bool = False
-
-    def to_dict(self, *, is_host: bool = False) -> dict:
-        return {
-            "id": self.id,
-            "name": self.name,
-            "has_submitted": self.has_submitted,
-            "is_host": is_host,
-        }
+from sketchy_shared.types import (
+    BookData,
+    EntryData,
+    EntryType,
+    GamePhase,
+    GameStateData,
+    PlayerData,
+    RoomData,
+    RoomPhase,
+)
 
 
 class GameState:
-    def __init__(self, players: list[Player]):
-        self.players: list[Player] = players
-        self.books: list[Book] = [Book(owner_id=p.id) for p in players]
+    def __init__(self, players: list[PlayerData]):
+        self.players: list[PlayerData] = players
+        self.books: list[BookData] = [BookData(owner_id=player.id) for player in players]
         self.phase: GamePhase = GamePhase.WRITING
         self.round_number: int = 1
         self.assignments: list[int] = list(range(len(players)))
@@ -97,7 +31,7 @@ class GameState:
         # takes the players index l oznvoisdnvooks at its assignment and then pulls
         # the book that it is in the index of the books
         book = self.books[self.assignments[player_index]]
-        entry = Entry(author_id=player_id, type=book.next_entry_type, content=content)
+        entry = EntryData(author_id=player_id, type=book.next_entry_type, content=content)
         book.entries.append(entry)
         player.has_submitted = True
 
@@ -118,7 +52,7 @@ class GameState:
         self._rotate_books()
         return False
 
-    def get_current_prompt(self, player_id: str) -> Entry | None:
+    def get_current_prompt(self, player_id: str) -> EntryData | None:
         # getting player index so we can find book assignment
         player_index = self._get_player_index(player_id)
         # getting book assignment and returning the last entry for it
@@ -130,7 +64,7 @@ class GameState:
         book = self.books[self.assignments[player_index]]
         return book.next_entry_type
 
-    def get_all_books_for_results(self) -> list[Book]:
+    def get_all_books_for_results(self) -> list[BookData]:
         # returning entire list of books
         return self.books
 
@@ -140,21 +74,20 @@ class GameState:
                 return player.name
         raise ValueError(f"Player {player_id} not found.")
 
+    def to_data(self, player_id: str | None = None, *, include_books: bool = False) -> GameStateData:
+        current_prompt = self.get_current_prompt(player_id) if player_id is not None else None
+        expected_entry_type = self.get_expected_entry_type(player_id) if player_id is not None else None
+
+        return GameStateData(
+            phase=self.phase,
+            round_number=self.round_number,
+            current_prompt=current_prompt,
+            expected_entry_type=expected_entry_type,
+            books=self.books.copy() if include_books else None,
+        )
+
     def to_dict(self, player_id: str | None = None, *, include_books: bool = False) -> dict:
-        payload = {
-            "phase": self.phase.value,
-            "round_number": self.round_number,
-        }
-
-        if player_id is not None:
-            current_prompt = self.get_current_prompt(player_id)
-            payload["current_prompt"] = current_prompt.to_dict() if current_prompt else None
-            payload["expected_entry_type"] = self.get_expected_entry_type(player_id).value
-
-        if include_books:
-            payload["books"] = [book.to_dict() for book in self.books]
-
-        return payload
+        return self.to_data(player_id=player_id, include_books=include_books).to_dict()
 
     def _rotate_books(self):
         n = len(self.players)
@@ -175,12 +108,12 @@ class Room:
         self.room_id: str = room_code
         self.game: GameState | None = None
         self.phase: RoomPhase = RoomPhase.LOBBY
-        self.players: list[Player] = []
+        self.players: list[PlayerData] = []
 
         host = self._create_player(host_name)
         self.host_id: str = host.id
 
-    def add_player(self, name: str) -> Player:
+    def add_player(self, name: str) -> PlayerData:
         if self.phase != RoomPhase.LOBBY:
             raise ValueError("Cannot join a game already in progress.")
         return self._create_player(name)
@@ -217,33 +150,44 @@ class Room:
             if game_over:
                 self.phase = RoomPhase.RESULTS
 
-    def get_player(self, player_id: str) -> Player:
+    def get_player(self, player_id: str) -> PlayerData:
         for player in self.players:
             if player.id == player_id:
                 return player
         raise ValueError(f"Player {player_id} not found.")
 
-    def to_dict(self, player_id: str | None = None) -> dict:
-        payload = {
-            "room_id": self.room_id,
-            "phase": self.phase.value,
-            "host_id": self.host_id,
-            "players": [player.to_dict(is_host=player.id == self.host_id) for player in self.players],
-        }
+    def to_data(self, player_id: str | None = None) -> RoomData:
+        players = [
+            PlayerData(
+                id=player.id,
+                name=player.name,
+                has_submitted=player.has_submitted,
+                is_host=player.id == self.host_id,
+            )
+            for player in self.players
+        ]
 
-        if self.game is None:
-            payload["game"] = None
-        else:
-            payload["game"] = self.game.to_dict(
+        game = None
+        if self.game is not None:
+            game = self.game.to_data(
                 player_id=player_id,
                 include_books=self.phase == RoomPhase.RESULTS,
             )
 
-        return payload
+        return RoomData(
+            room_id=self.room_id,
+            phase=self.phase,
+            host_id=self.host_id,
+            players=players,
+            game=game,
+        )
+
+    def to_dict(self, player_id: str | None = None) -> dict:
+        return self.to_data(player_id=player_id).to_dict()
 
     def _create_player(self, name: str):
         self._player_counter += 1
-        player = Player(id=str(self._player_counter), name=name)
+        player = PlayerData(id=str(self._player_counter), name=name)
         self.players.append(player)
         return player
 
@@ -252,7 +196,7 @@ class RoomManager:
     def __init__(self):
         self.rooms: dict[str, Room] = {}
 
-    def create_room(self, host_name: str) -> tuple[Room, Player]:
+    def create_room(self, host_name: str) -> tuple[Room, PlayerData]:
         room_code = self._generate_room_code()
         room = Room(room_code, host_name)
         self.rooms[room_code] = room
@@ -265,7 +209,7 @@ class RoomManager:
             raise ValueError(f"Room {normalized_code} not found.")
         return room
 
-    def join_room(self, room_code: str, player_name: str) -> tuple[Room, Player]:
+    def join_room(self, room_code: str, player_name: str) -> tuple[Room, PlayerData]:
         room = self.get_room(room_code)
         player = room.add_player(player_name)
         return room, player

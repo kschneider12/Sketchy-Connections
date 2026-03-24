@@ -1,6 +1,7 @@
 import pygame
 
-from DefaultUI import DefaultUI
+from .DefaultUI import DefaultUI
+from .paths import resolve_asset_path
 
 class TimeBar(DefaultUI):
     def __init__(self, position, size, time):
@@ -10,7 +11,7 @@ class TimeBar(DefaultUI):
         print(time)
         self.start_time = self.time
         super().__init__(position, size, img)
-        self.bar_img = pygame.image.load("assets/textures/time_line.png")
+        self.bar_img = pygame.image.load(resolve_asset_path("assets/textures/time_line.png"))
         self.bar_img = pygame.transform.scale(self.bar_img, (size[0] * 9/10, 10))
 
 

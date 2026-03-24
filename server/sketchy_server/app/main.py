@@ -1,22 +1,27 @@
+"""FastAPI application entrypoint for the Sketchy Connections backend.
+
+This module exposes:
+- HTTP endpoints for room creation, room lookup, and room membership.
+- A WebSocket endpoint for real-time room state synchronization.
+
+The server is authoritative for room and game state. Clients interact with the
+HTTP API to create/join rooms, then keep a WebSocket open to receive room
+updates and send gameplay actions.
+"""
+
 import asyncio
 from collections import defaultdict
-from pathlib import Path
-import sys
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-
-CURRENT_FILE = Path(__file__).resolve()
-for candidate in (CURRENT_FILE.parents[2], CURRENT_FILE.parents[1]):
-    if (candidate / "model.py").exists():
-        sys.path.insert(0, str(candidate))
-        break
-
-from model import RoomManager
+from sketchy_server.model import RoomManager
+from sketchy_shared.types import PlayerRegistrationData
 
 
 class PlayerRegistrationRequest(BaseModel):
+    """Request body for creating a player or joining a room."""
+
     model_config = ConfigDict(extra="forbid")
 
     player_name: str = Field(min_length=1, max_length=32)
@@ -31,6 +36,8 @@ class PlayerRegistrationRequest(BaseModel):
 
 
 class PlayerRegistrationResponse(BaseModel):
+    """Serialized room join/create response returned to the client."""
+
     room_code: str
     player_id: str
     host_id: str
@@ -39,12 +46,21 @@ class PlayerRegistrationResponse(BaseModel):
 
 
 class ServerRuntime:
+    """Owns in-memory room state and active WebSocket connections.
+
+    rooms: Authoritative in-memory room manager.
+    connections: Mapping of room code -> player id -> live WebSocket.
+    lock: Global async lock protecting room and connection mutations.
+    """
+
     def __init__(self):
         self.rooms = RoomManager()
         self.connections: dict[str, dict[str, WebSocket]] = defaultdict(dict)
         self.lock = asyncio.Lock()
 
     async def register_socket(self, room_code: str, player_id: str, websocket: WebSocket) -> str:
+        """Register a player's WebSocket after validating room and player ids."""
+
         normalized_code = room_code.upper()
         async with self.lock:
             room = self.rooms.get_room(normalized_code)
@@ -53,6 +69,8 @@ class ServerRuntime:
             return room.room_id
 
     async def unregister_socket(self, room_code: str, player_id: str):
+        """Remove a player's WebSocket connection from the runtime registry."""
+
         async with self.lock:
             normalized_code = room_code.upper()
             room_connections = self.connections.get(normalized_code)
@@ -64,6 +82,8 @@ class ServerRuntime:
                 self.connections.pop(normalized_code, None)
 
     async def send_room_state(self, room_code: str, player_id: str):
+        """Send the latest room snapshot to a single connected player."""
+
         async with self.lock:
             room = self.rooms.get_room(room_code)
             websocket = self.connections.get(room.room_id, {}).get(player_id)
@@ -74,6 +94,12 @@ class ServerRuntime:
         await websocket.send_json(payload)
 
     async def broadcast_room_state(self, room_code: str):
+        """Broadcast the latest room snapshot to all connected players in a room.
+
+        Any sockets that fail during send are treated as stale and removed from
+        the connection registry.
+        """
+
         async with self.lock:
             room = self.rooms.get_room(room_code)
             sockets = list(self.connections.get(room.room_id, {}).items())
@@ -98,21 +124,41 @@ app = FastAPI(title="Sketchy Connections API")
 
 
 def to_http_exception(exc: ValueError) -> HTTPException:
-    status_code = status.HTTP_404_NOT_FOUND if "not found" in str(exc).lower() else status.HTTP_400_BAD_REQUEST
+    """Translate domain-level validation errors into HTTP responses."""
+
+    if "not found" in str(exc).lower():
+        status_code = status.HTTP_404_NOT_FOUND
+    elif "unauthorized" in str(exc).lower():
+        status_code = status.HTTP_401_UNAUTHORIZED
+    else:
+        status_code = status.HTTP_400_BAD_REQUEST
+
     return HTTPException(status_code=status_code, detail=str(exc))
 
 
 def build_registration_response(room, player_id: str) -> PlayerRegistrationResponse:
-    return PlayerRegistrationResponse(
+    """Build the standard room registration payload for create/join endpoints."""
+
+    registration = PlayerRegistrationData(
         room_code=room.room_id,
         player_id=player_id,
         host_id=room.host_id,
         websocket_path=f"/ws/{room.room_id}/{player_id}",
-        room=room.to_dict(player_id),
+        room=room.to_data(player_id),
+    )
+
+    return PlayerRegistrationResponse(
+        room_code=registration.room_code,
+        player_id=registration.player_id,
+        host_id=registration.host_id,
+        websocket_path=registration.websocket_path,
+        room=registration.room.to_dict(),
     )
 
 
 def validate_entry_content(content):
+    """Validate websocket submission payloads for prompt/drawing content."""
+
     if isinstance(content, str):
         stripped = content.strip()
         if not stripped:
@@ -126,6 +172,19 @@ def validate_entry_content(content):
 
 
 async def handle_client_message(room_code: str, player_id: str, websocket: WebSocket, message: dict):
+    """Dispatch a single client WebSocket message.
+
+    Supported message types:
+    - ``sync``: send the caller the latest room state.
+    - ``start_game``: ask the host to move the room from lobby to playing.
+    - ``submit_entry``: submit a prompt/guess/drawing payload for the round.
+    - ``leave_room``: remove the player from the room and close the socket.
+
+    Returns:
+        ``True`` if the caller should stop reading from the socket because the
+        connection has been intentionally closed, otherwise ``False``.
+    """
+
     if not isinstance(message, dict):
         raise ValueError("WebSocket messages must be JSON objects.")
 
@@ -174,12 +233,15 @@ async def handle_client_message(room_code: str, player_id: str, websocket: WebSo
 
 @app.get("/")
 async def root():
+    """Return a lightweight index of backend capabilities."""
+
     return {
         "message": "Sketchy Connections backend",
         "http_endpoints": [
             "POST /rooms",
             "POST /rooms/{room_code}/players",
             "GET /rooms/{room_code}",
+            "POST /rooms/{room_code}/end"
         ],
         "websocket_endpoint": "/ws/{room_code}/{player_id}",
     }
@@ -187,20 +249,42 @@ async def root():
 
 @app.get("/healthz")
 async def healthz():
+    """Basic liveness endpoint for local checks and container health probes."""
+
     return {"ok": True}
 
 
 @app.post("/rooms", response_model=PlayerRegistrationResponse, status_code=status.HTTP_201_CREATED)
 async def create_room(request: PlayerRegistrationRequest):
+    """Create a new room and register the requesting player as the host."""
+
     async with runtime.lock:
         room, host = runtime.rooms.create_room(request.player_name)
         response = build_registration_response(room, host.id)
 
     return response
 
+@app.post("/rooms/{room_code}/end", status_code=status.HTTP_200_OK)
+async def delete_room(room_code: str, player_id: str | None = Query(default=None)):
+    """Delete a room by code.
+
+    Only the host can delete a room
+    """
+
+    async with runtime.lock:
+        print(runtime.rooms.get_room(room_code).host_id)
+        print(player_id)
+        if runtime.rooms.get_room(room_code).host_id == player_id:
+            runtime.rooms.remove_room(room_code)
+        else:
+            raise to_http_exception(ValueError("unauthorized"))
+
+    return {"detail": f"Room {room_code} removed"}
 
 @app.post("/rooms/{room_code}/players", response_model=PlayerRegistrationResponse)
 async def join_room(room_code: str, request: PlayerRegistrationRequest):
+    """Join an existing room and return the caller's initial room snapshot."""
+
     try:
         async with runtime.lock:
             room, player = runtime.rooms.join_room(room_code, request.player_name)
@@ -214,6 +298,12 @@ async def join_room(room_code: str, request: PlayerRegistrationRequest):
 
 @app.get("/rooms/{room_code}")
 async def get_room(room_code: str, player_id: str | None = Query(default=None)):
+    """Fetch the latest room snapshot over HTTP.
+
+    The optional ``player_id`` tailors the embedded game payload so the caller
+    can receive player-specific state such as the current prompt.
+    """
+
     try:
         async with runtime.lock:
             room = runtime.rooms.get_room(room_code)
@@ -226,6 +316,14 @@ async def get_room(room_code: str, player_id: str | None = Query(default=None)):
 
 @app.websocket("/ws/{room_code}/{player_id}")
 async def room_socket(websocket: WebSocket, room_code: str, player_id: str):
+    """Handle a live room WebSocket session for a single player.
+
+    On connect, the server validates the room/player pair, registers the socket,
+    and immediately broadcasts the updated room state. Thereafter the socket is
+    used for real-time actions and room updates until the client disconnects or
+    explicitly leaves the room.
+    """
+
     await websocket.accept()
 
     try:

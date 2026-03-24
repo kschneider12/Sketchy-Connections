@@ -1,5 +1,5 @@
-from Button import Button
-from DefaultUI import DefaultUI
+from .Button import Button
+from .DefaultUI import DefaultUI
 import pygame
 
 class BrightnessSlider(Button):

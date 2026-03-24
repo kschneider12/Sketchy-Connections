@@ -1,4 +1,5 @@
 import pygame
+import pyautogui
 from pygame.constants import K_KP_ENTER
 
 from .Button import Button
@@ -18,7 +19,6 @@ from .draw_window import AnimationWindow
 from .ColorWheel import ColorWheel
 #from .NetworkClient import NetworkClient
 # from draw_window import AnimationWindow
-import pyautogui
 
 SCREEN_LEN = pyautogui.size()[0]
 SCREEN_HT = pyautogui.size()[1]
@@ -330,14 +330,13 @@ class Engine:
         #would be nice to have index passed in too, so client already knows what their ID is, to easily access themselves inside Room
         player_name = self.last_submission.strip()
         if not player_name:
-          self.network_error = "Enter a name first."
-          return
-
+            self.network_error = "Enter a name first."
+            return
         try:
-          registration = self.network.create_room(player_name)
+            registration = self.network.create_room(player_name)
         except NetworkClientError as exc:
-          self.network_error = str(exc)
-          return
+            self.network_error = str(exc)
+            return
 
         self.player_name = player_name
         self.room_code = registration.room_code

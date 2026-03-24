@@ -56,7 +56,9 @@ class NetworkClient:
         self._ready.wait()
 
         if self._startup_error is not None:
-            raise NetworkClientError(f"Failed to start network client: {self._startup_error}") from self._startup_error
+            raise NetworkClientError(
+                f"Failed to start network client: {self._startup_error}"
+            ) from self._startup_error
 
     def create_room(self, player_name: str) -> PlayerRegistrationData:
         """Create a room and register the caller as host."""

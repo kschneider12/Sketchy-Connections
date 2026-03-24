@@ -29,6 +29,7 @@ class PlayerRegistrationRequest(BaseModel):
     @field_validator("player_name")
     @classmethod
     def validate_player_name(cls, value: str) -> str:
+        """Ensures player name is not empty"""
         stripped = value.strip()
         if not stripped:
             raise ValueError("Player name cannot be empty.")
@@ -171,7 +172,12 @@ def validate_entry_content(content):
     raise ValueError("Entry content must be a string or a list.")
 
 
-async def handle_client_message(room_code: str, player_id: str, websocket: WebSocket, message: dict):
+async def handle_client_message(
+        room_code: str,
+        player_id: str,
+        websocket: WebSocket,
+        message: dict
+):
     """Dispatch a single client WebSocket message.
 
     Supported message types:
@@ -339,7 +345,12 @@ async def room_socket(websocket: WebSocket, room_code: str, player_id: str):
         while True:
             message = await websocket.receive_json()
             try:
-                should_stop = await handle_client_message(normalized_code, player_id, websocket, message)
+                should_stop = await handle_client_message(
+                    normalized_code,
+                    player_id,
+                    websocket,
+                    message
+                )
                 if should_stop:
                     break
             except ValueError as exc:

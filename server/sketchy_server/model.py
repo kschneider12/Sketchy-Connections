@@ -75,8 +75,16 @@ class GameState:
         raise ValueError(f"Player {player_id} not found.")
 
     def to_data(self, player_id: str | None = None, *, include_books: bool = False) -> GameStateData:
-        current_prompt = self.get_current_prompt(player_id) if player_id is not None else None
-        expected_entry_type = self.get_expected_entry_type(player_id) if player_id is not None else None
+        current_prompt = (
+            self.get_current_prompt(player_id)
+            if player_id is not None
+            else None
+        )
+        expected_entry_type = (
+            self.get_expected_entry_type(player_id)
+            if player_id is not None
+            else None
+        )
 
         return GameStateData(
             phase=self.phase,

@@ -10,14 +10,13 @@ from .DefaultUI import DefaultUI
 from .TimeBar import TimeBar
 from .ColorButton import ColorButton
 from .draw_window import Grid
-#from sketchy_shared import GamePhase, GameStateData, PlayerData, BookData, RoomPhase, RoomData, EntryData, EntryType
-from .NetworkClient import NetworkClient, NetworkClientError
+from sketchy_shared.types import GamePhase, GameStateData, PlayerData, BookData, RoomPhase, RoomData, EntryData, EntryType
+from .network_client import NetworkClient, NetworkClientError
 from .TypeBox import TypeBox
 from .SliderButton import SliderButton
 from .draw_window import DrawingWindow
 from .draw_window import AnimationWindow
 from .ColorWheel import ColorWheel
-#from .NetworkClient import NetworkClient
 # from draw_window import AnimationWindow
 
 SCREEN_LEN = pyautogui.size()[0]
@@ -63,13 +62,10 @@ class Engine:
         self.curr_tool = "brush"
         self.tool_index = 0
 
-        #backend game state management
-
-        self.network = NetworkClient()
-        self.player_name = None
-        self.room_code = None
-        self.player_id = None
-        self.room_state = None
+        # Backend game state management
+        self.network: NetworkClient = NetworkClient()
+        self.room: RoomData = RoomData()
+        self.player: PlayerData = PlayerData()
         self.network_error = None
         self.last_submission = ""
 
@@ -77,6 +73,10 @@ class Engine:
     def run(self):
         self.switchToWelcome()
         while True:
+            self.room = self.network.room
+            if self.network_error is not None:
+                print(self.network_error)
+                self.network_error = None
             self.frame += 1
             if self.frame > 65535:
                 self.frame = 0
@@ -101,6 +101,7 @@ class Engine:
                 case "results":
                     self.results()
             if self.exit:
+                self.network.close()
                 pygame.quit()
                 break
             # Update the Screen
@@ -246,10 +247,10 @@ class Engine:
         self.scene = "welcome"
         self.active_ui = [DefaultUI(self.np(50, 30), self.ns(169 * 3.5, 97 * 3.5), "assets/textures/title.png")]
         self.active_buttons = [
-            Button(self.np(30, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/host.png", self.startRoom),
-            Button(self.np(70, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/join.png", self.joinRoom),
+            Button(self.np(30, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/host.png", self._start_room),
+            Button(self.np(70, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/join.png", self._join_room),
             TypeBox(self.np(50, 90), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", "Enter A Name",25),
-            CheckboxButton(self.np(50,50), self.ns(40, 40), self.checkBoxTest, "HIII"),
+            #CheckboxButton(self.np(50,50), self.ns(40, 40), self.checkBoxTest, "HIII"),
             ChoicesButton(self.np(70,50), self.ns(80,40), self.checkBoxTest, [0,1,'NICO','RYAN','KENT','LAUREL', 'SOPHIE'])]
         self.active_drawings = []
 
@@ -326,33 +327,41 @@ class Engine:
         self.drawText(vec[:-3])
         #(self.pos[0] - self.width / 2.2, self.pos[1] - self.height / 3)
 
-    def startRoom(self):
+    def _start_room(self):
         #would be nice to have index passed in too, so client already knows what their ID is, to easily access themselves inside Room
         player_name = self.last_submission.strip()
         if not player_name:
             self.network_error = "Enter a name first."
             return
         try:
-            registration = self.network.create_room(player_name)
+            self.network.create_room(player_name)
         except NetworkClientError as exc:
             self.network_error = str(exc)
             return
 
-        self.player_name = player_name
-        self.room_code = registration.room_code
-        self.player_id = registration.player_id
-        self.room_state = registration.room
-        self.network_error = None
+        self.room = self.network.room
+        self.player = self.network.player
 
-        print(f"ROOM STARTED BY {self.player_name} ({self.room_code})")
+        print(f"ROOM STARTED BY {self.player.name} ({self.room.room_id})")
         self.switchToLobby()
 
-    def joinRoom(self):
-        if len(self.last_submission) > 0:
-            #TODO and the room code is valid!
-            self.switchToLobby()
-            #need a new constructor to create a room where you're not the host. I.E. takes in a preexisting room (from the server)
-            #self.room = Room("ROOM CODE", self.last_submission)
+    def _join_room(self):
+        room_code = self.last_submission.strip()
+        if not room_code:
+            self.network_error = "Enter a name first."
+            return
+        try:
+            #TODO: Replace with entered name
+            self.network.join_room("TEST", room_code)
+        except NetworkClientError as exc:
+            self.network_error = str(exc)
+            return
+
+        self.room = self.network.room
+        self.player = self.network.player
+
+        print(f"ROOM {self.room.room_id} JOINED BY {self.player.name}")
+        self.switchToLobby()
 
     #------------------------------------------------------------------------------------------------
     #Animation and Audio listed below
@@ -379,7 +388,9 @@ class Engine:
         print(self.curr_shade)
 
     def checkBoxTest(self, val):
-        print(val)
+        print(self.last_submission)
+        self.player_name = val
+        print(self.player_name)
 
     def setBrushThickness(self):
         thickness = [1, 2, 4]

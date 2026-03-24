@@ -212,6 +212,9 @@ async def handle_client_message(
         async with runtime.lock:
             room = runtime.rooms.get_room(room_code)
             room.submit_entry(player_id, content)
+            assert room.game is not None
+            if room.game.all_submitted():
+                _ = room.game.next_round()
         await runtime.broadcast_room_state(room_code)
         return False
 

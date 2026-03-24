@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import asyncio
 from concurrent.futures import TimeoutError as FutureTimeoutError
-from copy import deepcopy
 import threading
 from typing import Any
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse, urlunparse
 
 import aiohttp
 
-from sketchy_shared.types import PlayerRegistrationData
+from sketchy_shared.types import PlayerRegistrationData, RoomData, PlayerData
 
 
 class NetworkClientError(RuntimeError):
@@ -39,8 +38,12 @@ class NetworkClient:
         self._request_timeout = request_timeout
 
         self._registration: PlayerRegistrationData | None = None
+        self.player: PlayerData = PlayerData()
+        self.room: RoomData = RoomData()
         self._loop: asyncio.AbstractEventLoop | None = None
         self._session: aiohttp.ClientSession | None = None
+        self._websocket: aiohttp.ClientWebSocketResponse | None = None
+        self._listener_task : asyncio.Task[None] | None = None
 
         self._startup_error: Exception | None = None
         self._ready = threading.Event()
@@ -60,22 +63,15 @@ class NetworkClient:
                 f"Failed to start network client: {self._startup_error}"
             ) from self._startup_error
 
-    def create_room(self, player_name: str) -> PlayerRegistrationData:
+    def create_room(self, player_name: str) -> None:
         """Create a room and register the caller as host."""
 
         return self._run_coroutine(self._create_room(player_name))
 
-    def join_room(self, player_name: str, room_code: str) -> PlayerRegistrationData:
+    def join_room(self, player_name: str, room_code: str) -> None:
         """Join an existing room."""
 
         return self._run_coroutine(self._join_room(player_name, room_code))
-
-    def get_registration(self) -> PlayerRegistrationData | None:
-        """Return the most recent room registration"""
-
-        if self._registration is None:
-            return None
-        return deepcopy(self._registration)
 
     def close(self):
         """Close the underlying aiohttp session and stop the worker loop."""
@@ -132,7 +128,11 @@ class NetworkClient:
         if self._shutdown_complete:
             return
 
+        if self._listener_task is not None:
+            self._listener_task.cancel()
+
         self._shutdown_complete = True
+        await self._close_websocket()
         if self._session is not None and not self._session.closed:
             await self._session.close()
 
@@ -153,24 +153,41 @@ class NetworkClient:
             future.cancel()
             raise NetworkClientError("Network operation timed out.") from exc
 
-    async def _create_room(self, player_name: str) -> PlayerRegistrationData:
+
+
+    async def _create_room(self, player_name: str) -> None:
         payload = await self._request_json(
             "POST",
             "/rooms",
             json_payload={"player_name": player_name},
         )
-        self._registration = PlayerRegistrationData.from_dict(payload)
-        return deepcopy(self._registration)
+        registration = PlayerRegistrationData.from_dict(payload)
 
-    async def _join_room(self, player_name: str, room_code: str) -> PlayerRegistrationData:
+        await self._connect_websocket(registration.websocket_path)
+        await self._start_websocket_listener()
+
+        self._registration = registration
+        self.room = self._registration.room
+        self.player.name = player_name
+        self.player.id = self._registration.player_id
+        self.player.is_host = True
+
+    async def _join_room(self, player_name: str, room_code: str) -> None:
         payload = await self._request_json(
             "POST",
-            f"/rooms/{room_code}",
+            f"/rooms/{room_code}/players",
             json_payload={"player_name": player_name}
         )
-        self._registration = PlayerRegistrationData.from_dict(payload)
-        return deepcopy(self._registration)
+        registration = PlayerRegistrationData.from_dict(payload)
 
+        await self._connect_websocket(registration.websocket_path)
+        await self._start_websocket_listener()
+
+        self._registration = registration
+        self.room = self._registration.room
+        self.player.name = player_name
+        self.player.id = self._registration.player_id
+        self.player.is_host = False
 
     async def _request_json(
         self,
@@ -198,9 +215,7 @@ class NetworkClient:
                     raise NetworkClientError("Expected a JSON object response from the server.")
 
                 return payload
-        except NetworkClientError:
-            raise
-        except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
+        except (aiohttp.ClientError, asyncio.TimeoutError, NetworkClientError) as exc:
             raise NetworkClientError(f"Request failed: {exc}") from exc
 
     async def _read_json_or_text(self, response: aiohttp.ClientResponse) -> dict[str, Any] | str:
@@ -211,6 +226,104 @@ class NetworkClient:
 
     def _build_http_url(self, path: str) -> str:
         return urljoin(f"{self._base_url}/", path.lstrip("/"))
+
+    def _build_websocket_url(self, path: str) -> str:
+        http_url = self._build_http_url(path)
+        parsed = urlparse(http_url)
+        websocket_scheme = "wss" if parsed.scheme == "https" else "ws"
+        return urlunparse(parsed._replace(scheme=websocket_scheme))
+
+    async def _connect_websocket(self, websocket_path: str) -> None:
+        session = self._require_session()
+        await self._close_websocket()
+        websocket_url = self._build_websocket_url(websocket_path)
+
+        try:
+            self._websocket = await session.ws_connect(websocket_url)
+        except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
+            raise NetworkClientError(f"WebSocket connection failed: {exc}") from exc
+
+    async def _listen_to_websocket(self) -> None:
+        websocket = self._require_websocket()
+
+        try:
+            async for message in websocket:
+                if message.type is aiohttp.WSMsgType.TEXT:
+                    payload = message.json()
+                    if not isinstance(payload, dict):
+                        continue
+
+                    message_type = payload.get("type")
+                    if message_type == "room_state":
+                        room_payload = payload.get("room")
+                        if not isinstance(room_payload, dict):
+                            continue
+
+                        room = RoomData.from_dict(room_payload)
+                        self.room = room
+                        if self._registration is not None:
+                            self._registration.room = room
+                        continue
+
+                    if message_type == "error":
+                        error_message = payload.get("message", "Server sent a websocket error.")
+                        raise NetworkClientError(str(error_message))
+
+                if message.type in (
+                    aiohttp.WSMsgType.CLOSE,
+                    aiohttp.WSMsgType.CLOSED,
+                    aiohttp.WSMsgType.CLOSING,
+                ):
+                    break
+
+                if message.type is aiohttp.WSMsgType.ERROR:
+                    raise NetworkClientError("WebSocket listener encountered an error.")
+        finally:
+            if self._websocket is websocket and websocket.closed:
+                self._websocket = None
+
+    async def _close_websocket(self) -> None:
+        if self._websocket is None:
+            return
+
+        websocket = self._websocket
+        self._websocket = None
+
+        if not websocket.closed:
+            await websocket.close()
+
+    async def _send_message(self, data: Any) -> None:
+        websocket = self._require_websocket()
+        try:
+            await websocket.send_json(data)
+        except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
+            await self._stop_websocket_listener()
+            raise NetworkClientError(f"Failed to send websocket data: {exc}") from exc
+
+    async def _stop_websocket_listener(self) -> None:
+        listener_task = getattr(self, "_listener_task", None)
+        if listener_task is None:
+            return
+
+        self._listener_task = None
+        listener_task.cancel()
+
+        try:
+            await listener_task
+        except asyncio.CancelledError:
+            pass
+
+    async def _start_websocket_listener(self) -> None:
+        await self._stop_websocket_listener()
+
+        self._listener_task = asyncio.create_task(self._listen_to_websocket())
+
+        await self._send_message({"type": "sync"})
+
+    def _require_websocket(self) -> aiohttp.ClientWebSocketResponse:
+        if self._websocket is None or self._websocket.closed:
+            raise NetworkClientError("WebSocket connection is not available.")
+        return self._websocket
 
     def _require_session(self) -> aiohttp.ClientSession:
         if self._session is None or self._session.closed:

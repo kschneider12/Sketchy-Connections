@@ -31,7 +31,6 @@ class ChoicesButton(Button):
                 if val == self.curr_choice:
                     self.curr_choice = self.choices[i - 1]
                     break
-        print(self.curr_choice)
         return self.command, self.curr_choice
 
     def draw(self, screen, curr_color):

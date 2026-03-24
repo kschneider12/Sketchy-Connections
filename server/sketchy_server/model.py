@@ -148,6 +148,7 @@ class Room:
         self.phase = RoomPhase.PLAYING
 
     def submit_entry(self, player_id: str, content: str | list):
+        assert self.game is not None
         if self.phase != RoomPhase.PLAYING:
             raise ValueError("Game is not in progress.")
 

@@ -24,8 +24,8 @@ class EntryType(str, Enum):
 
 @dataclass(slots=True)
 class PlayerData:
-    id: str
-    name: str
+    id: str = ""
+    name: str = ""
     has_submitted: bool = False
     is_host: bool = False
 
@@ -142,10 +142,10 @@ class GameStateData:
 
 @dataclass(slots=True)
 class RoomData:
-    room_id: str
-    phase: RoomPhase
-    host_id: str
-    players: list[PlayerData]
+    room_id: str = ""
+    phase: RoomPhase = RoomPhase.LOBBY
+    host_id: str = ""
+    players: list[PlayerData] = field(default_factory=list)
     game: GameStateData | None = None
 
     def to_dict(self) -> dict[str, Any]:

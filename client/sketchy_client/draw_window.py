@@ -46,14 +46,14 @@ class GridCell:
         self.color = COLORS['background']
 
     def get_position(self):
-        """
-        About function
-        """
+        """Returns a position of a GridCell"""
         return self.row, self.col
 
     def drawing(self, color):
-        """
-        About function
+        """Sets self.color to color
+
+        Args:
+            color: the color being used
         """
         self.color = color
 
@@ -77,17 +77,18 @@ class Grid:
             self.brush_cache[r] = self.brush_offsets(r)
 
     def create_cells(self):
-        """
-        About function
-        """
+        """Creates the cells"""
         return [
             [GridCell(row, col, self.cell_size) for col in range(GRID_WIDTH)]
             for row in range(GRID_HEIGHT)
         ]
 
     def get_cell(self, row, col):
-        """
-        About function
+        """Gets a specific cell based on row and column
+
+        Args:
+            row: the row of the cell
+            col: the column of the cell
         """
         if 0 <= row < GRID_HEIGHT and 0 <= col < GRID_WIDTH:
             return self.cells[row][col]
@@ -115,8 +116,13 @@ class Grid:
         return offsets
 
     def draw_brush(self, row, col, color, radius=1):
-        """
-        About function
+        """The drawing brush logic for the user's pointer
+
+        Args:
+            row: the row of the cell to be drawn
+            col: the col of the cell to be drawn
+            color: the col to be drawn into cell
+            radius (int): the radius of the brush
         """
         drawn_pixels =[]
 
@@ -132,8 +138,13 @@ class Grid:
         return drawn_pixels
 
     def draw_line_cells(self, start, end, color, radius=2):
-        """
-        About function
+        """Creates a smooth line when mouse is held down
+
+        Args:
+            start: the starting point of the line
+            end: the end point of the line
+            color: the color of the line
+            radius: the brush radius of the line
         """
         drawn_pixels = []
         x1, y1 = start

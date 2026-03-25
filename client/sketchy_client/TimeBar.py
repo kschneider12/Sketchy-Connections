@@ -15,7 +15,7 @@ class TimeBar(DefaultUI):
         self.bar_img = pygame.transform.scale(self.bar_img, (size[0] * 9/10, 10))
 
 
-    def draw(self, screen):
+    def draw(self, screen, curr_color = None):
         self.bar_pos =  (self.pos[0] - self.width / 2.15, self.pos[1] - self.height / 2.05 + (self.start_time - self.time) * (self.height / self.start_time * 0.964))
         #self.bar_pos =  (self.pos[0] - self.width / 2, self.pos[1] - self.height / 2 + (self.start_time - self.time) * (self.height / self.start_time * 0.965) + 5)
         #screen.blit(self.bar_img, ((self.pos[0] - self.width / 2) + 5, self.bar_pos))
@@ -31,7 +31,8 @@ class TimeBar(DefaultUI):
         screen.blit(self.bar_img, self.bar_pos)
 
     def time_up(self):
-        self.time -= 1
         if self.time == 0:
             return True
+        else:
+            self.time -= 1
         return False

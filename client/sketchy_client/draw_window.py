@@ -1,17 +1,23 @@
 """
-The complete implementation of a drawing window for the game
+The complete PyGame implementation of a drawing window for the game
 "Sketchy Connections", containing complete class structure for
-the Grid, GridCells, DrawingWindow, and AnimationWindow.
+the Grid and GridCells to use the window independently, and a
+DrawingWindow class that allows for this to be easily plopped into
+a broader project engine if necessary.
 
-Contains complete drawing window documentation that can be reused
-for outsider purposes with express consent of the authors.
+Also includes code for a simple animation loop to display the history
+of drawings made in the window, great little bonus feature for implementation
+or for an aspiring pixel artists.
 
 Authored by Mathew Neves with edits from Kent Schneider
 Direct comments or bug reports to
 Mathew Neves <mneves@uvm.edu>
 
 Contains complete drawing window documentation that can be reused
-for outsider purposes without express consent of the authors.
+and modified for without express consent of the authors.
+
+We would love to hear from you or see your drawings
+if you use this window!
 """
 import pygame
 

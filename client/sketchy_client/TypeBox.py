@@ -7,7 +7,7 @@ from .paths import asset_path
 FONT_PATH = asset_path("fonts", "MoreSugar-Regular.ttf")
 
 class TypeBox(Button):
-    def __init__(self,  position, size, img, default_message = "", character_limit = 60):
+    def __init__(self,  position, size, img, funct, default_message = "", character_limit = 60, z = 0):
         self.selected = False
         self.character_limit = character_limit
         self.accum = 0
@@ -16,68 +16,82 @@ class TypeBox(Button):
         self.color = (0,0,0)
         self.default_message = default_message
         img = img
-        funct = 0
-        super().__init__(position, size, img, funct, False)
+        super().__init__(position, size, img, funct, False, z)
         self.text_size = int(self.height * 2/3.3)
         self.font = pygame.font.Font(FONT_PATH, self.text_size)
 
     def behave(self, mouse_pos, just_clicked, keystrokes, mouse_status):
-        if self.clicked(mouse_pos, just_clicked):
-            self.selected = True
+        if self.active:
+            if self.clicked(mouse_pos, just_clicked):
+                self.selected = True
 
-        if self.unclicked(mouse_pos, just_clicked):
-            self.selected = False
-            self.accum = 0
+            if self.unclicked(mouse_pos, just_clicked):
+                self.selected = False
+                self.accum = 0
 
-        if self.selected:
-            self.accum += 1
-            if 'backspace' not in keystrokes:
-                self.backspace_hold = 0
-            for elem in keystrokes:
-                if elem == "enter":
-                    self.selected = False
-                    self.accum = 0
-                elif elem == "backspace":
-                    if self.backspace_hold == 0:
-                        self.curr_string = self.curr_string[:-1]
+            if self.selected:
+                self.accum += 1
+                if 'backspace' not in keystrokes:
+                    self.backspace_hold = 0
+                for elem in keystrokes:
+                    if elem == "enter":
+                        self.selected = False
+                        self.accum = 0
+                    elif elem == "backspace":
+                        if self.backspace_hold == 0:
+                            self.curr_string = self.curr_string[:-1]
+                        else:
+                            #NOW THAT BACKSPACE ISN'T 0, WAIT A BIT THEN START DELETING
+                            if self.backspace_hold > 30:
+                                if (self.backspace_hold // 500) % 2 == 0:
+                                    self.curr_string = self.curr_string[:-1]
+                        self.backspace_hold += 1
                     else:
-                        #NOW THAT BACKSPACE ISN'T 0, WAIT A BIT THEN START DELETING
-                        if self.backspace_hold > 30:
-                            if (self.backspace_hold // 500) % 2 == 0:
-                                self.curr_string = self.curr_string[:-1]
-                    self.backspace_hold += 1
-                else:
-                    self.curr_string += elem
-        #print(self.accum)
-        if (self.accum // 30) % 2 == 1:
-            bonus = "|"
+                        self.curr_string += elem
+            #print(self.accum)
+            if (self.accum // 30) % 2 == 1:
+                bonus = "|"
+            else:
+                bonus = ""
+            #if len(self.curr_string) > int(self.width / 4):
+                #self.curr_string = self.curr_string[:int(self.width / 4)]
+                    # physical text
+            if len(self.curr_string) > self.character_limit:
+                self.curr_string = self.curr_string[:self.character_limit]
+            if self.curr_string == "" and not self.selected:
+                # return default gray message
+                return [self.default_message,  # written text
+                        (self.pos[0] - self.width / 2.2, self.pos[1] - self.height / 3),  # position for main text
+                        self.font,
+                        (100,100,100),
+                        self.character_limit,
+                        (self.pos[0] + self.width / 2) - self.font.size("00")[0] - 10,  # position for top corner counter
+                        # position for top corner counter
+                        "",
+                        self.command]
+            # return appropriate text
+
+            #Handle staying inside the textbox:
+            lim = 0
+            while self.font.size(self.curr_string[lim:])[0] >= self.width * 9/10:
+                lim += 1
+            return [self.curr_string[lim:] + bonus, # written text
+                    (self.pos[0] - self.width / 2.2, self.pos[1] - self.height / 3), # position for main text
+                    self.font, # font
+                    self.color, # color
+                    self.character_limit,
+                    (self.pos[0] + self.width / 2) - self.font.size("00")[0] - 10, # position for top corner counter
+                    self.curr_string,
+                    self.command]
         else:
-            bonus = ""
-        #if len(self.curr_string) > int(self.width / 4):
-            #self.curr_string = self.curr_string[:int(self.width / 4)]
-                # physical text
-        if len(self.curr_string) > self.character_limit:
-            self.curr_string = self.curr_string[:self.character_limit]
-        if self.curr_string == "" and not self.selected:
-            # return default gray message
-            return [self.default_message,  # written text
+            lim = 0
+            while self.font.size(self.curr_string[lim:])[0] >= self.width * 9 / 10:
+                lim += 1
+            return [self.curr_string[lim:],  # written text
                     (self.pos[0] - self.width / 2.2, self.pos[1] - self.height / 3),  # position for main text
-                    self.font,
-                    (100,100,100),
+                    self.font,  # font
+                    self.color,  # color
                     self.character_limit,
                     (self.pos[0] + self.width / 2) - self.font.size("00")[0] - 10,  # position for top corner counter
-                    # position for top corner counter
-                    ""]
-        # return appropriate text
-
-        #Handle staying inside the textbox:
-        lim = 0
-        while self.font.size(self.curr_string[lim:])[0] >= self.width * 9/10:
-            lim += 1
-        return [self.curr_string[lim:] + bonus, # written text
-                (self.pos[0] - self.width / 2.2, self.pos[1] - self.height / 3), # position for main text
-                self.font, # font
-                self.color, # color
-                self.character_limit,
-                (self.pos[0] + self.width / 2) - self.font.size("00")[0] - 10, # position for top corner counter
-                self.curr_string]
+                    self.curr_string,
+                    self.command]

@@ -42,7 +42,7 @@ if __name__ == '__main__':
             screen.fill((255, 255, 255))
     
     Drawing rectangle objects:
-        
+    
         create rectangle
             ground = pygame.Rect(0, 400, 960, 50) 
         

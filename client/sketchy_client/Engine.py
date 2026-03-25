@@ -7,6 +7,7 @@ from .CheckboxButton import CheckboxButton
 from .ChoicesButton import ChoicesButton
 from .BrightnessSlider import BrightnessSlider
 from .DefaultUI import DefaultUI
+from .DefaultUI import TransparentUI
 from .TimeBar import TimeBar
 from .ColorButton import ColorButton
 from .draw_window import Grid
@@ -50,6 +51,7 @@ class Engine:
 
         # UI Management
         self.scene = "welcome"
+        self.draw_order = []
         self.active_ui = []
         self.active_buttons = []
         self.active_animations = []
@@ -61,6 +63,10 @@ class Engine:
         self.brush_index = 0
         self.curr_tool = "brush"
         self.tool_index = 0
+        self.curr_name = None
+        self.curr_guess = None
+        self.curr_prompt = None
+        self.room_code_attempt = None
 
         # Backend game state management
         self.network: NetworkClient = NetworkClient()
@@ -150,44 +156,29 @@ class Engine:
 
     def drawUI(self):
         self.screen.fill((50, 100, 100))
-        for button in self.active_buttons:
-            button.draw(self.screen, self.curr_color)
-        for ui in self.active_ui:
-            if isinstance(ui, TimeBar):
-                #TIMER IS UP! (WHAT DO WE DO HERE!?) (SWITCH SCENE PROBABLY YEAH?)
-                if ui.time_up():
-                    self.time_up()
-            ui.draw(self.screen)
-
+        for elem in self.draw_order:
+            elem.draw(self.screen, self.curr_color)
         for data in self.type_text_draws:
             # NEED TO SEPARATE FROM NORMAL DRAWS! TWO DIFFERENT VECTORS
             self.drawTypingText(data)
-
-        for canvas in self.active_drawings:
-            canvas.draw(self.screen)
-
-        # Mat added
-        for animation in self.active_animations:
-            animation.draw(self.screen)
-
-        pygame.draw.rect(self.screen, self.curr_shade, pygame.Rect(100,100, 100, 100))
 
     #TODO: SETTINGS NEED TO BE PRESERVED WHEN BUTTONS DIE! (STORE IN ENGINE AND IMPORT UPON CREATION!)
     def manageButtons(self):
         just_clicked = [not self.mouse_buttons_last_frame[0] and self.mouse_buttons[0],
                         not self.mouse_buttons_last_frame[1] and self.mouse_buttons[1]]
         for button in self.active_buttons:
-            output = button.behave(self.mouse_pos, just_clicked, self.keystrokes, self.mouse_buttons)
-            if isinstance(output, list):
-                if len(output) == 2:
-                    #slider bar
-                    output[0](output[1])
-                else:
-                    #output[:-1] is the return value- store when the submit button is pressed
-                    self.last_submission = output[-1]
-                    self.type_text_draws.append(output)
-            if callable(output):
-                output()
+            if button.active or isinstance(button, TypeBox):
+                output = button.behave(self.mouse_pos, just_clicked, self.keystrokes, self.mouse_buttons)
+                if isinstance(output, list):
+                    if len(output) == 2:
+                        #slider bar
+                        output[0](output[1])
+                    else:
+                        #output[:-1] is the return value- store when the submit button is pressed
+                        output[-1](output[-2])
+                        self.type_text_draws.append(output[:-1])
+                if callable(output):
+                    output()
 
 
     def welcome(self):
@@ -229,7 +220,6 @@ class Engine:
             case "draw":
                 self.switchToGuessing()
             case "guess":
-                # self.switchToWelcome()
                 # Switching to do animation debug
                 self.switchToResults()
 
@@ -250,11 +240,12 @@ class Engine:
             #Button(self.np(30, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/host.png", self._start_room),
             Button(self.np(30, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/host.png", self.switchToLobby),
 
-            Button(self.np(70, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/join.png", self._join_room),
-            TypeBox(self.np(50, 90), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", "Enter A Name",25),
+            Button(self.np(70, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/join.png", self.enableRoomCode),
+            TypeBox(self.np(50, 90), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", self.setName,"Enter A Name",25)]
             #CheckboxButton(self.np(50,50), self.ns(40, 40), self.checkBoxTest, "HIII"),
-            ChoicesButton(self.np(70,50), self.ns(80,40), self.checkBoxTest, [0,1,'NICO','RYAN','KENT','LAUREL', 'SOPHIE'])]
+            #ChoicesButton(self.np(70,50), self.ns(80,40), self.checkBoxTest, [0,1,'NICO','RYAN','KENT','LAUREL', 'SOPHIE'])]
         self.active_drawings = []
+        self.draw_order = self.active_buttons + self.active_drawings + self.active_ui + self.active_animations
 
     def switchToLobby(self):
         self.scene = "lobby"
@@ -266,18 +257,22 @@ class Engine:
             Button(self.np(88, 90), (self.ns(115 * 1.8, 51 * 1.8)), "assets/textures/play.png", self.startGame),
             Button(self.np(65, 90), (self.ns(115 * 1.8, 51 * 1.8)), "assets/textures/options.png", self.startGame)]
         self.active_drawings = []
+        self.draw_order = self.active_buttons + self.active_drawings + self.active_ui + self.active_animations
+
 
     def switchToWriting(self):
         self.scene = "write"
         self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
-        self.active_buttons = [TypeBox(self.np(45,50), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", "Enter A Prompt"),
+        self.active_buttons = [TypeBox(self.np(45,50), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", self.setCurrPrompt, "Enter A Prompt"),
                                Button(self.np(50,90), (self.ns(140 * 2.2, 51 * 2.2)), "assets/textures/submit.png", self.switchToDraw),
                                SliderButton(self.np(20, 20), self.ns(300,30),0, 100, self.setSoundEffectsVolume)]
+        self.draw_order = self.active_buttons + self.active_drawings + self.active_ui + self.active_animations
 
     def switchToGuessing(self):
         self.scene = "guess"
         self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
-        self.active_buttons = [TypeBox(self.np(50, 80), self.ns(1300 * 0.6, 70 * 0.6), "assets/textures/text_box_5.png", "Type A Response")]
+        self.active_buttons = [TypeBox(self.np(50, 80), self.ns(1300 * 0.6, 70 * 0.6), "assets/textures/text_box_5.png", self.setCurrGuess,"Type A Response")]
+        self.draw_order = self.active_buttons + self.active_drawings + self.active_ui + self.active_animations
 
     def switchToDraw(self):
         # note from Mat - this makes the drawing window displayable, but it does not fully work...it is just there for now.
@@ -292,12 +287,14 @@ class Engine:
             Button(self.np(90, 95), self.ns(60, 60), "assets/textures/submit.png", self.setCurrentTool)]
         # Mat changed this line
         self.active_drawings = [DrawingWindow(self.np(50,50), self.ns(845 * 0.5, 455 * 0.5))]
+        self.draw_order = self.active_buttons + self.active_drawings + self.active_ui + self.active_animations
 
     def switchToResults(self):
         self.scene = "results"
         self.active_ui = []
         self.active_buttons = [
-            Button(self.np(80, 95), self.ns(60, 60), "assets/textures/submit.png", self.switchToLobby)
+            Button(self.np(80, 95), (self.ns(140 * 2.2, 51 * 2.2)), "assets/textures/submit.png", self.switchToLobby)
+
         ]
         pixels = []
         if self.active_drawings:
@@ -307,6 +304,31 @@ class Engine:
             AnimationWindow(self.np(50, 50), self.ns(845, 455), pixels)
         ]
         self.active_drawings = []
+        self.draw_order = self.active_buttons + self.active_drawings + self.active_ui + self.active_animations
+
+    def enableRoomCode(self):
+        if self.curr_name:
+            for button in self.active_buttons:
+                button.active = False
+            self.active_ui.append(TransparentUI(self.np(50,50),self.ns(SCREEN_LEN,SCREEN_HT), (0,0,0), 150))
+
+            self.active_buttons.append(Button(self.np(60, 60), (self.ns(140 * 1.2, 51 * 1.2)), "assets/textures/join.png", self._join_room, z=2))
+            self.active_buttons.append(Button(self.np(40, 60), (self.ns(140 * 1.2, 51 * 1.2)), "assets/textures/join.png", self.disableRoomCode, z=2))
+            self.active_buttons.append(TypeBox(self.np(50, 40), (self.ns(150 * 1, 64 * 1)), "assets/textures/text_box_4.png", self.setRoomCode, "CODE", 4, 2))
+
+            self.draw_order = self.active_buttons + self.active_drawings + self.active_ui + self.active_animations
+            self.draw_order = sorted(self.draw_order, key=lambda elem: elem.z)
+
+    def disableRoomCode(self):
+        self.active_ui.pop()
+        self.active_buttons.pop()
+        self.active_buttons.pop()
+        self.active_buttons.pop()
+        self.draw_order = self.active_buttons + self.active_drawings + self.active_ui + self.active_animations
+        self.draw_order = sorted(self.draw_order, key=lambda elem: elem.z)
+        for button in self.active_buttons:
+            button.active = True
+            #TODO: generate box to get room code, including button
 
     def startGame(self):
         self.switchToWriting()
@@ -331,7 +353,7 @@ class Engine:
 
     def _start_room(self):
         #would be nice to have index passed in too, so client already knows what their ID is, to easily access themselves inside Room
-        player_name = self.last_submission.strip()
+        player_name = self.curr_name.strip()
         if not player_name:
             self.network_error = "Enter a name first."
             return
@@ -348,22 +370,24 @@ class Engine:
         self.switchToLobby()
 
     def _join_room(self):
-        room_code = self.last_submission.strip()
-        if not room_code:
-            self.network_error = "Enter a name first."
-            return
-        try:
-            #TODO: Replace with entered name
-            self.network.join_room("TEST", room_code)
-        except NetworkClientError as exc:
-            self.network_error = str(exc)
-            return
+        if len(self.room_code_attempt) == 4:
+            room_code = self.room_code_attempt.strip()
+            name = self.curr_name.strip()
+            if not room_code:
+                self.network_error = "Enter a code first."
+                return
+            try:
+                #TODO: Replace with entered name
+                self.network.join_room(name, room_code)
+            except NetworkClientError as exc:
+                self.network_error = str(exc)
+                return
 
-        self.room = self.network.room
-        self.player = self.network.player
+            self.room = self.network.room
+            self.player = self.network.player
 
-        print(f"ROOM {self.room.room_id} JOINED BY {self.player.name}")
-        self.switchToLobby()
+            print(f"ROOM {self.room.room_id} JOINED BY {self.player.name}")
+            self.switchToLobby()
 
     #------------------------------------------------------------------------------------------------
     #Animation and Audio listed below
@@ -405,6 +429,18 @@ class Engine:
         self.tool_index = (self.tool_index + 1) % len(tools)
         self.curr_tool = tools[self.tool_index]
         print("Current tool:", self.curr_tool)
+
+    def setName(self, name):
+        self.curr_name = name
+
+    def setCurrPrompt(self, prompt):
+        self.curr_prompt = prompt
+
+    def setCurrGuess(self, guess):
+        self.curr_guess = guess
+
+    def setRoomCode(self, code):
+        self.room_code = code
 
     #Kent's to-dos
     #DONE: COLOR BUTTONS

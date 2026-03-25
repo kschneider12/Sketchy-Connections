@@ -4,8 +4,9 @@ from .paths import resolve_asset_path
 
 
 class Button:
-    def __init__(self, position, size, img, funct, multi_texture = True):
+    def __init__(self, position, size, img, funct, multi_texture = True, z = 0):
         self.pos = position
+        self.z = z
         self.width = size[0]
         self.height = size[1]
         image_path = resolve_asset_path(img)
@@ -13,6 +14,7 @@ class Button:
         self.curr_hover = False
         self.img = pygame.transform.scale(self.img, size)
         self.command = funct
+        self.active = True
         if multi_texture:
             hover_path = resolve_asset_path(img[:-4] + "_hover.png")
             self.hover_img = pygame.image.load(hover_path)

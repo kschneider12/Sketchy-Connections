@@ -284,7 +284,7 @@ class DrawingWindow:
 
         self.last_mouse = mouse_pressed
 
-    def draw(self, screen):
+    def draw(self, screen, curr_color = None):
         """Draws the window on the Sketchy Connections screen
 
         Args:
@@ -390,7 +390,7 @@ class AnimationWindow:
                     self.grid.set_pixel(row, col, color)
                 self.index += 1
 
-    def draw(self, screen):
+    def draw(self, screen,curr_color = None):
         """Draws the window on the Sketchy Connections screen
 
         Args:

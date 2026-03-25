@@ -157,6 +157,9 @@ class Engine:
     def drawUI(self):
         self.screen.fill((50, 100, 100))
         for elem in self.draw_order:
+            if isinstance(elem, TimeBar):
+                if elem.time_up():
+                    print("time up!")
             elem.draw(self.screen, self.curr_color)
         for data in self.type_text_draws:
             # NEED TO SEPARATE FROM NORMAL DRAWS! TWO DIFFERENT VECTORS

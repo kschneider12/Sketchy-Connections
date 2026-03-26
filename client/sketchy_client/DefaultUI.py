@@ -39,10 +39,12 @@ class TransparentUI(DefaultUI):
 class TextUI(DefaultUI):
     def __init__(self, position, size, text, color, z = 0):
         self.text = text
-        self.font = pygame.font.Font(asset_path("fonts", "MoreSugar-Regular.ttf"), int(size[0]))
+        self.font = pygame.font.Font(asset_path("fonts", "MoreSugar-Regular.ttf"), int(size[1]))
         self.color = color
         DefaultUI.__init__(self, position, size, None, z)
 
     def draw(self, screen, curr_color=None):
         text_surface = self.font.render(self.text, True, self.color)
-        screen.blit(text_surface, self.pos)
+        #print(int(self.pos[0] - self.width / 2), int(self.pos[1] - self.height / 2))
+
+        screen.blit(text_surface, (self.pos[0] - self.font.size(self.text)[0] / 2, self.pos[1] - self.height / 2))

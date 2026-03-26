@@ -108,11 +108,11 @@ class Engine:
                     self.welcome()
                 case "lobby":
                     self.lobby()
-                case "write":
+                case "writing":
                     self.writing()
-                case "draw":
+                case "drawing":
                     self.draw()
-                case "guess":
+                case "guessing":
                     self.guess()
                 case "results":
                     self.results()
@@ -267,7 +267,8 @@ class Engine:
         self.active_ui = [DefaultUI(self.np(10, 5), self.ns(130 * 1.5, 50 * 1), "assets/textures/players.png"),
                           DefaultUI(self.np(80, 18), self.ns(169 * 2.0, 97 * 2.0), "assets/textures/title.png"),
                           DefaultUI(self.np(4, 55), self.ns(30 * 2.4, 241 * 2.4), "assets/textures/players_tab.png"),
-                          TextUI(self.np(50, 10), self.ns(20 * 2.4, 20 * 2.4), self.network.room.room_id, (0,0,0))]
+                          TextUI(self.np(80, 40), self.ns(0, 50), "Room Code:", (0, 0, 0)),
+                          TextUI(self.np(80, 50), self.ns(0, 50), self.network.room.room_id, (0,0,0))]
         if self.player.is_host:
             self.active_buttons = [
                 Button(self.np(88, 90), (self.ns(115 * 1.8, 51 * 1.8)), "assets/textures/play.png", self.startGame),
@@ -280,7 +281,8 @@ class Engine:
 
     def switchToWriting(self):
         self.scene = "writing"
-        self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
+        self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10),
+                          TextUI(self.np(50, 10), self.ns(100,100), "PROMPT: GET PREVIOUS PROMPT HERE", (0,0,0))]
         self.active_buttons = [TypeBox(self.np(45,50), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", self.setCurrPrompt, "Enter A Prompt"),
                                Button(self.np(50,90), (self.ns(140 * 2.2, 51 * 2.2)), "assets/textures/submit.png", self.submit),
                                SliderButton(self.np(20, 20), self.ns(300,30),0, 100, self.setSoundEffectsVolume)]
@@ -328,7 +330,7 @@ class Engine:
         if self.curr_name:
             for button in self.active_buttons:
                 button.active = False
-            self.active_ui.append(TransparentUI(self.np(50,50),self.ns(SCREEN_LEN,SCREEN_HT), (0,0,0), 150))
+            self.active_ui.append(TransparentUI(self.np(50,50),self.ns(SCREEN_LEN * 2,SCREEN_HT * 2), (0,0,0), 150))
 
             self.active_buttons.append(Button(self.np(60, 60), (self.ns(140 * 1.2, 51 * 1.2)), "assets/textures/join.png", self._join_room, z=2))
             self.active_buttons.append(Button(self.np(40, 60), (self.ns(140 * 1.2, 51 * 1.2)), "assets/textures/join.png", self.disableRoomCode, z=2))
@@ -455,7 +457,7 @@ class Engine:
         self.curr_guess = guess
 
     def setRoomCode(self, code):
-        self.room_code_attempt = code
+        self.room_code_attempt = code.upper()
 
     def submit(self):
         if self.scene == "writing":

@@ -79,6 +79,7 @@ class Engine:
     def run(self):
         self.switchToWelcome()
         while True:
+            print(self.room)
             self.room = self.network.room
             if self.network_error is not None:
                 print(self.network_error)
@@ -91,6 +92,17 @@ class Engine:
             self.mouse_buttons_last_frame[1] = self.mouse_buttons[1]
             self.getInputs()
             self.manageButtons()
+
+            if self.room.phase == RoomPhase.PLAYING:
+                if self.scene != self.room.game.phase:
+                    match self.room.game.phase:
+                        case 'writing':
+                            self.switchToWriting()
+                        case 'drawing':
+                            self.switchToDraw()
+                        case 'guessing':
+                            self.switchToGuessing()
+
 
             # Behaviors depending on scene
             match self.scene:
@@ -160,6 +172,7 @@ class Engine:
             if isinstance(elem, TimeBar):
                 if elem.time_up():
                     print("time up!")
+                    self.submit()
             elem.draw(self.screen, self.curr_color)
         for data in self.type_text_draws:
             # NEED TO SEPARATE FROM NORMAL DRAWS! TWO DIFFERENT VECTORS
@@ -256,30 +269,33 @@ class Engine:
         self.active_ui = [DefaultUI(self.np(10, 5), self.ns(130 * 1.5, 50 * 1), "assets/textures/players.png"),
                           DefaultUI(self.np(80, 18), self.ns(169 * 2.0, 97 * 2.0), "assets/textures/title.png"),
                           DefaultUI(self.np(4, 55), self.ns(30 * 2.4, 241 * 2.4), "assets/textures/players_tab.png")]
-        self.active_buttons = [
-            Button(self.np(88, 90), (self.ns(115 * 1.8, 51 * 1.8)), "assets/textures/play.png", self.startGame),
-            Button(self.np(65, 90), (self.ns(115 * 1.8, 51 * 1.8)), "assets/textures/options.png", self.startGame)]
+        if self.player.is_host:
+            self.active_buttons = [
+                Button(self.np(88, 90), (self.ns(115 * 1.8, 51 * 1.8)), "assets/textures/play.png", self.startGame),
+                Button(self.np(65, 90), (self.ns(115 * 1.8, 51 * 1.8)), "assets/textures/options.png", self.startGame)]
+        else:
+            self.active_buttons = []
         self.active_drawings = []
         self.draw_order = self.active_buttons + self.active_drawings + self.active_ui + self.active_animations
 
 
     def switchToWriting(self):
-        self.scene = "write"
+        self.scene = "writing"
         self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
         self.active_buttons = [TypeBox(self.np(45,50), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", self.setCurrPrompt, "Enter A Prompt"),
-                               Button(self.np(50,90), (self.ns(140 * 2.2, 51 * 2.2)), "assets/textures/submit.png", self.switchToDraw),
+                               Button(self.np(50,90), (self.ns(140 * 2.2, 51 * 2.2)), "assets/textures/submit.png", self.submit),
                                SliderButton(self.np(20, 20), self.ns(300,30),0, 100, self.setSoundEffectsVolume)]
         self.draw_order = self.active_buttons + self.active_drawings + self.active_ui + self.active_animations
 
     def switchToGuessing(self):
-        self.scene = "guess"
+        self.scene = "guessing"
         self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
         self.active_buttons = [TypeBox(self.np(50, 80), self.ns(1300 * 0.6, 70 * 0.6), "assets/textures/text_box_5.png", self.setCurrGuess,"Type A Response")]
         self.draw_order = self.active_buttons + self.active_drawings + self.active_ui + self.active_animations
 
     def switchToDraw(self):
         # note from Mat - this makes the drawing window displayable, but it does not fully work...it is just there for now.
-        self.scene = "draw"
+        self.scene = "drawing"
         self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
         self.active_buttons = [
             ColorWheel(self.np(50, 85), (self.ns(180, 180)), self.setColor),
@@ -334,7 +350,6 @@ class Engine:
             #TODO: generate box to get room code, including button
 
     def startGame(self):
-        self.switchToWriting()
         self.network.start_game()
         return
 
@@ -442,6 +457,9 @@ class Engine:
 
     def setRoomCode(self, code):
         self.room_code_attempt = code
+
+    def submit(self):
+        pass
 
     #Kent's to-dos
     #DONE: COLOR BUTTONS

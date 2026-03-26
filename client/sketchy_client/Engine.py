@@ -269,7 +269,7 @@ class Engine:
                           DefaultUI(self.np(80, 18), self.ns(169 * 2.0, 97 * 2.0), "assets/textures/title.png"),
                           DefaultUI(self.np(4, 55), self.ns(30 * 2.4, 241 * 2.4), "assets/textures/players_tab.png"),
                           TextUI(self.np(80, 40), self.ns(0, 50), "Room Code:", (0, 0, 0)),
-                          TextUI(self.np(80, 50), self.ns(0, 50), self.network.room.room_id, (0,0,0))]
+                          TextUI(self.np(80, 50), self.ns(0, 50), self.network.room.room_id.lower(), (0,0,0))]
         if self.player.is_host:
             self.active_buttons = [
                 Button(self.np(88, 90), (self.ns(115 * 1.8, 51 * 1.8)), "assets/textures/play.png", self.startGame),

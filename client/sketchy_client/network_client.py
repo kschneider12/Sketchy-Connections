@@ -78,6 +78,9 @@ class NetworkClient:
 
         return self._run_coroutine(self._start_game())
 
+    def submit_entry(self, content: str | list) -> None:
+        return self._run_coroutine(self._submit_entry(content))
+
     def close(self):
         """Close the underlying aiohttp session and stop the worker loop."""
 
@@ -197,6 +200,12 @@ class NetworkClient:
 
     async def _start_game(self) -> None:
         await self._send_message({"type": "start_game"})
+
+    async def _submit_entry(self, content: str | list) -> None:
+        await self._send_message({
+            "type": "submit_entry",
+            "content": content,
+        })
 
     async def _request_json(
         self,

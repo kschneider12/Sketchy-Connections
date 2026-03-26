@@ -112,6 +112,7 @@ class GameState:
 
 class Room:
     def __init__(self, room_code: str, host_name: str):
+        #TODO: add drawtime, guesstime, colors: (complex, simple) in a dict
         self._player_counter = 0
         self.room_id: str = room_code
         self.game: GameState | None = None
@@ -227,7 +228,7 @@ class RoomManager:
         self.rooms.pop(room_code.upper(), None)
 
     def _generate_room_code(self, length: int = 4) -> str:
-        alphabet = string.ascii_uppercase + string.digits
+        alphabet = string.ascii_lowercase + string.digits
 
         while True:
             room_code = "".join(random.choices(alphabet, k=length))

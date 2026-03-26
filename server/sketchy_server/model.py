@@ -228,7 +228,7 @@ class RoomManager:
         self.rooms.pop(room_code.upper(), None)
 
     def _generate_room_code(self, length: int = 4) -> str:
-        alphabet = string.ascii_lowercase + string.digits
+        alphabet = string.ascii_uppercase + string.digits
 
         while True:
             room_code = "".join(random.choices(alphabet, k=length))

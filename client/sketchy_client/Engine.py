@@ -457,7 +457,7 @@ class Engine:
         self.curr_guess = guess
 
     def setRoomCode(self, code):
-        self.room_code_attempt = code
+        self.room_code_attempt = code.lower()
 
     def submit(self):
         if self.scene == "writing":

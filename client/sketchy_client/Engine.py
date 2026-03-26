@@ -6,7 +6,7 @@ from .Button import Button
 from .CheckboxButton import CheckboxButton
 from .ChoicesButton import ChoicesButton
 from .BrightnessSlider import BrightnessSlider
-from .DefaultUI import DefaultUI, TransparentUI, TextUI
+from .DefaultUI import DefaultUI, TransparentUI, TextUI, PlayerDisplay
 from .TimeBar import TimeBar
 from .ColorButton import ColorButton
 from .draw_window import Grid
@@ -18,8 +18,8 @@ from .draw_window import DrawingWindow, AnimationWindow
 from .ColorWheel import ColorWheel
 # from draw_window import AnimationWindow
 
-SCREEN_LEN = pyautogui.size()[0] / 2
-SCREEN_HT = pyautogui.size()[1] / 2
+SCREEN_LEN = pyautogui.size()[0]
+SCREEN_HT = pyautogui.size()[1]
 
 class Engine:
     def __init__(self):
@@ -172,6 +172,8 @@ class Engine:
                 if elem.time_up():
                     print("time up!")
                     self.submit()
+            elif isinstance(elem, PlayerDisplay):
+                elem.set_active_players(self.network.room.players)
             elem.draw(self.screen, self.curr_color)
         for data in self.type_text_draws:
             # NEED TO SEPARATE FROM NORMAL DRAWS! TWO DIFFERENT VECTORS
@@ -256,7 +258,7 @@ class Engine:
             #Button(self.np(30, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/host.png", self.switchToLobby),
 
             Button(self.np(70, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/join.png", self.enableRoomCode),
-            TypeBox(self.np(50, 90), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", self.setName,"Enter A Name",25)]
+            TypeBox(self.np(50, 90), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", self.setName,"Enter A Name",15)]
             #CheckboxButton(self.np(50,50), self.ns(40, 40), self.checkBoxTest, "HIII"),
             #ChoicesButton(self.np(70,50), self.ns(80,40), self.checkBoxTest, [0,1,'NICO','RYAN','KENT','LAUREL', 'SOPHIE'])]
         self.active_drawings = []
@@ -267,7 +269,7 @@ class Engine:
         self.active_animations = []
         self.active_ui = [DefaultUI(self.np(10, 5), self.ns(130 * 1.5, 50 * 1), "assets/textures/players.png"),
                           DefaultUI(self.np(80, 18), self.ns(169 * 2.0, 97 * 2.0), "assets/textures/title.png"),
-                          DefaultUI(self.np(4, 55), self.ns(30 * 2.4, 241 * 2.4), "assets/textures/players_tab.png"),
+                          PlayerDisplay(self.np(4, 55), self.ns(30 * 2.4, 241 * 2.4), (SCREEN_LEN, SCREEN_HT), self.network.room.players),
                           TextUI(self.np(80, 40), self.ns(0, 50), "Room Code:", (0, 0, 0)),
                           TextUI(self.np(80, 50), self.ns(0, 50), self.network.room.room_id.lower(), (0,0,0))]
         if self.player.is_host:

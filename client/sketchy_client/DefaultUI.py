@@ -45,6 +45,26 @@ class TextUI(DefaultUI):
 
     def draw(self, screen, curr_color=None):
         text_surface = self.font.render(self.text, True, self.color)
-        #print(int(self.pos[0] - self.width / 2), int(self.pos[1] - self.height / 2))
-
         screen.blit(text_surface, (self.pos[0] - self.font.size(self.text)[0] / 2, self.pos[1] - self.height / 2))
+
+class PlayerDisplay(DefaultUI):
+    def __init__(self, pos, size, screen_size, active_players):
+        DefaultUI.__init__(self, pos, size, "assets/textures/players_tab.png")
+        self.screen_size = screen_size
+        self.light = pygame.image.load(resolve_asset_path("assets/textures/player_light.png"))
+        self.light = pygame.transform.scale(self.light, (size[0] * 0.7,size[0] * 0.7))
+        self.active_players = active_players
+        self.font = pygame.font.Font(asset_path("fonts", "MoreSugar-Regular.ttf"), int(size[0] * 0.7))
+
+
+    def set_active_players(self, active_players):
+        self.active_players = active_players
+
+    def draw(self, screen, curr_color=None):
+        screen.blit(self.img, (self.pos[0] - self.width / 2, self.pos[1] - self.height / 2))
+        for i, name in enumerate(self.active_players):
+            screen.blit(self.light, (self.pos[0] - self.width / 2.5, self.pos[1] - (self.height / 2) + self.ns(0,26)[1] + i * self.ns(0,69.8)[1]))
+            text_surface = self.font.render(name.name, True, (0,0,0))
+            screen.blit(text_surface, (self.pos[0] + self.width / 2, self.pos[1] - (self.height / 2) + self.ns(0,26)[1] + i * self.ns(0,69.8)[1]))
+    def ns(self, x, y):
+        return x * self.screen_size[0] / 1000, y * self.screen_size[1] / 1000 * 16/10

@@ -458,7 +458,9 @@ class Engine:
         self.room_code_attempt = code
 
     def submit(self):
-        pass
+        if self.scene == "writing":
+            self.network.submit_entry(self.curr_prompt)
+
     #Kent's to-dos
     #DONE: COLOR BUTTONS
     #DONE: COLOR WHEEL

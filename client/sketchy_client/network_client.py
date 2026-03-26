@@ -78,6 +78,9 @@ class NetworkClient:
 
         return self._run_coroutine(self._start_game())
 
+    def sync(self) -> None:
+        return self._run_coroutine(self._send_message({"type": "sync"}))
+
     def submit_entry(self, content: str | list) -> None:
         return self._run_coroutine(self._submit_entry(content))
 

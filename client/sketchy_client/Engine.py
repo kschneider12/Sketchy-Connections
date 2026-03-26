@@ -77,7 +77,8 @@ class Engine:
     def run(self):
         self.switchToWelcome()
         while True:
-            print(self.room)
+            #print(self.room)
+
             self.room = self.network.room
             if self.network_error is not None:
                 print(self.network_error)
@@ -462,6 +463,8 @@ class Engine:
     def submit(self):
         if self.scene == "writing":
             self.network.submit_entry(self.curr_prompt)
+
+        self.network.sync()
 
     #Kent's to-dos
     #DONE: COLOR BUTTONS

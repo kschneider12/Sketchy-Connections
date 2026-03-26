@@ -108,6 +108,7 @@ class ServerRuntime:
                 (player_id, websocket, {"type": "room_state", "room": room.to_dict(player_id)})
                 for player_id, websocket in sockets
             ]
+        print(payloads)
 
         stale_players: list[str] = []
         for player_id, websocket, payload in payloads:

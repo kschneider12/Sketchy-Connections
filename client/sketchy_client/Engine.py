@@ -283,7 +283,7 @@ class Engine:
     def switchToWriting(self):
         self.scene = "writing"
         self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10),
-                          TextUI(self.np(50, 10), self.ns(100,100), "PROMPT: GET PREVIOUS PROMPT HERE", (0,0,0))]
+                          TextUI(self.np(50, 10), self.ns(100,100), "Create a Prompt!", (0,0,0))]
         self.active_buttons = [TypeBox(self.np(45,50), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", self.setCurrPrompt, "Enter A Prompt"),
                                Button(self.np(50,90), (self.ns(140 * 2.2, 51 * 2.2)), "assets/textures/submit.png", self.submit),
                                SliderButton(self.np(20, 20), self.ns(300,30),0, 100, self.setSoundEffectsVolume)]
@@ -298,7 +298,9 @@ class Engine:
     def switchToDraw(self):
         # note from Mat - this makes the drawing window displayable, but it does not fully work...it is just there for now.
         self.scene = "drawing"
-        self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
+        self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10),
+                          TextUI(self.np(50, 10), self.ns(100, 100), "PUT CORRECT PROMPT HERE!", (0, 0, 0))
+                          ]
         self.active_buttons = [
             ColorWheel(self.np(50, 85), (self.ns(180, 180)), self.setColor),
             BrightnessSlider(self.np(70, 80), (self.ns(1 * 50, 4 * 50)), self.setBrightness),

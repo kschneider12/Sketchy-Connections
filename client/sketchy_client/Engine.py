@@ -459,7 +459,7 @@ class Engine:
         self.room_code_attempt = code
 
     def submit(self):
-        pass
+        self.NetworkClient.
 
     #Kent's to-dos
     #DONE: COLOR BUTTONS

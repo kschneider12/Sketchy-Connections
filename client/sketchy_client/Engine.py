@@ -77,7 +77,8 @@ class Engine:
     def run(self):
         self.switchToWelcome()
         while True:
-            #print(self.room)
+            if self.room.game:
+                print(self.room.game.phase)
 
             self.room = self.network.room
             if self.network_error is not None:
@@ -101,7 +102,6 @@ class Engine:
                             self.switchToDraw()
                         case 'guessing':
                             self.switchToGuessing()
-
 
             # Behaviors depending on scene
             match self.scene:
@@ -463,7 +463,8 @@ class Engine:
     def submit(self):
         if self.scene == "writing":
             self.network.submit_entry(self.curr_prompt)
-
+        if self.scene == "drawing":
+            self.network.submit_entry(self.active_drawings[0].drawn_pixels)
         self.network.sync()
 
     #Kent's to-dos

@@ -1,7 +1,7 @@
 import pygame
 
 from .paths import resolve_asset_path
-
+from .paths import asset_path
 
 class DefaultUI:
     def __init__(self, position, size, img, z = 0):
@@ -35,3 +35,14 @@ class TransparentUI(DefaultUI):
 
     def draw(self, screen, curr_color = None):
         screen.blit(self.surface, (self.pos[0] - self.width / 2, self.pos[1] - self.height / 2))
+
+class TextUI(DefaultUI):
+    def __init__(self, position, size, text, color, z = 0):
+        self.text = text
+        self.font = pygame.font.Font(asset_path("fonts", "MoreSugar-Regular.ttf"), int(size[0]))
+        self.color = color
+        DefaultUI.__init__(self, position, size, None, z)
+
+    def draw(self, screen, curr_color=None):
+        text_surface = self.font.render(self.text, True, self.color)
+        screen.blit(text_surface, self.pos)

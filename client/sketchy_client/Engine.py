@@ -6,8 +6,7 @@ from .Button import Button
 from .CheckboxButton import CheckboxButton
 from .ChoicesButton import ChoicesButton
 from .BrightnessSlider import BrightnessSlider
-from .DefaultUI import DefaultUI
-from .DefaultUI import TransparentUI
+from .DefaultUI import DefaultUI, TransparentUI, TextUI
 from .TimeBar import TimeBar
 from .ColorButton import ColorButton
 from .draw_window import Grid
@@ -15,8 +14,7 @@ from sketchy_shared.types import GamePhase, GameStateData, PlayerData, BookData,
 from .network_client import NetworkClient, NetworkClientError
 from .TypeBox import TypeBox
 from .SliderButton import SliderButton
-from .draw_window import DrawingWindow
-from .draw_window import AnimationWindow
+from .draw_window import DrawingWindow, AnimationWindow
 from .ColorWheel import ColorWheel
 # from draw_window import AnimationWindow
 
@@ -268,7 +266,8 @@ class Engine:
         self.active_animations = []
         self.active_ui = [DefaultUI(self.np(10, 5), self.ns(130 * 1.5, 50 * 1), "assets/textures/players.png"),
                           DefaultUI(self.np(80, 18), self.ns(169 * 2.0, 97 * 2.0), "assets/textures/title.png"),
-                          DefaultUI(self.np(4, 55), self.ns(30 * 2.4, 241 * 2.4), "assets/textures/players_tab.png")]
+                          DefaultUI(self.np(4, 55), self.ns(30 * 2.4, 241 * 2.4), "assets/textures/players_tab.png"),
+                          TextUI(self.np(50, 10), self.ns(20 * 2.4, 20 * 2.4), self.network.room.room_id, (0,0,0))]
         if self.player.is_host:
             self.active_buttons = [
                 Button(self.np(88, 90), (self.ns(115 * 1.8, 51 * 1.8)), "assets/textures/play.png", self.startGame),
@@ -459,8 +458,7 @@ class Engine:
         self.room_code_attempt = code
 
     def submit(self):
-        self.NetworkClient.
-
+        pass
     #Kent's to-dos
     #DONE: COLOR BUTTONS
     #DONE: COLOR WHEEL

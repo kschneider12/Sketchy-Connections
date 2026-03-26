@@ -204,6 +204,7 @@ async def handle_client_message(
         async with runtime.lock:
             room = runtime.rooms.get_room(room_code)
             room.start_game(player_id)
+            print(f"Game started: {room.to_dict()}")
         await runtime.broadcast_room_state(room_code)
         return False
 

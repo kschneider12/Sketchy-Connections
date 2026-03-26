@@ -141,8 +141,8 @@ class Room:
             raise ValueError("Only the host can start the game.")
         if self.phase != RoomPhase.LOBBY:
             raise ValueError("Game has already started.")
-        if len(self.players) <= 2:
-            raise ValueError("Need at least 3 players to start.")
+        # if len(self.players) <= 2:
+        #     raise ValueError("Need at least 3 players to start.")
 
         self.game = GameState(self.players)
         self.phase = RoomPhase.PLAYING

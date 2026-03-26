@@ -8,7 +8,7 @@ from urllib.parse import urljoin, urlparse, urlunparse
 
 import aiohttp
 
-from shared.sketchy_shared.types import PlayerRegistrationData, RoomData, PlayerData
+from sketchy_shared.types import PlayerRegistrationData, RoomData, PlayerData
 
 
 class NetworkClientError(RuntimeError):

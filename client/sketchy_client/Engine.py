@@ -11,7 +11,7 @@ from .DefaultUI import TransparentUI
 from .TimeBar import TimeBar
 from .ColorButton import ColorButton
 from .draw_window import Grid
-from shared.sketchy_shared.types import GamePhase, GameStateData, PlayerData, BookData, RoomPhase, RoomData, EntryData, EntryType
+from sketchy_shared.types import GamePhase, GameStateData, PlayerData, BookData, RoomPhase, RoomData, EntryData, EntryType
 from .network_client import NetworkClient, NetworkClientError
 from .TypeBox import TypeBox
 from .SliderButton import SliderButton
@@ -240,8 +240,8 @@ class Engine:
         self.scene = "welcome"
         self.active_ui = [DefaultUI(self.np(50, 30), self.ns(169 * 3.5, 97 * 3.5), "assets/textures/title.png")]
         self.active_buttons = [
-            #Button(self.np(30, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/host.png", self._start_room),
-            Button(self.np(30, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/host.png", self.switchToLobby),
+            Button(self.np(30, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/host.png", self._start_room),
+            #Button(self.np(30, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/host.png", self.switchToLobby),
 
             Button(self.np(70, 70), (self.ns(115 * 2.2, 51 * 2.2)), "assets/textures/join.png", self.enableRoomCode),
             TypeBox(self.np(50, 90), self.ns(1300 * 0.6, 110 * 0.6), "assets/textures/text_box_5.png", self.setName,"Enter A Name",25)]
@@ -335,7 +335,7 @@ class Engine:
 
     def startGame(self):
         self.switchToWriting()
-        #self.room.start_game(str(self.player_id))
+        self.network.start_game()
         return
 
     def drawText(self, vec):

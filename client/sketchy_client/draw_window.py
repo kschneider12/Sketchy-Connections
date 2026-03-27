@@ -279,6 +279,7 @@ class DrawingWindow:
         row = this_y // self.grid.cell_size
         col = this_x // self.grid.cell_size
 
+        # call drawing logic for all tools
         if mouse_pressed:
             if current_tool == "brush":
                 if self.last_pos and (this_x, this_y) != self.last_pos:
@@ -287,15 +288,21 @@ class DrawingWindow:
                         (this_x, this_y),
                         curr_color,
                         brush_radius)
-                    self.drawn_pixels.append(("pixels", drawing))
+                    ops = [(r, col) for (r, col, _) in drawing]
+                    self.drawn_pixels.append({"color": curr_color,
+                                              "ops": ops})
                 else:
                     drawing = self.grid.draw_brush(row, col, curr_color, brush_radius)
-                    self.drawn_pixels.append(("pixels", drawing))
+                    ops = [(r, col) for (r, col, _) in drawing]
+                    self.drawn_pixels.append({"color": curr_color,
+                                              "ops": ops})
                 self.last_pos = (this_x, this_y)
             elif current_tool == "fill":
                 if not self.last_mouse:
                     drawing = self.grid.fill_tool(row, col, curr_color)
-                    self.drawn_pixels.append(("fill", drawing))
+                    ops = [(r, col) for (r, col, _) in drawing]
+                    self.drawn_pixels.append({"color": curr_color,
+                                              "ops": ops})
         else:
             self.last_pos = None
 
@@ -395,23 +402,19 @@ class AnimationWindow:
                 self.done = True
                 break
 
-            action_type, pixel_list = self.drawn_pixels[self.index]
+            action = self.drawn_pixels[self.index]
+            color = action["color"]
+            ops = action["ops"]
 
-            if action_type == "fill":
-                for row, col, color in pixel_list:
-                    self.grid.set_pixel(row, col, color)
-                self.index += 1
+            for row, col in ops:
+                self. grid.set_pixel(row, col, color)
 
-            else:
-                for row, col, color in pixel_list:
-                    self.grid.set_pixel(row, col, color)
-                self.index += 1
-
-    def draw(self, screen,curr_color = None):
+    def draw(self, screen, curr_color=None):
         """Draws the window on the Sketchy Connections screen
 
         Args:
             screen: (blit): the screen being displayed
+            curr_color: the color to be drawn
         """
         self.grid.draw(screen)
 

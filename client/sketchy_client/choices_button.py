@@ -1,12 +1,19 @@
+"""
+ChoicesButton extends button, and enables a limited number
+of possible values for a variable. For example, this may be utilized to change the time
+the users get to draw, or even the refresh rate.
+"""
 import pygame
-from .Button import Button
-
+from .button import Button
 from .paths import resolve_asset_path
 
-FONT_PATH = resolve_asset_path(f"assets/fonts/MoreSugar-Regular.ttf")
-
+FONT_PATH = resolve_asset_path("assets/fonts/MoreSugar-Regular.ttf")
 
 class ChoicesButton(Button):
+    """
+    Initializes ChoicesButton, storing the possible choices and which choice
+    is currently set.
+    """
     def __init__(self, pos, size, funct, choices, start_choice = -1):
 
         self.choices = choices
@@ -16,17 +23,24 @@ class ChoicesButton(Button):
             self.curr_choice = start_choice
 
         super().__init__(pos, size, 'assets/textures/play.png', funct, False)
-        self.left = Button((pos[0] + size[0] / 1.2, pos[1]), (size[1],size[1]), 'assets/textures/host.png', True)
-        self.right = Button((pos[0] - size[0] / 1.2, pos[1]), (size[1],size[1]), 'assets/textures/host.png', True)
+        self.left = Button((pos[0] + size[0] / 1.2, pos[1]),
+                           (size[1],size[1]), 'assets/textures/host.png', True)
+        self.right = Button((pos[0] - size[0] / 1.2, pos[1]),
+                            (size[1],size[1]), 'assets/textures/host.png', True)
         self.font = pygame.font.Font(FONT_PATH, int(self.height * 0.7))
 
     def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state):
-        if self.left.behave(mouse_pos, just_clicked, keystrokes, mouse_state) and self.curr_choice != self.choices[-1]:
+        """
+        Overrides Button.behave, rotating through options based on user interaction
+        """
+        if (self.left.behave(mouse_pos, just_clicked, keystrokes, mouse_state)
+                and self.curr_choice != self.choices[-1]):
             for i, val in enumerate(self.choices):
                 if val == self.curr_choice:
                     self.curr_choice = self.choices[i + 1]
                     break
-        if self.right.behave(mouse_pos, just_clicked, keystrokes, mouse_state) and self.curr_choice != self.choices[0]:
+        if (self.right.behave(mouse_pos, just_clicked, keystrokes, mouse_state)
+                and self.curr_choice != self.choices[0]):
             for i, val in enumerate(self.choices):
                 if val == self.curr_choice:
                     self.curr_choice = self.choices[i - 1]
@@ -34,6 +48,10 @@ class ChoicesButton(Button):
         return self.command, self.curr_choice
 
     def draw(self, screen, curr_color):
+        """
+        Overrides Button.draw, drawing both arrows independently
+        and the center UI element.
+        """
         self.left.draw(screen, curr_color)
         self.right.draw(screen, curr_color)
         screen.blit(self.img, (self.pos[0] - self.width / 2, self.pos[1] - self.height / 2))
@@ -41,4 +59,3 @@ class ChoicesButton(Button):
         scale = self.font.size(text)
         text_surface = self.font.render(text, True, (0, 0, 0))
         screen.blit(text_surface, (self.pos[0] - scale[0] / 2, self.pos[1] - scale[1] / 2))
-

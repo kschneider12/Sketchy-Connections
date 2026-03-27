@@ -21,7 +21,7 @@ if you use this window!
 """
 import pygame
 
-GRID_WIDTH = 325 # width of the grid used by Engine.py
+GRID_WIDTH = 325 # width of the grid used by engine.py
 GRID_HEIGHT = 175 # height of the grid used by engine.py
 
 # for debugging and basic usage purposes
@@ -217,7 +217,7 @@ class Grid:
 
 
 class DrawingWindow:
-    """Class used for rendering a drawing window in the Engine.py file"""
+    """Class used for rendering a drawing window in the engine.py file"""
     def __init__(self, center_pos, size):
         self.center = center_pos
         self.size = size
@@ -261,7 +261,7 @@ class DrawingWindow:
         self.color_index = 0
 
     def update(self, mouse_pos, mouse_pressed, curr_color, brush_radius, current_tool):
-        """Updates the window based on user input in Engine.py
+        """Updates the window based on user input in engine.py
 
         Args:
             mouse_pos: position of the mouse
@@ -355,7 +355,7 @@ class DrawingWindow:
 
 
 class AnimationWindow:
-    """Class used for rendering an animation window in the Engine.py file"""
+    """Class used for rendering an animation window in the engine.py file"""
     def __init__(self, center_pos, size, drawn_pixels):
         self.center = center_pos
         self.size = size

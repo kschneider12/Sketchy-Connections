@@ -1,23 +1,19 @@
 # Sketchy Connections
 # CS3050 Final Project
 # Kent Schneider, Mathew Neves, James LeMahieu, Joe Liotta
+"""
+Main file for the program
+"""
 import pygame
 
-from .Engine import Engine
+from .engine import Engine
 
-# We will need plenty of other screens, but this is a proof of concept for simple structure
-'''
-Other screens may include: Naming a user, selecting host or join for multiplayer, options, stats,
-store, creating prompts, voting, etc. Many of which could be late game, but by having this global
-variable that enables a scene switch, it could be super easy to add new screens! (It won't switch to a new
-screen until that particular screen tells it to, because that's the only loop getting called)
-Also, many screens will reuse code, so we will absolutely have different functions called from multiple game loops.
-But I still think the core loop should be independent for each screen because they need to behave differently,
-and for organizational purposes.
-'''
 def main():
+    """
+    main function that holds and begins Engine
+    """
     # Init Pygame
-    pygame.init()
+    pygame.init() # pylint: disable=no-member
     pygame.mixer.init()
 
     # Create and run game
@@ -32,7 +28,7 @@ if __name__ == '__main__':
     PYGAME DOCUMENTATION:
     
         loading an image:
-       player_img = pygame.image.load("assets\sprites\\player.png")
+        player_img = pygame.image.load("assets\sprites\\player.png")
        
        putting image on screen:
             screen.blit(player_img, (player_x,player_y))

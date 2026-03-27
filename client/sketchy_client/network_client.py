@@ -8,7 +8,7 @@ from urllib.parse import urljoin, urlparse, urlunparse
 
 import aiohttp
 
-from shared.sketchy_shared.types import PlayerRegistrationData, RoomData, PlayerData
+from sketchy_shared.types import PlayerRegistrationData, RoomData, PlayerData
 
 
 class NetworkClientError(RuntimeError):
@@ -72,6 +72,11 @@ class NetworkClient:
         """Join an existing room."""
 
         return self._run_coroutine(self._join_room(player_name, room_code))
+
+    def start_game(self) -> None:
+        "Start the game"
+
+        return self._run_coroutine(self._start_game())
 
     def close(self):
         """Close the underlying aiohttp session and stop the worker loop."""
@@ -188,6 +193,10 @@ class NetworkClient:
         self.player.name = player_name
         self.player.id = self._registration.player_id
         self.player.is_host = False
+
+
+    async def _start_game(self) -> None:
+        await self._send_message({"type": "start_game"})
 
     async def _request_json(
         self,

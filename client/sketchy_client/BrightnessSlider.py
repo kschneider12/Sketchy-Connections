@@ -24,7 +24,6 @@ class BrightnessSlider(Button):
         else:
             self.curr_hover = False
         if self.hovering(mouse_pos) and just_clicked[0]:
-            print("HERE!")
             # convert mouse pos to 0-1 for position
             self.dragging = True
         if self.dragging:

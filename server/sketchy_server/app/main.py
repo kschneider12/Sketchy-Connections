@@ -108,6 +108,7 @@ class ServerRuntime:
                 (player_id, websocket, {"type": "room_state", "room": room.to_dict(player_id)})
                 for player_id, websocket in sockets
             ]
+        print(payloads)
 
         stale_players: list[str] = []
         for player_id, websocket, payload in payloads:
@@ -214,8 +215,6 @@ async def handle_client_message(
             room = runtime.rooms.get_room(room_code)
             room.submit_entry(player_id, content)
             assert room.game is not None
-            if room.game.all_submitted():
-                _ = room.game.next_round()
         await runtime.broadcast_room_state(room_code)
         return False
 

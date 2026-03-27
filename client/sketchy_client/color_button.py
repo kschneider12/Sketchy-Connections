@@ -1,6 +1,10 @@
+"""
+ColorButton is a child of Button which is for simple color selection
+by the user while drawing
+"""
 import pygame
 
-from .Button import Button
+from .button import Button
 from .paths import resolve_asset_path
 
 COLORS = {
@@ -20,27 +24,32 @@ COLORS = {
 }
 
 class ColorButton(Button):
+    """
+    Initializes ColorButton, storing the color as well
+    """
     def __init__(self,  position, size, funct, color):
-        self.rel_pos = [position[0], position[1]]
-        self.bkg_size = size
-        self.dragging = False
         self.color = COLORS[color]
         img = 'assets/textures/color_button.png'
         super().__init__(position, size, img, funct)
-        self.img_select = pygame.image.load(resolve_asset_path('assets/textures/color_button_select.png'))
+        self.img_select = pygame.image.load(
+            resolve_asset_path('assets/textures/color_button_select.png'))
         self.img_select = pygame.transform.scale(self.img_select, size)
 
-    def behave(self, mouse_pos, just_clicked, keystrokes, mouse_status):
+    def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state):
+        """
+        Overrides Button.behave, overriding the return to include button color
+        """
         if self.hovering(mouse_pos):
             self.curr_hover = True
         else:
             self.curr_hover = False
         if self.clicked(mouse_pos, just_clicked):
             return [self.command, self.color]
-        else:
-            return False
+        return False
 
     def draw(self, screen, curr_color):
+        """Overrides Button.draw, including the
+        selection and color behavior"""
         #extra data is colorID
         if self.curr_hover:
             image = self.hover_img
@@ -48,5 +57,8 @@ class ColorButton(Button):
             image = self.img
         if curr_color == self.color:
             image = self.img_select
-        pygame.draw.rect(screen, self.color, pygame.Rect(self.pos[0] - self.width / 2, self.pos[1] - self.height / 2, self.width, self.height))
+        pygame.draw.rect(screen, self.color,
+                         pygame.Rect(self.pos[0] - self.width / 2,
+                                     self.pos[1] - self.height / 2,
+                                     self.width, self.height))
         screen.blit(image, (self.pos[0] - self.width / 2, self.pos[1] - self.height / 2))

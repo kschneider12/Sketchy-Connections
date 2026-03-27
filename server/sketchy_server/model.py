@@ -112,6 +112,7 @@ class GameState:
 
 class Room:
     def __init__(self, room_code: str, host_name: str):
+        #TODO: add drawtime, guesstime, colors: (complex, simple) in a dict
         self._player_counter = 0
         self.room_id: str = room_code
         self.game: GameState | None = None
@@ -141,8 +142,8 @@ class Room:
             raise ValueError("Only the host can start the game.")
         if self.phase != RoomPhase.LOBBY:
             raise ValueError("Game has already started.")
-        # if len(self.players) <= 2:
-        #     raise ValueError("Need at least 3 players to start.")
+        #if len(self.players) <= 2:
+            #raise ValueError("Need at least 3 players to start.")
 
         self.game = GameState(self.players)
         self.phase = RoomPhase.PLAYING

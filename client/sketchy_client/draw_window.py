@@ -33,7 +33,7 @@ if you use this window!
 
 import pygame
 
-GRID_WIDTH = 325 # width of the grid used by Engine.py
+GRID_WIDTH = 325 # width of the grid used by engine.py
 GRID_HEIGHT = 175 # height of the grid used by engine.py
 
 # for debugging and basic usage purposes

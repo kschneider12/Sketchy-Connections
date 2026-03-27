@@ -19,6 +19,18 @@ and modified for without express consent of the authors.
 We would love to hear from you or see your drawings
 if you use this window!
 """
+
+# disabling unnecessary pylint tests
+
+#pylint: disable=no-member
+#pylint: disable=too-many-instance-attributes
+#pylint: disable=too-many-locals
+#pylint: disable=too-many-positional-arguments
+#pylint: disable=too-many-arguments
+#pylint: disable=unused-variable
+#pylint: disable=too-many-branches
+#pylint: disable=too-many-statements
+
 import pygame
 
 GRID_WIDTH = 325 # width of the grid used by Engine.py
@@ -42,8 +54,9 @@ COLORS = {
 }
 
 class GridCell:
-    """Class representing Cells on the grid"""
+    """Represents a single cell in the drawing grid"""
     def __init__(self, row, col, cell_size):
+        """Initializes a new instance of the GridCell class"""
         self.row = row
         self.col = col
         self.cell_size = cell_size
@@ -52,22 +65,26 @@ class GridCell:
         self.color = COLORS['background']
 
     def get_position(self):
-        """Returns a position of a GridCell"""
+        """Returns the row, col position of the cell
+
+        Returns:
+            A tuple of the (row, col) position of the cell
+        """
         return self.row, self.col
 
     def drawing(self, color):
-        """Sets self.color to color
+        """Updates the cell's color
 
         Args:
-            color: the color being used
+            color (tuple): RGB color to assign to the cell
         """
         self.color = color
 
 
-
 class Grid:
-    """Class representing the Grid being drawn on"""
+    """Represents the drawable grid and handles drawing logic"""
     def __init__(self, pos, cell_size):
+        """Initializes a new instance of the Grid class"""
         self.pos = pos
         self.cell_size = cell_size
         self.cells = self.create_cells()
@@ -83,7 +100,11 @@ class Grid:
             self.brush_cache[r] = self.brush_offsets(r)
 
     def create_cells(self):
-        """Creates the cells"""
+        """Creates the cells on the grid
+
+        Returns:
+            List of the cells on the grid
+        """
         return [
             [GridCell(row, col, self.cell_size) for col in range(GRID_WIDTH)]
             for row in range(GRID_HEIGHT)
@@ -93,16 +114,23 @@ class Grid:
         """Gets a specific cell based on row and column
 
         Args:
-            row: the row of the cell
-            col: the column of the cell
+            row (int): the row of the cell
+            col (int): the column of the cell
+
+        Returns:
+            GridCell the cell if in the boundary, none otherwise
         """
         if 0 <= row < GRID_HEIGHT and 0 <= col < GRID_WIDTH:
             return self.cells[row][col]
         return None
 
     def set_pixel(self, row, col, color):
-        """
-        About function
+        """Sets a single cell to a given color and updates surface
+
+        Args:
+            row (int): the row of the cell
+            col (int): the column of the cell
+            color (tuple): RGB color of the cell
         """
         if 0 <= row < GRID_HEIGHT and 0 <= col < GRID_WIDTH:
             self.cells[row][col].color = color
@@ -111,8 +139,13 @@ class Grid:
                             self.cell_size, self.cell_size))
 
     def brush_offsets(self, radius):
-        """
-        About function
+        """Generates relative offsets for a circular brush
+
+        Args:
+            radius (int): the brush radius
+
+        Returns:
+            A list of the relative offsets
         """
         offsets = []
         for r in range(-radius, radius + 1):
@@ -125,10 +158,13 @@ class Grid:
         """The drawing brush logic for the user's pointer
 
         Args:
-            row: the row of the cell to be drawn
-            col: the col of the cell to be drawn
-            color: the col to be drawn into cell
+            row (int): the row of the cell to be drawn
+            col (int): the col of the cell to be drawn
+            color (tuple): the col to be drawn into cell
             radius (int): the radius of the brush
+
+        Returns:
+            A list of modified pixels
         """
         drawn_pixels =[]
 
@@ -144,13 +180,16 @@ class Grid:
         return drawn_pixels
 
     def draw_line_cells(self, start, end, color, radius=2):
-        """Creates a smooth line when mouse is held down
+        """Creates a smooth line between two pixel positions
 
         Args:
-            start: the starting point of the line
-            end: the end point of the line
-            color: the color of the line
-            radius: the brush radius of the line
+            start (tuple): the starting row, col of the line
+            end (tuple): the end row, col of the line
+            color (tuple): the color of the line
+            radius (int): the brush radius of the line
+
+        Returns:
+            A list of modified pixels
         """
         drawn_pixels = []
         x1, y1 = start
@@ -171,8 +210,15 @@ class Grid:
         return drawn_pixels
 
     def fill_tool(self, start_row, start_col, new_color):
-        """
-        About function
+        """Performs a fill starting from a cell
+
+        Args:
+            start_row (int): the starting row
+            start_col (int): the starting column
+            new_color (tuple): the new color to be filled
+
+        Returns:
+            A list of modified pixels
         """
         drawn_pixels = []
         visited = set()
@@ -208,17 +254,19 @@ class Grid:
 
         return drawn_pixels
 
-
     def draw(self, window):
-        """
-        About function
+        """Renders the grid surface onto given window
+
+        Args:
+            window (pygame.Surface): the window to render on
         """
         window.blit(self.surface, self.pos)
 
 
 class DrawingWindow:
-    """Class used for rendering a drawing window in the Engine.py file"""
+    """Handles user drawing input and records drawing operation"""
     def __init__(self, center_pos, size):
+        """Initializes the drawing window"""
         self.center = center_pos
         self.size = size
 
@@ -264,11 +312,11 @@ class DrawingWindow:
         """Updates the window based on user input in Engine.py
 
         Args:
-            mouse_pos: position of the mouse
-            mouse_pressed: True if the user pressed the mouse
-            curr_color: current user color
-            brush_radius: radius of the brush
-            current_tool: current user tool
+            mouse_pos (tuple): the row, col position of the mouse
+            mouse_pressed (bool): True if the user pressed the mouse
+            curr_color (tuple): current user color
+            brush_radius (int): radius of the brush
+            current_tool (string): current user tool
         """
         this_x = mouse_pos[0] - self.pos[0]
         this_y = mouse_pos[1] - self.pos[1]
@@ -308,20 +356,19 @@ class DrawingWindow:
 
         self.last_mouse = mouse_pressed
 
-    def draw(self, screen, curr_color = None):
-        """Draws the window on the Sketchy Connections screen
+    def draw(self, screen):
+        """Renders the drawing grid on the screen
 
         Args:
-            screen: (blit): the screen being displayed
+            screen: (pygame.Surface): the screen being displayed
         """
         self.grid.draw(screen)
 
     def color_switch(self, input_color=None):
-        """
-        About function
+        """Cycles through colors or sets a specific color
 
         Args:
-            input_color: the color to be switched
+            input_color (tuple, optional): directly sets color
         """
         if input_color:
             self.current_color = input_color
@@ -333,7 +380,7 @@ class DrawingWindow:
         """Some general outlines for debugging keybinds
 
         Args:
-            click: (type): the incoming user action
+            click (pygame.event.Event): the incoming user action
         """
         if click.type == pygame.KEYDOWN:
             if click.key == pygame.K_TAB:
@@ -350,13 +397,20 @@ class DrawingWindow:
                 self.current_tool = "brush"
 
     def get_drawn_pixels(self):
-        """Gets the list of drawn pixels"""
+        """Gets the list of drawn pixels
+
+        Returns:
+            A list of drawing actions:
+                - "color": RGB tuple
+                - "ops": list of row, col cells
+        """
         return self.drawn_pixels
 
 
 class AnimationWindow:
-    """Class used for rendering an animation window in the Engine.py file"""
+    """Replays drawing operations as an animation or display"""
     def __init__(self, center_pos, size, drawn_pixels):
+        """Initializes the animation window"""
         self.center = center_pos
         self.size = size
 
@@ -409,24 +463,29 @@ class AnimationWindow:
             for row, col in ops:
                 self. grid.set_pixel(row, col, color)
 
-    def draw(self, screen, curr_color=None):
-        """Draws the window on the Sketchy Connections screen
+            self.index += 1
+
+    def draw(self, screen):
+        """Renders the animation window on the screen
 
         Args:
-            screen: (blit): the screen being displayed
-            curr_color: the color to be drawn
+            screen: (pygame.Surface): the screen being displayed
         """
         self.grid.draw(screen)
 
 
 def get_clicked_pos(position, cell_size):
-    """
-    About function
+    """Gets the position of a user click
+
+    Args:
+        position (tuple): row, col position on the grid
+        cell_size (int): size of a cell on the grid
     """
     x, y = position
     col = x // cell_size
     row = y // cell_size
     return row, col
+
 
 def run_drawing(window):
     """Runs the drawing window from this file for debugging purposes"""
@@ -450,7 +509,6 @@ def run_drawing(window):
     run = True
     last_pos = None
     brush_radius = 1
-    color = None
     drawn_pixels = []
 
     # font variables

@@ -139,6 +139,8 @@ class NetworkClient:
         if self._shutdown_complete:
             return
 
+        await self._send_message({"type": "leave_room"})
+
         if self._listener_task is not None:
             self._listener_task.cancel()
 

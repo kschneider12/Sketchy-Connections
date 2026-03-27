@@ -44,6 +44,7 @@ class NetworkClient:
         self._session: aiohttp.ClientSession | None = None
         self._websocket: aiohttp.ClientWebSocketResponse | None = None
         self._listener_task : asyncio.Task[None] | None = None
+        self._listener_error: NetworkClientError | None = None
 
         self._startup_error: Exception | None = None
         self._ready = threading.Event()
@@ -92,7 +93,11 @@ class NetworkClient:
 
         if self._loop is not None and self._loop.is_running():
             try:
-                self._run_coroutine(self._async_shutdown(), timeout=5)
+                self._run_coroutine(
+                    self._async_shutdown(),
+                    timeout=5,
+                    check_listener_error=False,
+                )
             finally:
                 self._loop.call_soon_threadsafe(self._loop.stop)
                 self._thread.join(timeout=5)
@@ -139,23 +144,36 @@ class NetworkClient:
         if self._shutdown_complete:
             return
 
-        await self._send_message({"type": "leave_room"})
-
-        if self._listener_task is not None:
-            self._listener_task.cancel()
-
         self._shutdown_complete = True
+        websocket = self._websocket
+
+        if websocket is not None and not websocket.closed:
+            try:
+                await websocket.send_json({"type": "leave_room"})
+            except Exception:
+                pass
+
+        await self._stop_websocket_listener()
         await self._close_websocket()
+
         if self._session is not None and not self._session.closed:
             await self._session.close()
 
-    def _run_coroutine(self, coroutine, *, timeout: float | None = None):
+    def _run_coroutine(
+        self,
+        coroutine,
+        *,
+        timeout: float | None = None,
+        check_listener_error: bool = True,
+    ):
         if self._closed:
             raise NetworkClientError("Network client is already closed.")
         if self._loop is None:
             raise NetworkClientError("Network client loop is not available.")
         if threading.current_thread() is self._thread:
             raise NetworkClientError("Network client methods cannot be called from its internal event loop thread.")
+        if check_listener_error:
+            self._raise_listener_error()
 
         # Submit the ccoroutine to the loop
         future = asyncio.run_coroutine_threadsafe(coroutine, self._loop)
@@ -165,6 +183,10 @@ class NetworkClient:
         except FutureTimeoutError as exc:
             future.cancel()
             raise NetworkClientError("Network operation timed out.") from exc
+        except NetworkClientError:
+            raise
+        except Exception as exc:
+            raise NetworkClientError(f"Network operation failed: {exc}") from exc
 
 
 
@@ -238,7 +260,9 @@ class NetworkClient:
                     raise NetworkClientError("Expected a JSON object response from the server.")
 
                 return payload
-        except (aiohttp.ClientError, asyncio.TimeoutError, NetworkClientError) as exc:
+        except NetworkClientError:
+            raise
+        except (aiohttp.ClientError, asyncio.TimeoutError, ValueError) as exc:
             raise NetworkClientError(f"Request failed: {exc}") from exc
 
     async def _read_json_or_text(self, response: aiohttp.ClientResponse) -> dict[str, Any] | str:
@@ -263,6 +287,7 @@ class NetworkClient:
 
         try:
             self._websocket = await session.ws_connect(websocket_url)
+            self._listener_error = None
         except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
             raise NetworkClientError(f"WebSocket connection failed: {exc}") from exc
 
@@ -335,15 +360,19 @@ class NetworkClient:
             await listener_task
         except asyncio.CancelledError:
             pass
+        except Exception:
+            pass
 
     async def _start_websocket_listener(self) -> None:
         await self._stop_websocket_listener()
 
         self._listener_task = asyncio.create_task(self._listen_to_websocket())
+        self._listener_task.add_done_callback(self._handle_listener_task_done)
 
         await self._send_message({"type": "sync"})
 
     def _require_websocket(self) -> aiohttp.ClientWebSocketResponse:
+        self._raise_listener_error()
         if self._websocket is None or self._websocket.closed:
             raise NetworkClientError("WebSocket connection is not available.")
         return self._websocket
@@ -352,3 +381,19 @@ class NetworkClient:
         if self._session is None or self._session.closed:
             raise NetworkClientError("HTTP session is not available.")
         return self._session
+
+    def _handle_listener_task_done(self, task: asyncio.Task[None]) -> None:
+        try:
+            task.result()
+        except asyncio.CancelledError:
+            return
+        except NetworkClientError as exc:
+            self._listener_error = exc
+        except Exception as exc:
+            self._listener_error = NetworkClientError(
+                f"WebSocket listener failed: {exc}"
+            )
+
+    def _raise_listener_error(self) -> None:
+        if self._listener_error is not None:
+            raise self._listener_error

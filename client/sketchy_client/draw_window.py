@@ -309,7 +309,7 @@ class DrawingWindow:
         self.color_index = 0
 
     def update(self, mouse_pos, mouse_pressed, curr_color, brush_radius, current_tool):
-        """Updates the window based on user input in Engine.py
+        """Updates the window based on user input in engine.py
 
         Args:
             mouse_pos (tuple): the row, col position of the mouse

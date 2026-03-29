@@ -72,6 +72,7 @@ class Engine:
         self.frame = 0
         self.curr_color = [120,250,250]
         self.curr_shade = [0,0,0]
+        self.brightness = 1
         self.curr_brush = 1
         self.brush_index = 0
         self.curr_tool = "brush"
@@ -80,6 +81,7 @@ class Engine:
         self.curr_guess = None
         self.curr_prompt = None
         self.room_code_attempt = None
+        self.tool_text = "brush"
 
         # Backend game state management
         self.network: NetworkClient = NetworkClient()
@@ -92,7 +94,8 @@ class Engine:
     def run(self):
         """main game loop. Updates the game, manages inputs, buttons,
         draws UI, handles special loop cases, and maintains the game clock"""
-        self.switch_to_welcome()
+        self.switch_to_draw()
+        # self.switch_to_welcome()
         while True:
             if self.room.game:
                 print(self.room.game.phase)
@@ -191,6 +194,8 @@ class Engine:
         for data in self.type_text_draws:
             # NEED TO SEPARATE FROM NORMAL DRAWS! TWO DIFFERENT VECTORS
             self.draw_typing_text(data)
+        if self.scene == "drawing":
+            self.tool_text.text = "Current: " + self.curr_tool
 
     #TODO: SETTINGS NEED TO BE PRESERVED WHEN BUTTONS DIE! (STORE IN ENGINE/SERVER)
     def manage_buttons(self):
@@ -319,42 +324,73 @@ class Engine:
                                        self.set_curr_prompt, "Enter A Prompt"),
                                Button(self.np(50,90), (self.ns(140 * 2.2, 51 * 2.2)),
                                       "assets/textures/submit.png", self.submit),
-                               SliderButton(self.np(20, 20), self.ns(300,30),
-                                            0, 100, self.set_sound_effects_volume)]
+                               # SliderButton(self.np(20, 20), self.ns(300,30),
+                               #           0, 100, self.set_sound_effects_volume)
+                                      ]
         self.draw_order = self.active_buttons + self.active_drawings +\
                           self.active_ui + self.active_animations
 
     def switch_to_guessing(self):
         """switches the scene to guessing, initializing the UI."""
         self.scene = "guessing"
-        self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10)]
-        self.active_buttons = [TypeBox(self.np(50, 80), self.ns(1300 * 0.6, 70 * 0.6),
+        self.active_ui = [TimeBar(self.np(92,43), self.ns(60 * 1.5, 270 * 1.5), 10),
+                          DefaultUI(self.np(36, 43), self.ns(650, 400),
+                                    "assets/textures/color_button.png")
+        ]
+        self.active_buttons = [TypeBox(self.np(50, 86), self.ns(1550 * 0.6, 70 * 0.6),
                                        "assets/textures/text_box_5.png",
                                        self.set_curr_guess,"Type A Response")]
-        self.draw_order = self.active_buttons + self.active_drawings +\
-                          self.active_ui + self.active_animations
+        self.active_drawings = [DrawingWindow(self.np(36, 43), self.ns(845, 455))]
+        self.draw_order = self.active_buttons + self.active_ui + \
+                          self.active_drawings + self.active_animations
+        self.draw_order = self.active_buttons + self.active_ui +\
+                          self.active_drawings + self.active_animations
 
     def switch_to_draw(self):
         """switches the scene to drawing, initializing the UI."""
         # note from Mat - this makes the drawing window displayable, not fully functional
         self.scene = "drawing"
-        self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10),
+        self.tool_text = TextUI(self.np(60, 95), self.ns(20, 20),
+                                 "Current: " + self.curr_tool, (0, 0, 0))
+        self.active_ui = [TimeBar(self.np(94,58), self.ns(60 * 1.5, 320 * 1.5), 60),
                           TextUI(self.np(50, 10), self.ns(100, 100),
-                                 "PUT CORRECT PROMPT HERE!", (0, 0, 0))
-                          ]
+                                 "PUT CORRECT PROMPT HERE!", (0, 0, 0)),
+                          TextUI(self.np(69, 57), self.ns(10, 10),
+                                 "1", (0, 0, 0)),
+                          TextUI(self.np(69, 65), self.ns(10, 10),
+                                 "2", (0, 0, 0)),
+                          TextUI(self.np(69, 73), self.ns(10, 10),
+                                 "4", (0, 0, 0)),
+                          TextUI(self.np(69, 81), self.ns(10, 10),
+                                 "8", (0, 0, 0)),
+                          TextUI(self.np(60, 90), self.ns(20, 20),
+                                 "Eraser and Fill", (0, 0, 0)),
+                          self.tool_text,
+                          DefaultUI(self.np(36, 53), self.ns(650, 400),
+                                "assets/textures/color_button.png")]
         self.active_buttons = [
-            ColorWheel(self.np(50, 85), (self.ns(180, 180)), self.set_color),
-            BrightnessSlider(self.np(70, 80), (self.ns(1 * 50, 4 * 50)), self.set_brightness),
+            ColorWheel(self.np(79, 36), (self.ns(180, 180)), self.set_color),
+            BrightnessSlider(self.np(85, 69), (self.ns(1.2 * 50, 4 * 50)), self.set_brightness),
         #   ColorButton(self.np(10, 80), self.ns(40, 40), self.set_color, "red"),
         #   ColorWheel(self.np(50,85), (self.ns(180,180)), self.set_color)
-            Button(self.np(80, 95), self.ns(60, 60),
-                   "assets/textures/submit.png", self.set_brush_thickness),
-            Button(self.np(90, 95), self.ns(60, 60),
-                   "assets/textures/submit.png", self.set_current_tool)]
+            Button(self.np(75, 57), self.ns(100, 40),
+                   "assets/textures/submit.png", lambda: self.set_brush_thickness(1)),
+            Button(self.np(75, 65), self.ns(100, 40),
+                   "assets/textures/submit.png", lambda: self.set_brush_thickness(2)),
+            Button(self.np(75, 73), self.ns(100, 40),
+                   "assets/textures/submit.png", lambda: self.set_brush_thickness(4)),
+            Button(self.np(75, 81), self.ns(100, 40),
+                   "assets/textures/submit.png", lambda: self.set_brush_thickness(8)),
+            Button(self.np(74, 92), self.ns(80, 60),
+                   "assets/textures/submit.png", lambda: self.set_eraser()),
+            Button(self.np(84, 92), self.ns(80, 60),
+                    "assets/textures/submit.png", self.set_fill_tool),
+            Button(self.np(36, 92.5), (self.ns(140 * 1.8, 51 * 1.8)),
+                  "assets/textures/submit.png", self.submit)]
         # Mat changed this line
-        self.active_drawings = [DrawingWindow(self.np(50,50), self.ns(845 * 0.5, 455 * 0.5))]
-        self.draw_order = self.active_buttons + self.active_drawings +\
-                          self.active_ui + self.active_animations
+        self.active_drawings = [DrawingWindow(self.np(36,53), self.ns(845, 455))]
+        self.draw_order = self.active_buttons + self.active_ui +\
+                          self.active_drawings + self.active_animations
 
     def switch_to_results(self):
         """switches the scene to results, initializing the UI"""
@@ -495,31 +531,45 @@ class Engine:
     def set_color(self, color):
         """sets the RGB color while drawing. Primarily used by buttons"""
         self.curr_color = color
+        self.curr_shade = [
+            color[0] * self.brightness,
+            color[1] * self.brightness,
+            color[2] * self.brightness]
 
     def set_brightness(self, val):
         """sets brightness of the RGB value while drawing.
         Utilized by BrightnessSlider object exclusively"""
-        self.curr_shade[0] = self.curr_color[0] * val
-        self.curr_shade[1] = self.curr_color[1] * val
-        self.curr_shade[2] = self.curr_color[2] * val
+        self.brightness = val
+        self.curr_shade = [
+            self.curr_color[0] * val,
+            self.curr_color[1] * val,
+            self.curr_color[2] * val]
 
     def check_box_test(self, val):
         """temporary test empty function"""
         return
 
-    def set_brush_thickness(self):
+    def set_brush_thickness(self, num):
         """sets the brush thickness while drawing. Primarily used by buttons"""
-        thickness = [1, 2, 4]
-        self.brush_index = (self.brush_index + 1) % len(thickness)
-        self.curr_brush = thickness[self.brush_index]
-        print("Brush thickness:", self.curr_brush)
+        self.curr_brush = num
+        self.curr_tool = "brush"
+        # print("Brush thickness:", self.curr_brush)
 
-    def set_current_tool(self):
-        """sets the current paint tool while drawing. Primarily used by buttons"""
-        tools = ["brush", "fill"]
-        self.tool_index = (self.tool_index + 1) % len(tools)
-        self.curr_tool = tools[self.tool_index]
-        print("Current tool:", self.curr_tool)
+    def set_fill_tool(self):
+        """sets the tool to fill. Primarily used by buttons"""
+        self.curr_tool = "fill"
+        # print("Current tool:", self.curr_tool)
+
+    def set_brush_tool(self):
+        """Sets tool to brush"""
+        self.curr_tool = "brush"
+        # print("Current tool:", self.curr_tool)
+
+    def set_eraser(self):
+        """Sets the current color to eraser values. Primarily used by buttons"""
+        self.curr_color = [240, 240, 240]
+        self.curr_shade = [240, 240, 240]
+        self.curr_tool = "brush"
 
     def set_name(self, name):
         """sets the name of the user. Primarily used by buttons"""

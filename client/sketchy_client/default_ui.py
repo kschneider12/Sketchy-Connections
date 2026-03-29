@@ -44,6 +44,10 @@ class TransparentUI(DefaultUI):
         self.surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA) # pylint: disable=no-member
         self.surface.fill((color[0], color[1], color[2], transparency))
 
+    def draw(self, screen, curr_color=None):
+        """draws the ui on the screen"""
+        screen.blit(self.surface, (self.pos[0] - self.width / 2, self.pos[1] - self.height / 2))
+
 class TextUI(DefaultUI):
     """Extending DefaultUI, this UI is plain text on the background."""
     def __init__(self, position, size, text, color, z = 0):

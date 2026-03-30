@@ -465,11 +465,12 @@ class AnimationWindow:
 
             self.index += 1
 
-    def draw(self, screen):
+    def draw(self, screen, curr_color = None):
         """Renders the animation window on the screen
 
         Args:
             screen: (pygame.Surface): the screen being displayed
+            curr_color: (pygame.Surface): the screen being displayed
         """
         self.grid.draw(screen)
 

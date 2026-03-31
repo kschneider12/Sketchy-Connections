@@ -8,7 +8,7 @@ import pygame
 import pyautogui
 from pygame.constants import K_KP_ENTER # pylint: disable=no-name-in-module
 
-from sketchy_shared.types import PlayerData,\
+from shared.sketchy_shared.types import PlayerData,\
     RoomPhase, RoomData
 from .button import Button
 #from .CheckboxButton import CheckboxButton
@@ -94,8 +94,7 @@ class Engine:
     def run(self):
         """main game loop. Updates the game, manages inputs, buttons,
         draws UI, handles special loop cases, and maintains the game clock"""
-        self.switch_to_draw()
-        # self.switch_to_welcome()
+        self.switch_to_welcome()
         while True:
             if self.room.game:
                 print(self.room.game.phase)

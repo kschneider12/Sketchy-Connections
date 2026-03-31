@@ -96,7 +96,7 @@ class Grid:
         self.surface.fill(COLORS['background'])
 
         self.brush_cache = {}
-        for r in [1, 2, 4]:
+        for r in [1, 2, 4, 8]:
             self.brush_cache[r] = self.brush_offsets(r)
 
     def create_cells(self):
@@ -356,11 +356,12 @@ class DrawingWindow:
 
         self.last_mouse = mouse_pressed
 
-    def draw(self, screen):
+    def draw(self, screen, curr_color):
         """Renders the drawing grid on the screen
 
         Args:
             screen: (pygame.Surface): the screen being displayed
+            curr_color (tuple): current user color
         """
         self.grid.draw(screen)
 
@@ -465,12 +466,11 @@ class AnimationWindow:
 
             self.index += 1
 
-    def draw(self, screen, curr_color = None):
+    def draw(self, screen, curr_color):
         """Renders the animation window on the screen
 
         Args:
             screen: (pygame.Surface): the screen being displayed
-            curr_color: (pygame.Surface): the screen being displayed
         """
         self.grid.draw(screen)
 

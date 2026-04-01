@@ -108,7 +108,6 @@ class ServerRuntime:
                 (player_id, websocket, {"type": "room_state", "room": room.to_dict(player_id)})
                 for player_id, websocket in sockets
             ]
-        print(payloads)
 
         stale_players: list[str] = []
         for player_id, websocket, payload in payloads:
@@ -226,7 +225,7 @@ async def handle_client_message(
 
             room_connections = runtime.connections.get(room.room_id, {})
             room_connections.pop(player_id, None)
-            if not room.players:
+            if not room.players or len(room.players) == 0:
                 runtime.connections.pop(room.room_id, None)
                 runtime.rooms.remove_room(room.room_id)
             else:

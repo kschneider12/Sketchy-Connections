@@ -13,6 +13,7 @@ from shared.sketchy_shared.types import PlayerData,\
 from .button import Button
 #from .CheckboxButton import CheckboxButton
 #from .ChoicesButton import ChoicesButton
+from .pen_type_button import PenTypeButton
 from .brightness_slider import BrightnessSlider
 from .default_ui import DefaultUI, TransparentUI, TextUI, PlayerDisplay
 from .time_bar import TimeBar
@@ -25,8 +26,8 @@ from .draw_window import DrawingWindow, AnimationWindow
 from .color_wheel import ColorWheel
 # from draw_window import AnimationWindow
 
-SCREEN_LEN = pyautogui.size()[0]
-SCREEN_HT = pyautogui.size()[1]
+SCREEN_LEN = pyautogui.size()[0] / 2
+SCREEN_HT = pyautogui.size()[1] / 2
 
 
 class Engine:
@@ -94,7 +95,7 @@ class Engine:
     def run(self):
         """main game loop. Updates the game, manages inputs, buttons,
         draws UI, handles special loop cases, and maintains the game clock"""
-        self.switch_to_welcome()
+        self.switch_to_draw()
         while True:
             if self.room.game:
                 print(self.room.game.phase)
@@ -189,6 +190,8 @@ class Engine:
                     self.submit()
             elif isinstance(elem, PlayerDisplay):
                 elem.set_active_players(self.network.room.players)
+            elif isinstance(elem,PenTypeButton):
+                elem.set_selection(self.curr_brush)
             elem.draw(self.screen, self.curr_color)
         for data in self.type_text_draws:
             # NEED TO SEPARATE FROM NORMAL DRAWS! TWO DIFFERENT VECTORS
@@ -372,18 +375,18 @@ class Engine:
             BrightnessSlider(self.np(85, 69), (self.ns(1.2 * 50, 4 * 50)), self.set_brightness),
         #   ColorButton(self.np(10, 80), self.ns(40, 40), self.set_color, "red"),
         #   ColorWheel(self.np(50,85), (self.ns(180,180)), self.set_color)
-            Button(self.np(75, 57), self.ns(100, 40),
-                   "assets/textures/submit.png", lambda: self.set_brush_thickness(1)),
-            Button(self.np(75, 65), self.ns(100, 40),
-                   "assets/textures/submit.png", lambda: self.set_brush_thickness(2)),
-            Button(self.np(75, 73), self.ns(100, 40),
-                   "assets/textures/submit.png", lambda: self.set_brush_thickness(4)),
-            Button(self.np(75, 81), self.ns(100, 40),
-                   "assets/textures/submit.png", lambda: self.set_brush_thickness(8)),
+            PenTypeButton(self.np(75, 57), self.ns(100, 40),
+                   "assets/textures/thickness_1.png", lambda: self.set_brush_thickness(1), 1),
+            PenTypeButton(self.np(75, 65), self.ns(100, 40),
+                   "assets/textures/thickness_2.png", lambda: self.set_brush_thickness(2), 2),
+            PenTypeButton(self.np(75, 73), self.ns(100, 40),
+                   "assets/textures/thickness_3.png", lambda: self.set_brush_thickness(4), 4),
+            PenTypeButton(self.np(75, 81), self.ns(100, 40),
+                   "assets/textures/thickness_4.png", lambda: self.set_brush_thickness(8), 8),
             Button(self.np(74, 92), self.ns(80, 60),
                    "assets/textures/submit.png", lambda: self.set_eraser()),
-            Button(self.np(84, 92), self.ns(80, 60),
-                    "assets/textures/submit.png", self.set_fill_tool),
+            PenTypeButton(self.np(84, 92), self.ns(80, 60),
+                    "assets/textures/thickness_1.png", self.set_fill_tool, 0),
             Button(self.np(36, 92.5), (self.ns(140 * 1.8, 51 * 1.8)),
                   "assets/textures/submit.png", self.submit)]
         # Mat changed this line
@@ -556,6 +559,7 @@ class Engine:
 
     def set_fill_tool(self):
         """sets the tool to fill. Primarily used by buttons"""
+        self.curr_brush = 0
         self.curr_tool = "fill"
         # print("Current tool:", self.curr_tool)
 

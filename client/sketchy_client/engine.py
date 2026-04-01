@@ -26,8 +26,8 @@ from .draw_window import DrawingWindow, AnimationWindow
 from .color_wheel import ColorWheel
 # from draw_window import AnimationWindow
 
-SCREEN_LEN = pyautogui.size()[0] / 2
-SCREEN_HT = pyautogui.size()[1] / 2
+SCREEN_LEN = pyautogui.size()[0]
+SCREEN_HT = pyautogui.size()[1]
 
 
 class Engine:
@@ -96,7 +96,7 @@ class Engine:
     def run(self):
         """main game loop. Updates the game, manages inputs, buttons,
         draws UI, handles special loop cases, and maintains the game clock"""
-        self.switch_to_draw()
+        self.switch_to_welcome()
         while True:
             self.room = self.network.room
             if self.network_error is not None:
@@ -262,6 +262,11 @@ class Engine:
         regardless of screen size"""
         return x * SCREEN_LEN / 1000, y * SCREEN_HT / 1000 * 16/10
 
+    def nl(self, x, y):
+        """short for normalize length, this normalizes draw window length
+        regardless of screen size"""
+        return x * SCREEN_LEN / 1000, y * SCREEN_LEN / 1000
+
 #------------------------------------------------------------------------------------------------
 #Button Commands listed below
 #------------------------------------------------------------------------------------------------
@@ -389,7 +394,7 @@ class Engine:
             Button(self.np(36, 92.5), (self.ns(140 * 1.8, 51 * 1.8)),
                   "assets/textures/submit.png", self.submit)]
         # Mat changed this line
-        self.active_drawings = [DrawingWindow(self.np(36,53), self.ns(845, 455))]
+        self.active_drawings = [DrawingWindow(self.np(36,53), self.nl(845, 455))]
         self.draw_order = self.active_buttons + self.active_ui +\
                           self.active_drawings + self.active_animations
 

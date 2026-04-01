@@ -8,7 +8,7 @@ from urllib.parse import urljoin, urlparse, urlunparse
 
 import aiohttp
 
-from shared.sketchy_shared.types import PlayerRegistrationData, RoomData, PlayerData
+from sketchy_shared.types import PlayerRegistrationData, RoomData, PlayerData
 
 
 class NetworkClientError(RuntimeError):
@@ -33,7 +33,7 @@ class NetworkClient:
     ``_run_coroutine`` registers an event to be triggered
     """
 
-    def __init__(self, base_url: str = "http://127.0.0.1:8000", *, request_timeout: float = 10.0):
+    def __init__(self, base_url: str = "https://api.sketchy-connections.com/", *, request_timeout: float = 100.0):
         self._base_url = base_url.rstrip("/")
         self._request_timeout = request_timeout
 
@@ -164,7 +164,7 @@ class NetworkClient:
         coroutine,
         *,
         timeout: float | None = None,
-        check_listener_error: bool = True,
+        check_listener_error: bool = False,
     ):
         if self._closed:
             raise NetworkClientError("Network client is already closed.")

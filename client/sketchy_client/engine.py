@@ -8,7 +8,7 @@ import pygame
 import pyautogui
 from pygame.constants import K_KP_ENTER # pylint: disable=no-name-in-module
 
-from shared.sketchy_shared.types import PlayerData,\
+from sketchy_shared.types import PlayerData,\
     RoomPhase, RoomData
 from .button import Button
 #from .CheckboxButton import CheckboxButton
@@ -88,6 +88,7 @@ class Engine:
         self.room: RoomData = RoomData()
         self.player: PlayerData = PlayerData()
         self.network_error = None
+        self.submitted = False
         self.last_submission = ""
 
 
@@ -96,9 +97,6 @@ class Engine:
         draws UI, handles special loop cases, and maintains the game clock"""
         self.switch_to_welcome()
         while True:
-            if self.room.game:
-                print(self.room.game.phase)
-
             self.room = self.network.room
             if self.network_error is not None:
                 print(self.network_error)
@@ -113,7 +111,8 @@ class Engine:
             self.manage_buttons()
 
             if self.room.phase == RoomPhase.PLAYING:
-                if self.scene != self.room.game.phase:
+                if self.room.game and self.scene != self.room.game.phase:
+                    self.submitted = False
                     match self.room.game.phase:
                         case 'writing':
                             self.switch_to_writing()
@@ -353,7 +352,7 @@ class Engine:
                                  "Current: " + self.curr_tool, (0, 0, 0))
         self.active_ui = [TimeBar(self.np(94,58), self.ns(60 * 1.5, 320 * 1.5), 60),
                           TextUI(self.np(50, 10), self.ns(100, 100),
-                                 "PUT CORRECT PROMPT HERE!", (0, 0, 0)),
+                                 "Prompt: " + self.room.game.current_prompt.content, (0, 0, 0)),
                           TextUI(self.np(69, 57), self.ns(10, 10),
                                  "1", (0, 0, 0)),
                           TextUI(self.np(69, 65), self.ns(10, 10),
@@ -588,8 +587,11 @@ class Engine:
 
     def submit(self):
         """refers to server that a user has made a submission, and submits it"""
-        if self.scene == "writing":
+        print(self.submitted)
+        if self.scene == "writing" and not self.submitted:
             self.network.submit_entry(self.curr_prompt)
-        if self.scene == "drawing":
+            self.submitted = True
+        elif self.scene == "drawing" and not self.submitted:
             self.network.submit_entry(self.active_drawings[0].drawn_pixels)
-        self.network.sync()
+            print(self.network.room.to_dict())
+            self.submitted = True

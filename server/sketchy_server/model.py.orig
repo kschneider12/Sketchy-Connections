@@ -142,16 +142,21 @@ class Room:
             raise ValueError("Only the host can start the game.")
         if self.phase != RoomPhase.LOBBY:
             raise ValueError("Game has already started.")
+<<<<<<< HEAD
+        # if len(self.players) <= 2:
+        #     raise ValueError("Need at least 3 players to start.")
+=======
         #if len(self.players) <= 2:
             #raise ValueError("Need at least 3 players to start.")
+>>>>>>> network_client_merge
 
         self.game = GameState(self.players)
         self.phase = RoomPhase.PLAYING
 
     def submit_entry(self, player_id: str, content: str | list):
         assert self.game is not None
-        #if self.phase != RoomPhase.PLAYING:
-            #raise ValueError("Game is not in progress.")
+        if self.phase != RoomPhase.PLAYING:
+            raise ValueError("Game is not in progress.")
 
         self.game.submit_entry(player_id, content)
 

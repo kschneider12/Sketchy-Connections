@@ -26,8 +26,8 @@ from .draw_window import DrawingWindow, AnimationWindow
 from .color_wheel import ColorWheel
 # from draw_window import AnimationWindow
 
-SCREEN_LEN = pyautogui.size()[0] / 2
-SCREEN_HT = pyautogui.size()[1] / 2
+SCREEN_LEN = pyautogui.size()[0]
+SCREEN_HT = pyautogui.size()[1]
 
 class Engine:
     """Initialization of Engine, including the screen, UI elements,
@@ -95,7 +95,7 @@ class Engine:
     def run(self):
         """main game loop. Updates the game, manages inputs, buttons,
         draws UI, handles special loop cases, and maintains the game clock"""
-        self.switch_to_welcome()
+        self.switch_to_results()
         while True:
             self.room = self.network.room
             if self.network_error is not None:
@@ -410,10 +410,20 @@ class Engine:
     def switch_to_results(self):
         """switches the scene to results, initializing the UI"""
         self.scene = "results"
-        self.active_ui = []
+        self.active_ui = [
+            TextUI(self.np(18, 4), self.ns(150*1.5, 60*1),
+                   "Game Results", (0, 0, 0)),
+            # TODO: replace with actual border
+            DefaultUI(self.np(68, 50), self.ns(620, 640),
+                      "assets/textures/default_texture.png"),
+            PlayerDisplay(self.np(4, 55), self.ns(30 * 2.4, 241 * 2.4),
+                          (SCREEN_LEN, SCREEN_HT), self.network.room.players),
+            #DefaultUI(self.np(10, 5), self.ns(130 * 1.5, 50 * 1),
+            #          "assets/textures/players.png")
+        ]
         self.active_buttons = [
-            Button(self.np(80, 95), (self.ns(140 * 2.2, 51 * 2.2)),
-                   "assets/textures/submit.png", self.switch_to_lobby)
+            #Button(self.np(80, 95), (self.ns(140 * 2.2, 51 * 2.2)),
+            #      "assets/textures/submit.png", self.switch_to_lobby)
 
         ]
         pixels = []
@@ -421,9 +431,17 @@ class Engine:
             pixels = self.active_drawings[0].get_drawn_pixels()
 
         self.active_animations = [
-            AnimationWindow(self.np(50, 50), self.ns(845, 455), pixels)
+            AnimationWindow(self.np(76, 50), self.ns(325*1.7, 175*1.7), pixels)
         ]
-        self.active_drawings = []
+        #self.active_drawings = []
+
+        if self.player.is_host:
+            self.active_buttons = [
+                Button(self.np(88, 90), (self.ns(115 * 1.8, 51 * 1.8)),
+                       "assets/textures/play.png", self.start_game)]
+        else:
+            self.active_buttons = []
+
         self.draw_order = self.active_buttons + self.active_drawings +\
                           self.active_ui + self.active_animations
 

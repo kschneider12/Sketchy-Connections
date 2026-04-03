@@ -39,7 +39,7 @@ class TimeBar(DefaultUI):
             if val < 0 or val > 255:
                 color = (0,0,0)
         pygame.draw.rect(screen, color,
-                         pygame.Rect(self.pos[0] - self.width / 2.15, self.bar_pos[1] + 5,
+                         pygame.Rect(self.pos[0] - self.width / 2.17, self.bar_pos[1] + 5,
                                      self.width * 9/10, self.height * 1.245 - self.bar_pos[1] + 5))
         screen.blit(self.bar_img, self.bar_pos)
         screen.blit(self.img, (self.pos[0] - self.width / 2, self.pos[1] - self.height / 2))

@@ -270,8 +270,8 @@ class DrawingWindow:
         self.center = center_pos
         self.size = size
 
-        self.cell_width = size[0] / GRID_WIDTH
-        self.cell_height = size[1] / GRID_HEIGHT
+        self.cell_width = size[0] / (GRID_WIDTH * 1.0)
+        self.cell_height = size[1] / (GRID_HEIGHT * 1.0)
 
         self.cell_size = int(min((self.cell_width, self.cell_height)))
 

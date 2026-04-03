@@ -96,7 +96,7 @@ class Engine:
     def run(self):
         """main game loop. Updates the game, manages inputs, buttons,
         draws UI, handles special loop cases, and maintains the game clock"""
-        self.switch_to_welcome()
+        self.switch_to_draw()
         while True:
             self.room = self.network.room
             if self.network_error is not None:
@@ -262,10 +262,10 @@ class Engine:
         regardless of screen size"""
         return x * SCREEN_LEN / 1000, y * SCREEN_HT / 1000 * 16/10
 
-    def nl(self, x, y):
+    def nl(self, x):
         """short for normalize length, this normalizes draw window length
         regardless of screen size"""
-        return x * SCREEN_LEN / 1000, y * SCREEN_LEN / 1000 * 16/10
+        return x * SCREEN_LEN / 1000.0, x * SCREEN_LEN / 1000.0 * 175/325.0
 
 #------------------------------------------------------------------------------------------------
 #Button Commands listed below
@@ -359,8 +359,8 @@ class Engine:
         self.tool_text = TextUI(self.np(60, 95), self.ns(20, 20),
                                  "Current: " + self.curr_tool, (0, 0, 0))
         self.active_ui = [TimeBar(self.np(94,58), self.ns(60 * 1.5, 320 * 1.5), 60),
-                          TextUI(self.np(50, 10), self.ns(100, 100),
-                                 "Prompt: " + self.room.game.current_prompt.content, (0, 0, 0)),
+                          #TextUI(self.np(50, 10), self.ns(100, 100),
+                                 #"Prompt: " + self.room.game.current_prompt.content, (0, 0, 0)),
                           TextUI(self.np(69, 57), self.ns(10, 10),
                                  "1", (0, 0, 0)),
                           TextUI(self.np(69, 65), self.ns(10, 10),
@@ -372,7 +372,7 @@ class Engine:
                           TextUI(self.np(60, 90), self.ns(20, 20),
                                  "Eraser and Fill", (0, 0, 0)),
                           self.tool_text,
-                          DefaultUI(self.np(36, 53), self.ns(650, 400),
+                          DefaultUI(self.np(36, 53), self.nl(660),
                                 "assets/textures/color_button.png")]
         self.active_buttons = [
             ColorWheel(self.np(79, 36), (self.ns(180, 180)), self.set_color),
@@ -394,7 +394,12 @@ class Engine:
             Button(self.np(36, 92.5), (self.ns(140 * 1.8, 51 * 1.8)),
                   "assets/textures/submit.png", self.submit)]
         # Mat changed this line
-        self.active_drawings = [DrawingWindow(self.np(36,53), self.nl(845, 455))]
+        #TODO: MAT- self.nl works- I use it for the colorbutton texture you put behind
+        #TODO: the drawing window for reference. Mess around with DrawingWindow and change 680.
+        #TODO: See how it snaps? The calculation for size of drawing window is not consistent with
+        #TODO: the other UI elements- please look at this and solve it, as it's out of my scope now.
+        #TODO: The objective is that it can be ANY size- especially for the results page.
+        self.active_drawings = [DrawingWindow(self.np(36,53), self.nl(680))]
         self.draw_order = self.active_buttons + self.active_ui +\
                           self.active_drawings + self.active_animations
 

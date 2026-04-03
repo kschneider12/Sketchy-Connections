@@ -267,6 +267,10 @@ class Engine:
         regardless of screen size"""
         return x * SCREEN_LEN / 1000.0, x * SCREEN_LEN / 1000.0 * 175/325.0
 
+    #TODO: Pause screen with volume bars and leave game
+    #TODO: Drawing only starts when you click on canvas
+    #TODO: Better drawing update disable (for pause menu)
+
 #------------------------------------------------------------------------------------------------
 #Button Commands listed below
 #------------------------------------------------------------------------------------------------

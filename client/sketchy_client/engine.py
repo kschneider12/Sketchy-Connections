@@ -26,9 +26,8 @@ from .draw_window import DrawingWindow, AnimationWindow
 from .color_wheel import ColorWheel
 # from draw_window import AnimationWindow
 
-SCREEN_LEN = pyautogui.size()[0]
-SCREEN_HT = pyautogui.size()[1]
-
+SCREEN_LEN = pyautogui.size()[0] / 2
+SCREEN_HT = pyautogui.size()[1] / 2
 
 class Engine:
     """Initialization of Engine, including the screen, UI elements,
@@ -363,8 +362,8 @@ class Engine:
         self.tool_text = TextUI(self.np(60, 95), self.ns(20, 20),
                                  "Current: " + self.curr_tool, (0, 0, 0))
         self.active_ui = [TimeBar(self.np(94,58), self.ns(60 * 1.5, 320 * 1.5), 60),
-                          #TextUI(self.np(50, 10), self.ns(100, 100),
-                                 #"Prompt: " + self.room.game.current_prompt.content, (0, 0, 0)),
+                          TextUI(self.np(50, 10), self.ns(100, 100),
+                                 "Prompt: " + self.room.game.current_prompt.content, (0, 0, 0)),
                           TextUI(self.np(69, 57), self.ns(10, 10),
                                  "1", (0, 0, 0)),
                           TextUI(self.np(69, 65), self.ns(10, 10),
@@ -382,7 +381,6 @@ class Engine:
             ColorWheel(self.np(79, 36), (self.ns(180, 180)), self.set_color),
             BrightnessSlider(self.np(85, 69), (self.ns(1.2 * 50, 4 * 50)), self.set_brightness),
             #ColorButton(self.np(10, 80), self.ns(40, 40), self.set_color, "red"),
-            ColorWheel(self.np(50,85), (self.ns(180,180)), self.set_color),
             PenTypeButton(self.np(75, 57), self.ns(100, 40),
                    "assets/textures/thickness_1.png", lambda: self.set_brush_thickness(1), 1),
             PenTypeButton(self.np(75, 65), self.ns(100, 40),

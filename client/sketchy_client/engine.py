@@ -95,7 +95,7 @@ class Engine:
     def run(self):
         """main game loop. Updates the game, manages inputs, buttons,
         draws UI, handles special loop cases, and maintains the game clock"""
-        self.switch_to_welcome()
+        self.switch_to_draw()
         while True:
             self.room = self.network.room
             if self.network_error is not None:
@@ -195,7 +195,14 @@ class Engine:
             # NEED TO SEPARATE FROM NORMAL DRAWS! TWO DIFFERENT VECTORS
             self.draw_typing_text(data)
         if self.scene == "drawing":
-            self.tool_text.text = "Current: " + self.curr_tool
+            if self.curr_shade == [240, 240, 240] and \
+                self.curr_tool == "fill":
+                self.tool_text.text = "eraser fill"
+            elif self.curr_shade == [240, 240, 240] and \
+                    self.curr_tool == "brush":
+                self.tool_text.text = "eraser brush"
+            else:
+                self.tool_text.text = "draw " + self.curr_tool
 
     def manage_buttons(self):
         """manages all active buttons on screen, running behavior
@@ -362,18 +369,10 @@ class Engine:
         self.tool_text = TextUI(self.np(60, 95), self.ns(20, 20),
                                  "Current: " + self.curr_tool, (0, 0, 0))
         self.active_ui = [TimeBar(self.np(94,58), self.ns(60 * 1.5, 320 * 1.5), 60),
-                          TextUI(self.np(50, 10), self.ns(100, 100),
-                                 "Prompt: " + self.room.game.current_prompt.content, (0, 0, 0)),
-                          TextUI(self.np(69, 57), self.ns(10, 10),
-                                 "1", (0, 0, 0)),
-                          TextUI(self.np(69, 65), self.ns(10, 10),
-                                 "2", (0, 0, 0)),
-                          TextUI(self.np(69, 73), self.ns(10, 10),
-                                 "4", (0, 0, 0)),
-                          TextUI(self.np(69, 81), self.ns(10, 10),
-                                 "8", (0, 0, 0)),
+                          # TextUI(self.np(50, 10), self.ns(100, 100),
+                          #      "Prompt: " + self.room.game.current_prompt.content, (0, 0, 0)),
                           TextUI(self.np(60, 90), self.ns(20, 20),
-                                 "Eraser and Fill", (0, 0, 0)),
+                                 "Current Tool: ", (0, 0, 0)),
                           self.tool_text,
                           DefaultUI(self.np(36, 53), self.nl(660),
                                 "assets/textures/color_button.png")]

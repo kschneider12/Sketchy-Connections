@@ -96,7 +96,7 @@ class Engine:
     def run(self):
         """main game loop. Updates the game, manages inputs, buttons,
         draws UI, handles special loop cases, and maintains the game clock"""
-        self.switch_to_draw()
+        self.switch_to_welcome()
         while True:
             self.room = self.network.room
             if self.network_error is not None:
@@ -377,8 +377,8 @@ class Engine:
         self.active_buttons = [
             ColorWheel(self.np(79, 36), (self.ns(180, 180)), self.set_color),
             BrightnessSlider(self.np(85, 69), (self.ns(1.2 * 50, 4 * 50)), self.set_brightness),
-        #   ColorButton(self.np(10, 80), self.ns(40, 40), self.set_color, "red"),
-        #   ColorWheel(self.np(50,85), (self.ns(180,180)), self.set_color)
+            #ColorButton(self.np(10, 80), self.ns(40, 40), self.set_color, "red"),
+            ColorWheel(self.np(50,85), (self.ns(180,180)), self.set_color),
             PenTypeButton(self.np(75, 57), self.ns(100, 40),
                    "assets/textures/thickness_1.png", lambda: self.set_brush_thickness(1), 1),
             PenTypeButton(self.np(75, 65), self.ns(100, 40),

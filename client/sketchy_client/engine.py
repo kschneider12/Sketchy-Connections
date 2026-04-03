@@ -11,7 +11,7 @@ from pygame.constants import K_KP_ENTER # pylint: disable=no-name-in-module
 from sketchy_shared.types import PlayerData,\
     RoomPhase, RoomData
 from .button import Button
-#from .CheckboxButton import CheckboxButton
+from .checkbox_button import CheckboxButton
 #from .ChoicesButton import ChoicesButton
 from .pen_type_button import PenTypeButton
 from .brightness_slider import BrightnessSlider
@@ -288,8 +288,7 @@ class Engine:
                    "assets/textures/join.png", self.enable_room_code),
             TypeBox(self.np(50, 90), self.ns(1300 * 0.6, 110 * 0.6),
                     "assets/textures/text_box_5.png", self.set_name,"Enter A Name",15)]
-            #CheckboxButton(self.np(50,50), self.ns(40, 40), self.check_box_test, "HIII"),
-            #ChoicesButton(self.np(70,50), self.ns(80,40),
+        #ChoicesButton(self.np(70,50), self.ns(80,40),
         #                   self.check_box_test, [0,1,'NICO','RYAN','KENT','LAUREL', 'SOPHIE'])]
         self.active_drawings = []
         self.draw_order = self.active_buttons + self.active_drawings +\
@@ -389,10 +388,13 @@ class Engine:
                    "assets/textures/thickness_3.png", lambda: self.set_brush_thickness(4), 4),
             PenTypeButton(self.np(75, 81), self.ns(100, 40),
                    "assets/textures/thickness_4.png", lambda: self.set_brush_thickness(8), 8),
-            Button(self.np(74, 92), self.ns(80, 60),
-                   "assets/textures/submit.png", lambda: self.set_eraser()),
+            #Button(self.np(74, 92), self.ns(80, 60),
+                   #"assets/textures/submit.png", lambda: self.set_eraser()),
             PenTypeButton(self.np(84, 92), self.ns(80, 60),
                     "assets/textures/thickness_1.png", self.set_fill_tool, 0),
+            CheckboxButton(self.np(74, 92), self.ns(115, 51),
+                           self.set_eraser, "", False,
+                           "assets/textures/eraser_button.png"),
             Button(self.np(36, 92.5), (self.ns(140 * 1.8, 51 * 1.8)),
                   "assets/textures/submit.png", self.submit)]
         # Mat changed this line
@@ -589,11 +591,11 @@ class Engine:
         self.curr_tool = "brush"
         # print("Current tool:", self.curr_tool)
 
-    def set_eraser(self):
+    def set_eraser(self, enabled):
         """Sets the current color to eraser values. Primarily used by buttons"""
-        self.curr_color = [240, 240, 240]
-        self.curr_shade = [240, 240, 240]
-        self.curr_tool = "brush"
+        if enabled:
+            #self.curr_color = [240, 240, 240]
+            self.curr_shade = [240, 240, 240]
 
     def set_name(self, name):
         """sets the name of the user. Primarily used by buttons"""

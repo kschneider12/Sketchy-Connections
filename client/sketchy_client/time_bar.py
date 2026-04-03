@@ -4,6 +4,7 @@ It tracks time in many phases of the game, and counts down, returning True when 
 time runs out.
 """
 import pygame
+import time as t
 
 from .default_ui import DefaultUI
 from .paths import resolve_asset_path
@@ -15,8 +16,11 @@ class TimeBar(DefaultUI):
     def __init__(self, position, size, time):
         img = "assets/textures/time_bar.png"
         self.bar_pos = position
-        self.time = time * 60
-        self.start_time = self.time
+        self.start_time = time
+        self.end_time = t.time() + time
+        self.time = self.start_time
+        print(self.time)
+        self.returned = False
         super().__init__(position, size, img)
         self.bar_img = pygame.image.load(resolve_asset_path("assets/textures/time_line.png"))
         self.bar_img = pygame.transform.scale(self.bar_img, (size[0] * 9/10, 10))
@@ -30,7 +34,7 @@ class TimeBar(DefaultUI):
         self.bar_pos =  (self.pos[0] - self.width / 2.15,
                          self.pos[1] - self.height / 2.05 + (self.start_time - self.time)
                          * (self.height / self.start_time * 0.964))
-        color = (255 - 255 * self.time / self.start_time, 255 * self.time / self.start_time, 0)
+        color = (255 - int(255 * self.time / self.start_time), int(255 * self.time / self.start_time), 0)
         for val in color:
             if val < 0 or val > 255:
                 color = (0,0,0)
@@ -47,7 +51,9 @@ class TimeBar(DefaultUI):
         """
         returns True when the time reaches 0, and else otherwise.
         """
-        if self.time == 0:
-            return True
-        self.time -= 1
+        if not self.returned:
+            self.time = self.end_time - t.time()
+            if self.end_time <= t.time():
+                self.returned = True
+                return True
         return False

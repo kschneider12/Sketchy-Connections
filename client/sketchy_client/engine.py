@@ -198,7 +198,6 @@ class Engine:
         if self.scene == "drawing":
             self.tool_text.text = "Current: " + self.curr_tool
 
-    #TODO: SETTINGS NEED TO BE PRESERVED WHEN BUTTONS DIE! (STORE IN ENGINE/SERVER)
     def manage_buttons(self):
         """manages all active buttons on screen, running behavior
         and handling any output in any variation"""
@@ -265,7 +264,7 @@ class Engine:
     def nl(self, x, y):
         """short for normalize length, this normalizes draw window length
         regardless of screen size"""
-        return x * SCREEN_LEN / 1000, y * SCREEN_LEN / 1000
+        return x * SCREEN_LEN / 1000, y * SCREEN_LEN / 1000 * 16/10
 
 #------------------------------------------------------------------------------------------------
 #Button Commands listed below
@@ -426,18 +425,21 @@ class Engine:
             self.active_ui.append(TransparentUI(self.np(50,50),
                                                 self.ns(SCREEN_LEN * 2,SCREEN_HT * 2),
                                                 (0,0,0), 150))
-            self.active_buttons.append(Button(self.np(60, 60), (self.ns(140 * 1.2, 51 * 1.2)),
+            self.active_buttons.append(Button(self.np(62, 60), (self.ns(140 * 1.5, 51 * 1.5)),
                                               "assets/textures/join.png", self._join_room, z=2))
-            self.active_buttons.append(Button(self.np(40, 60), (self.ns(140 * 1.2, 51 * 1.2)),
+            self.active_buttons.append(Button(self.np(38, 60), (self.ns(140 * 1.5, 51 * 1.5)),
                                               "assets/textures/join.png",
                                               self.disable_room_code, z=2))
-            self.active_buttons.append(TypeBox(self.np(50, 40), (self.ns(150 * 1, 64 * 1)),
+            self.active_buttons.append(TypeBox(self.np(50, 40), (self.ns(150 * 1.4, 64 * 1.4)),
                                                "assets/textures/text_box_4.png", self.set_room_code,
                                                "CODE", 4, 2))
 
             self.draw_order = self.active_buttons + self.active_drawings +\
                               self.active_ui + self.active_animations
             self.draw_order = sorted(self.draw_order, key=lambda elem: elem.z)
+            self.draw_order.append(TextUI(self.np(50, 68),
+                                         self.ns(0, 20),
+                                     "", (255, 255, 255)))
 
     def disable_room_code(self):
         """Turns off the room code popup and returns
@@ -498,7 +500,11 @@ class Engine:
     def _join_room(self):
         """Joins the room, accessing the room code and joining it if it exists.
         Supports error with multiple error checks. Sets self.player and self.room"""
-        if self.room_code_attempt and len(self.room_code_attempt) == 4:
+        if not self.room_code_attempt:
+            self.draw_order[-1] = TextUI(self.np(50, 68),
+                                         self.ns(0, 20),
+                                     "Enter a code to join", (255, 255, 255))
+        if self.room_code_attempt:
             room_code = self.room_code_attempt.strip()
             name = self.curr_name.strip()
             if not room_code:
@@ -508,6 +514,9 @@ class Engine:
                 self.network.join_room(name, room_code)
             except NetworkClientError as exc:
                 self.network_error = str(exc)
+                self.draw_order[-1] = TextUI(self.np(50, 68),
+                                             self.ns(0, 20),
+                                             "Invalid Room Code", (255, 255, 255))
                 return
 
             self.room = self.network.room
@@ -595,12 +604,34 @@ class Engine:
         self.room_code_attempt = code.upper()
 
     def submit(self):
+        #TODO: Joe: If a player leaves the game (or crashes) it doesn't submit them,
+        # and everyone sits in limbo waiting for all submissions. How do we want to approach this?
         """refers to server that a user has made a submission, and submits it"""
         print(self.submitted)
         if self.scene == "writing" and not self.submitted:
             self.network.submit_entry(self.curr_prompt)
             self.submitted = True
+            # disable buttons and present close screen
+            self.submit_ui()
         elif self.scene == "drawing" and not self.submitted:
+            # disable buttons and present close screen
+            self.submit_ui()
             self.network.submit_entry(self.active_drawings[0].drawn_pixels)
             print(self.network.room.to_dict())
             self.submitted = True
+
+    def submit_ui(self):
+        """creates the overlay when you submit something"""
+        for button in self.active_buttons:
+            button.active = False
+        self.draw_order.append(TransparentUI(self.np(50, 50),
+                                            self.ns(SCREEN_LEN * 2, SCREEN_HT * 2),
+                                            (0, 0, 0), 150))
+        if self.scene == "writing":
+            self.draw_order.append(TextUI(self.np(50, 40),
+                                         self.ns(0, 80),
+                                     "Wow. This sure is something.", (255, 255, 255)))
+        elif self.scene == "drawing":
+            self.draw_order.append(TextUI(self.np(50, 35),
+                                         self.ns(0, 80),
+                                     "Put that on a fridge!", (255, 255, 255)))

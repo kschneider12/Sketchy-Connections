@@ -222,14 +222,15 @@ class Engine:
         """game loop for drawing screen"""
         # added by Mat for drawing window
         #keys = pygame.key.get_pressed()
-        for drawing_win in self.active_drawings:
-            drawing_win.update(
-                self.mouse_pos,
-                self.mouse_buttons[0],
-                self.curr_shade,
-                self.curr_brush,
-                self.curr_tool
-            )
+        if not self.submitted:
+            for drawing_win in self.active_drawings:
+                drawing_win.update(
+                    self.mouse_pos,
+                    self.mouse_buttons[0],
+                    self.curr_shade,
+                    self.curr_brush,
+                    self.curr_tool
+                )
 
     def results(self):
         """game loop for the game over screen"""
@@ -630,7 +631,7 @@ class Engine:
         if self.scene == "writing":
             self.draw_order.append(TextUI(self.np(50, 40),
                                          self.ns(0, 80),
-                                     "Wow. This sure is something.", (255, 255, 255)))
+                                     "Are you sure?", (255, 255, 255)))
         elif self.scene == "drawing":
             self.draw_order.append(TextUI(self.np(50, 35),
                                          self.ns(0, 80),

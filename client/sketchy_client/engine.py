@@ -12,6 +12,7 @@ from sketchy_shared.types import PlayerData,\
     RoomPhase, RoomData
 from .button import Button
 from .checkbox_button import CheckboxButton
+from .slide_down_button import SlideDownButton
 #from .ChoicesButton import ChoicesButton
 from .pen_type_button import PenTypeButton
 from .brightness_slider import BrightnessSlider
@@ -25,9 +26,8 @@ from .slider_button import SliderButton
 from .draw_window import DrawingWindow, AnimationWindow
 from .color_wheel import ColorWheel
 # from draw_window import AnimationWindow
-
-SCREEN_LEN = pyautogui.size()[0] / 2
-SCREEN_HT = pyautogui.size()[1] / 2
+SCREEN_LEN = pyautogui.size()[0]
+SCREEN_HT = pyautogui.size()[1]
 
 class Engine:
     """Initialization of Engine, including the screen, UI elements,
@@ -254,7 +254,7 @@ class Engine:
     def np(self, x, y):
         """short for normalize position, this normalizes UI elements
         regardless of screen size"""
-        return int(x * SCREEN_LEN / 100), int(y * SCREEN_HT / 100)
+        return [int(x * SCREEN_LEN / 100), int(y * SCREEN_HT / 100)]
     # normalize scale in relation to screen size
     def ns(self, x, y):
         """short for normalize scale, this normalizes UI elements
@@ -287,7 +287,8 @@ class Engine:
             Button(self.np(70, 70), (self.ns(115 * 2.2, 51 * 2.2)),
                    "assets/textures/join.png", self.enable_room_code),
             TypeBox(self.np(50, 90), self.ns(1300 * 0.6, 110 * 0.6),
-                    "assets/textures/text_box_5.png", self.set_name,"Enter A Name",15)]
+                    "assets/textures/text_box_5.png", self.set_name,"Enter A Name",15),
+            SlideDownButton(self.np(90, 0), (self.np(0, 20), self.np(0,80)), self.ns(10,50), self.slider_control)]
         #ChoicesButton(self.np(70,50), self.ns(80,40),
         #                   self.check_box_test, [0,1,'NICO','RYAN','KENT','LAUREL', 'SOPHIE'])]
         self.active_drawings = []
@@ -645,3 +646,10 @@ class Engine:
             self.draw_order.append(TextUI(self.np(50, 35),
                                          self.ns(0, 80),
                                      "Put that on a fridge!", (255, 255, 255)))
+
+    def slider_control(self, offset):
+        print("HERE!")
+        for element in self.draw_order:
+            if not isinstance(element, SlideDownButton):
+                #TODO: STORE SIZE OF FULL WINDOW HEIGHT TO CALCULATE OFFSET!
+                element.pos[1] = element.init_y - offset * 500

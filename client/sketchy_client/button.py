@@ -18,6 +18,7 @@ class Button:
         self.z = z
         self.width = size[0]
         self.height = size[1]
+        self.init_y = position[1]
         image_path = resolve_asset_path(img)
         self.img = pygame.image.load(image_path)
         self.curr_hover = False

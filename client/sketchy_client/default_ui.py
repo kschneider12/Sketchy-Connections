@@ -11,6 +11,7 @@ class DefaultUI:
     can draw to the screen appropriately"""
     def __init__(self, position, size, img, z = 0):
         self.z = z
+        self.init_y = position[1]
         self.pos = position
         self.width = size[0]
         self.height = size[1]

@@ -29,25 +29,29 @@ class MouseStick(DefaultUI):
     or paintbrush"""
     def __init__(self, size):
         self.state = "brush"
-        DefaultUI.__init__(self, [0,0], size, resolve_asset_path("assets/textures/pen_mouse.png"), 3)
+        DefaultUI.__init__(self, [0,0], size, resolve_asset_path("assets/textures/pen_mouse.png"), 100)
+        self.offset = -1 * self.width / 2, self.height / 2
 
     def behave(self, mouse_pos, pen_state):
         """Moves the position on top of the mouse"""
         if self.state != pen_state:
-            match self.state:
+            match pen_state:
                 case "brush":
                     self.img = pygame.image.load(resolve_asset_path("assets/textures/pen_mouse.png"))
                     self.img = pygame.transform.scale(self.img, (self.width,self.height))
+                    self.offset = -1 * self.width / 2, self.height / 2
                     self.state = "brush"
                 case "eraser":
                     self.img = pygame.image.load(resolve_asset_path("assets/textures/eraser_mouse.png"))
                     self.img = pygame.transform.scale(self.img, (self.width, self.height))
+                    self.offset = 0, 0
                     self.state = "eraser"
                 case "fill":
                     self.img = pygame.image.load(resolve_asset_path("assets/textures/fill_mouse.png"))
                     self.img = pygame.transform.scale(self.img, (self.width, self.height))
+                    self.offset = self.width / 3, 0
                     self.state = "fill"
-        self.pos = [mouse_pos[0], mouse_pos[1]]
+        self.pos = [mouse_pos[0] - self.offset[0], mouse_pos[1] - self.offset[1]]
 
 class TransparentUI(DefaultUI):
     """Extending DefaultUI, this UI is a semitransparent background. Used as an

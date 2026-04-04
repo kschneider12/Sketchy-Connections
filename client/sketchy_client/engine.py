@@ -26,8 +26,8 @@ from .slider_button import SliderButton
 from .draw_window import DrawingWindow, AnimationWindow
 from .color_wheel import ColorWheel
 # from draw_window import AnimationWindow
-SCREEN_LEN = pyautogui.size()[0]
-SCREEN_HT = pyautogui.size()[1]
+SCREEN_LEN = pyautogui.size()[0] * 0.9
+SCREEN_HT = pyautogui.size()[1] * 0.9
 
 class Engine:
     """Initialization of Engine, including the screen, UI elements,
@@ -98,7 +98,7 @@ class Engine:
     def run(self):
         """main game loop. Updates the game, manages inputs, buttons,
         draws UI, handles special loop cases, and maintains the game clock"""
-        self.switch_to_welcome()
+        self.switch_to_draw()
         while True:
             self.room = self.network.room
             if self.network_error is not None:
@@ -359,6 +359,7 @@ class Engine:
     def switch_to_guessing(self):
         """switches the scene to guessing, initializing the UI."""
         self.scene = "guessing"
+        pygame.mouse.set_visible(True)
         self.active_ui = [TimeBar(self.np(92,43), self.ns(60 * 1.5, 270 * 1.5), 10),
                           DefaultUI(self.np(36, 43), self.ns(650, 400),
                                     "assets/textures/color_button.png")
@@ -369,10 +370,9 @@ class Engine:
         self.active_drawings = [DrawingWindow(self.np(36, 43), self.ns(845, 455))]
         self.draw_order = self.active_buttons + self.active_ui + \
                           self.active_drawings + self.active_animations
-        self.draw_order = self.active_buttons + self.active_ui +\
-                          self.active_drawings + self.active_animations
 
     def switch_to_draw(self):
+        pygame.mouse.set_visible(False)
         """switches the scene to drawing, initializing the UI."""
         # note from Mat - this makes the drawing window displayable, not fully functional
         self.scene = "drawing"
@@ -386,7 +386,7 @@ class Engine:
                           self.tool_text,
                           DefaultUI(self.np(36, 53), self.nl(660),
                                 "assets/textures/color_button.png"),
-                          MouseStick(self.ns(50, 50)),]
+                          MouseStick(self.ns(20, 20))]
         self.active_buttons = [
             ColorWheel(self.np(79, 36), (self.ns(180, 180)), self.set_color),
             BrightnessSlider(self.np(85, 69), (self.ns(1.2 * 50, 4 * 50)), self.set_brightness),
@@ -417,6 +417,7 @@ class Engine:
         self.active_drawings = [DrawingWindow(self.np(36,53), self.nl(680))]
         self.draw_order = self.active_buttons + self.active_ui +\
                           self.active_drawings + self.active_animations
+        self.draw_order = sorted(self.draw_order, key=lambda elem: elem.z)
 
     def switch_to_results(self):
         """switches the scene to results, initializing the UI"""

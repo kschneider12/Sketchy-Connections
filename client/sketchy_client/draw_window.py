@@ -270,6 +270,7 @@ class DrawingWindow:
         self.center = center_pos
         self.draggable = draggable
         self.size = size
+        self.z = 1
 
         self.cell_width = size[0] / (GRID_WIDTH * 1.0)
         self.cell_height = size[1] / (GRID_HEIGHT * 1.0)

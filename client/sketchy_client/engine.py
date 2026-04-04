@@ -16,7 +16,7 @@ from .slide_down_button import SlideDownButton
 #from .ChoicesButton import ChoicesButton
 from .pen_type_button import PenTypeButton
 from .brightness_slider import BrightnessSlider
-from .default_ui import DefaultUI, TransparentUI, TextUI, PlayerDisplay
+from .default_ui import DefaultUI, TransparentUI, TextUI, PlayerDisplay, MouseStick
 from .time_bar import TimeBar
 #from .ColorButton import ColorButton
 #from .draw_window import Grid
@@ -52,7 +52,7 @@ class Engine:
             pygame.K_RETURN: False, # pylint: disable=no-member
             pygame.K_ESCAPE: False  # pylint: disable=no-member
         }
-        self.mouse_buttons = [False, False]
+        self.mouse_buttons = [False, False, 0]
         self.mouse_buttons_last_frame = [False, False]
         self.mouse_pos = (0, 0)
         self.keystrokes = []
@@ -91,11 +91,14 @@ class Engine:
         self.submitted = False
         self.last_submission = ""
 
+        # Results page
+        self.results_height = 0
+
 
     def run(self):
         """main game loop. Updates the game, manages inputs, buttons,
         draws UI, handles special loop cases, and maintains the game clock"""
-        self.switch_to_draw()
+        self.switch_to_welcome()
         while True:
             self.room = self.network.room
             if self.network_error is not None:
@@ -139,6 +142,7 @@ class Engine:
         """Collects all inputs from the user every frame, and stores it
         within Engine to be accessed by any other functions."""
         self.keystrokes = []
+        self.mouse_buttons[2] = 0
         self.key_status[K_KP_ENTER] = False
         #self.key_status[K_BACKSPACE] = False
         self.mouse_pos = pygame.mouse.get_pos()
@@ -163,6 +167,8 @@ class Engine:
                     self.mouse_buttons[0] = False
                 elif event.button == 3:
                     self.mouse_buttons[1] = False
+            elif event.type == pygame.MOUSEWHEEL:
+                self.mouse_buttons[2] = event.y
 
             # added by Mat for drawing window
             if self.scene == "draw":
@@ -188,8 +194,10 @@ class Engine:
                     self.submit()
             elif isinstance(elem, PlayerDisplay):
                 elem.set_active_players(self.network.room.players)
-            elif isinstance(elem,PenTypeButton):
+            elif isinstance(elem, PenTypeButton):
                 elem.set_selection(self.curr_brush)
+            elif isinstance(elem, MouseStick):
+                elem.behave(self.mouse_pos, self.get_pen_state())
             elem.draw(self.screen, self.curr_color)
         for data in self.type_text_draws:
             # NEED TO SEPARATE FROM NORMAL DRAWS! TWO DIFFERENT VECTORS
@@ -293,6 +301,8 @@ class Engine:
 
             Button(self.np(70, 70), (self.ns(115 * 2.2, 51 * 2.2)),
                    "assets/textures/join.png", self.enable_room_code),
+            Button(self.np(97, 4), (self.ns(50, 50)),
+                   "assets/textures/exit.png", self.quit_game),
             TypeBox(self.np(50, 90), self.ns(1300 * 0.6, 110 * 0.6),
                     "assets/textures/text_box_5.png", self.set_name,"Enter A Name",15),
             SlideDownButton(self.np(90, 0), (self.np(0, 20), self.np(0,80)), self.ns(10,50), self.slider_control)]
@@ -375,7 +385,8 @@ class Engine:
                                  "Current Tool: ", (0, 0, 0)),
                           self.tool_text,
                           DefaultUI(self.np(36, 53), self.nl(660),
-                                "assets/textures/color_button.png")]
+                                "assets/textures/color_button.png"),
+                          MouseStick(self.ns(50, 50)),]
         self.active_buttons = [
             ColorWheel(self.np(79, 36), (self.ns(180, 180)), self.set_color),
             BrightnessSlider(self.np(85, 69), (self.ns(1.2 * 50, 4 * 50)), self.set_brightness),
@@ -436,9 +447,9 @@ class Engine:
                                                 self.ns(SCREEN_LEN * 2,SCREEN_HT * 2),
                                                 (0,0,0), 150))
             self.active_buttons.append(Button(self.np(62, 60), (self.ns(140 * 1.5, 51 * 1.5)),
-                                              "assets/textures/join.png", self._join_room, z=2))
+                                              "assets/textures/go.png", self._join_room, z=2))
             self.active_buttons.append(Button(self.np(38, 60), (self.ns(140 * 1.5, 51 * 1.5)),
-                                              "assets/textures/join.png",
+                                              "assets/textures/back.png",
                                               self.disable_room_code, z=2))
             self.active_buttons.append(TypeBox(self.np(50, 40), (self.ns(150 * 1.4, 64 * 1.4)),
                                                "assets/textures/text_box_4.png", self.set_room_code,
@@ -613,6 +624,11 @@ class Engine:
         """sets the room code. Primarily used by buttons"""
         self.room_code_attempt = code.upper()
 
+    def get_pen_state(self):
+        if self.curr_shade == [240, 240, 240]:
+            return "eraser"
+        return self.curr_tool
+
     def submit(self):
         #TODO: Joe: If a player leaves the game (or crashes) it doesn't submit them,
         # and everyone sits in limbo waiting for all submissions. How do we want to approach this?
@@ -647,8 +663,18 @@ class Engine:
                                      "Put that on a fridge!", (255, 255, 255)))
 
     def slider_control(self, offset):
-        print("HERE!")
+        """Controls the slide bar, moving items up and down
+        based on the offset from the UI element"""
+        # compare results height to the height of the window: A constant for now.
+        # The excess height is
+        results_window_ht = self.ns(0, 500) #random value for now, proof of concept complete!
+        mult =  self.results_height - results_window_ht[1]
+        if mult < 0:
+            mult = 0
         for element in self.draw_order:
-            if not isinstance(element, SlideDownButton):
-                #TODO: STORE SIZE OF FULL WINDOW HEIGHT TO CALCULATE OFFSET!
-                element.pos[1] = element.init_y - offset * 500
+            if not isinstance(element, SlideDownButton) and element.draggable:
+                element.pos[1] = element.init_y - offset * mult
+
+    def quit_game(self):
+        """closes the program"""
+        self.exit = True

@@ -265,9 +265,10 @@ class Grid:
 
 class DrawingWindow:
     """Handles user drawing input and records drawing operation"""
-    def __init__(self, center_pos, size):
+    def __init__(self, center_pos, size, draggable = False):
         """Initializes the drawing window"""
         self.center = center_pos
+        self.draggable = draggable
         self.size = size
 
         self.cell_width = size[0] / (GRID_WIDTH * 1.0)
@@ -284,6 +285,7 @@ class DrawingWindow:
             self.center[0] - self.pixel_width // 2,
             self.center[1] - self.pixel_height // 2
         )
+        self.init_y = center_pos[1]
 
         self.grid = Grid(self.pos, self.cell_size)
         self.brush_radius = 1

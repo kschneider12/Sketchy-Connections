@@ -13,9 +13,10 @@ class Button:
     what function it is connected to, and if it has a different texture when it is
     hovered over.
     """
-    def __init__(self, position, size, img, funct, multi_texture = True, z = 0):
+    def __init__(self, position, size, img, funct, multi_texture = True, z = 0, draggable = False):
         self.pos = position
         self.z = z
+        self.draggable = draggable
         self.width = size[0]
         self.height = size[1]
         self.init_y = position[1]

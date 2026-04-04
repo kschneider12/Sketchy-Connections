@@ -9,8 +9,9 @@ from .paths import asset_path
 class DefaultUI:
     """The parent and building block for UI- stores positioning and
     can draw to the screen appropriately"""
-    def __init__(self, position, size, img, z = 0):
+    def __init__(self, position, size, img, z = 0, draggable = False):
         self.z = z
+        self.draggable = draggable
         self.init_y = position[1]
         self.pos = position
         self.width = size[0]
@@ -26,14 +27,27 @@ class DefaultUI:
 class MouseStick(DefaultUI):
     """Extending DefaultUI, this UI moves on the mouse for drawing, such as paint bucket
     or paintbrush"""
-    def __init__(self, size, img):
-        self.visible = False
-        DefaultUI.__init__(self, [0,0], size, img, 3)
+    def __init__(self, size):
+        self.state = "brush"
+        DefaultUI.__init__(self, [0,0], size, resolve_asset_path("assets/textures/pen_mouse.png"), 3)
 
-    def behave(self, mouse_pos):
+    def behave(self, mouse_pos, pen_state):
         """Moves the position on top of the mouse"""
-        if self.visible:
-            self.pos = [mouse_pos[0], mouse_pos[1]]
+        if self.state != pen_state:
+            match self.state:
+                case "brush":
+                    self.img = pygame.image.load(resolve_asset_path("assets/textures/pen_mouse.png"))
+                    self.img = pygame.transform.scale(self.img, (self.width,self.height))
+                    self.state = "brush"
+                case "eraser":
+                    self.img = pygame.image.load(resolve_asset_path("assets/textures/eraser_mouse.png"))
+                    self.img = pygame.transform.scale(self.img, (self.width, self.height))
+                    self.state = "eraser"
+                case "fill":
+                    self.img = pygame.image.load(resolve_asset_path("assets/textures/fill_mouse.png"))
+                    self.img = pygame.transform.scale(self.img, (self.width, self.height))
+                    self.state = "fill"
+        self.pos = [mouse_pos[0], mouse_pos[1]]
 
 class TransparentUI(DefaultUI):
     """Extending DefaultUI, this UI is a semitransparent background. Used as an

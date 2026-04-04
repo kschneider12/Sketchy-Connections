@@ -6,8 +6,7 @@ class SlideDownButton(Button):
         img = 'assets/textures/play.png'
         self.dragging = False
         self.bounds = (y_bounds[0] + size[1] / 2, y_bounds[1] - size[1] / 2)
-        print(self.bounds)
-        super().__init__([pos[0],y_bounds[0] + size[1] / 2] , size, img, funct)
+        super().__init__([pos[0],y_bounds[1] - size[1] / 2] , size, img, funct)
 
     def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state):
         if self.hovering(mouse_pos):
@@ -20,10 +19,13 @@ class SlideDownButton(Button):
 
         if self.dragging:
             self.pos[1] = mouse_pos[1]
-            if self.pos[1] < self.bounds[0]:
-                self.pos[1] = self.bounds[0]
-            elif self.pos[1] > self.bounds[1]:
-                self.pos[1] = self.bounds[1]
+        else:
+            self.pos[1] += (mouse_state[2] * 5)
+
+        if self.pos[1] < self.bounds[0]:
+            self.pos[1] = self.bounds[0]
+        elif self.pos[1] > self.bounds[1]:
+            self.pos[1] = self.bounds[1]
 
         if not mouse_state[0]:
             self.dragging = False

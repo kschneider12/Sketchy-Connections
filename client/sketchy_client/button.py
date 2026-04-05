@@ -13,8 +13,9 @@ class Button:
     what function it is connected to, and if it has a different texture when it is
     hovered over.
     """
-    def __init__(self, position, size, img, funct, multi_texture = True, z = 0, draggable = False):
+    def __init__(self, position, size, img, funct, multi_texture = True, z = 0, draggable = False, pause_override = False):
         self.pos = position
+        self.pause_override = pause_override
         self.z = z
         self.draggable = draggable
         self.width = size[0]
@@ -33,18 +34,19 @@ class Button:
         else:
             self.hover_img = self.img
 
-    def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state):
+    def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state, paused):
         """
         Called every frame, behave handles the default behavior of a button.
         Contains some unnecessary parameters, but they are for specific children that override
         this behavior.
         """
-        if self.hovering(mouse_pos):
-            self.curr_hover = True
-        else:
-            self.curr_hover = False
-        if self.clicked(mouse_pos, just_clicked):
-            return self.command
+        if not paused or self.pause_override:
+            if self.hovering(mouse_pos):
+                self.curr_hover = True
+            else:
+                self.curr_hover = False
+            if self.clicked(mouse_pos, just_clicked):
+                return self.command
         return False
 
     def draw(self, screen, curr_color):

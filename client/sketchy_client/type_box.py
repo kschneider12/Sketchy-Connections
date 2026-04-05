@@ -28,12 +28,12 @@ class TypeBox(Button):
         self.text_size = int(self.height * 2/3.3)
         self.font = pygame.font.Font(FONT_PATH, self.text_size)
 
-    def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state):
+    def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state, paused):
         """
         Overrides Button.behave, enabling typing in the box,
         box selection, backspace, return and character management.
         """
-        if self.active:
+        if self.active and (not paused or self.pause_override):
             if self.clicked(mouse_pos, just_clicked):
                 self.selected = True
 
@@ -60,46 +60,34 @@ class TypeBox(Button):
                         self.backspace_hold += 1
                     else:
                         self.curr_string += elem
-            if (self.accum // 30) % 2 == 1:
-                bonus = "|"
-            else:
-                bonus = ""
+        if (self.accum // 30) % 2 == 1:
+            bonus = "|"
+        else:
+            bonus = ""
             if len(self.curr_string) > self.character_limit:
                 self.curr_string = self.curr_string[:self.character_limit]
-            if self.curr_string == "" and not self.selected:
-                # return default gray message
-                return [self.default_message,  # written text
-                        (self.pos[0] - self.width / 2.2, self.pos[1] - self.height / 3),
-                        self.font,
-                        (100,100,100),
-                        self.character_limit,
-                        (self.pos[0] + self.width / 2) - self.font.size("00")[0] - 10,
-                        # position for top corner counter
-                        "",
-                        self.command]
-            # return appropriate text
-
-            #Handle staying inside the textbox:
-            lim = 0
-            while self.font.size(self.curr_string[lim:])[0] >= self.width * 9/10:
-                lim += 1
-            return [self.curr_string[lim:] + bonus, # written text
-                    (self.pos[0] - self.width / 2.2, self.pos[1] - self.height / 3), #pos for main
-                    self.font, # font
-                    self.color, # color
+        if self.curr_string == "" and not self.selected:
+            # return default gray message
+            return [self.default_message,  # written text
+                    (self.pos[0] - self.width / 2.2, self.pos[1] - self.height / 3),
+                    self.font,
+                    (100,100,100),
                     self.character_limit,
-                    (self.pos[0] + self.width / 2) - self.font.size("00")[0] - 10, # pos for corner
-                    self.curr_string,
+                    (self.pos[0] + self.width / 2) - self.font.size("00")[0] - 10,
+                    # position for top corner counter
+                    "",
                     self.command]
+        # return appropriate text
 
+        #Handle staying inside the textbox:
         lim = 0
-        while self.font.size(self.curr_string[lim:])[0] >= self.width * 9 / 10:
+        while self.font.size(self.curr_string[lim:])[0] >= self.width * 9/10:
             lim += 1
-        return [self.curr_string[lim:],  # written text
-                (self.pos[0] - self.width / 2.2, self.pos[1] - self.height / 3),  # pos for main
-                self.font,  # font
-                self.color,  # color
+        return [self.curr_string[lim:] + bonus, # written text
+                (self.pos[0] - self.width / 2.2, self.pos[1] - self.height / 3), #pos for main
+                self.font, # font
+                self.color, # color
                 self.character_limit,
-                (self.pos[0] + self.width / 2) - self.font.size("00")[0] - 10,  # pos for top
+                (self.pos[0] + self.width / 2) - self.font.size("00")[0] - 10, # pos for corner
                 self.curr_string,
                 self.command]

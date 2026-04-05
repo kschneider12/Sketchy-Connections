@@ -35,16 +35,17 @@ class ColorButton(Button):
             resolve_asset_path('assets/textures/color_button_select.png'))
         self.img_select = pygame.transform.scale(self.img_select, size)
 
-    def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state):
+    def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state, paused):
         """
         Overrides Button.behave, overriding the return to include button color
         """
-        if self.hovering(mouse_pos):
-            self.curr_hover = True
-        else:
-            self.curr_hover = False
-        if self.clicked(mouse_pos, just_clicked):
-            return [self.command, self.color]
+        if not paused or self.pause_override:
+            if self.hovering(mouse_pos):
+                self.curr_hover = True
+            else:
+                self.curr_hover = False
+            if self.clicked(mouse_pos, just_clicked):
+                return [self.command, self.color]
         return False
 
     def draw(self, screen, curr_color):

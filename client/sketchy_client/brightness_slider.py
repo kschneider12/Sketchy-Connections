@@ -26,23 +26,24 @@ class BrightnessSlider(Button):
         self.bounds = [self.pos[1] + self.bkg_size[1] / 2 - self.height / 2,
                        self.pos[1] - self.bkg_size[1] / 2 + self.height / 2]
 
-    def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state):
+    def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state, paused):
         """Override of button behave function. Manages sliding bar and alternate return type"""
-        if self.hovering_bar(mouse_pos):
-            self.curr_hover = True
-        else:
-            self.curr_hover = False
-        if self.hovering(mouse_pos) and just_clicked[0]:
-            # convert mouse pos to 0-1 for position
-            self.dragging = True
-        if self.dragging:
-            self.rel_pos[1] = mouse_pos[1]
-        if mouse_state[0] == 0 and self.dragging:
-            self.dragging = False
-        if self.rel_pos[1] > self.bounds[0]:
-            self.rel_pos[1] = self.bounds[0]
-        if self.rel_pos[1] < self.bounds[1]:
-            self.rel_pos[1] = self.bounds[1]
+        if not paused or self.pause_override:
+            if self.hovering_bar(mouse_pos):
+                self.curr_hover = True
+            else:
+                self.curr_hover = False
+            if self.hovering(mouse_pos) and just_clicked[0]:
+                # convert mouse pos to 0-1 for position
+                self.dragging = True
+            if self.dragging:
+                self.rel_pos[1] = mouse_pos[1]
+            if mouse_state[0] == 0 and self.dragging:
+                self.dragging = False
+            if self.rel_pos[1] > self.bounds[0]:
+                self.rel_pos[1] = self.bounds[0]
+            if self.rel_pos[1] < self.bounds[1]:
+                self.rel_pos[1] = self.bounds[1]
         return [self.command, 1 - ((self.max - (self.rel_pos[1] - self.bounds[1])
                                     * (self.max - self.min) / (
                     self.bounds[1] - self.bounds[0])) - 1)]

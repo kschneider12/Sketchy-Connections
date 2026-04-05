@@ -29,23 +29,25 @@ class ChoicesButton(Button):
                             (size[1],size[1]), 'assets/textures/host.png', True)
         self.font = pygame.font.Font(FONT_PATH, int(self.height * 0.7))
 
-    def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state):
+    def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state, paused):
         """
         Overrides Button.behave, rotating through options based on user interaction
         """
-        if (self.left.behave(mouse_pos, just_clicked, keystrokes, mouse_state)
-                and self.curr_choice != self.choices[-1]):
-            for i, val in enumerate(self.choices):
-                if val == self.curr_choice:
-                    self.curr_choice = self.choices[i + 1]
-                    break
-        if (self.right.behave(mouse_pos, just_clicked, keystrokes, mouse_state)
-                and self.curr_choice != self.choices[0]):
-            for i, val in enumerate(self.choices):
-                if val == self.curr_choice:
-                    self.curr_choice = self.choices[i - 1]
-                    break
-        return self.command, self.curr_choice
+        if not paused or self.pause_override:
+            if (self.left.behave(mouse_pos, just_clicked, keystrokes, mouse_state)
+                    and self.curr_choice != self.choices[-1]):
+                for i, val in enumerate(self.choices):
+                    if val == self.curr_choice:
+                        self.curr_choice = self.choices[i + 1]
+                        break
+            if (self.right.behave(mouse_pos, just_clicked, keystrokes, mouse_state)
+                    and self.curr_choice != self.choices[0]):
+                for i, val in enumerate(self.choices):
+                    if val == self.curr_choice:
+                        self.curr_choice = self.choices[i - 1]
+                        break
+            return self.command, self.curr_choice
+        return False
 
     def draw(self, screen, curr_color):
         """

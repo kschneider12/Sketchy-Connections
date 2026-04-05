@@ -29,17 +29,18 @@ class CheckboxButton(Button):
         self.text_surface = self.font.render(self.text, True, (0,0,0))
 
 
-    def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state):
+    def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state, paused):
         """
         Overrides Button.behave, toggling on or off this button.
         """
-        if self.hovering(mouse_pos):
-            self.curr_hover = True
-        else:
-            self.curr_hover = False
-        if self.clicked(mouse_pos, just_clicked):
-            self.on = not self.on
-            return [self.command, self.on]
+        if not paused or self.pause_override:
+            if self.hovering(mouse_pos):
+                self.curr_hover = True
+            else:
+                self.curr_hover = False
+            if self.clicked(mouse_pos, just_clicked):
+                self.on = not self.on
+                return [self.command, self.on]
         if self.text == "":
             return [self.command, self.on]
         return False

@@ -26,8 +26,8 @@ from .slider_button import SliderButton
 from .draw_window import DrawingWindow, AnimationWindow
 from .color_wheel import ColorWheel
 # from draw_window import AnimationWindow
-SCREEN_LEN = pyautogui.size()[0] * 0.9
-SCREEN_HT = pyautogui.size()[1] * 0.9
+SCREEN_LEN = pyautogui.size()[0] * 0.5
+SCREEN_HT = pyautogui.size()[1] * 0.5
 
 class Engine:
     """Initialization of Engine, including the screen, UI elements,
@@ -90,6 +90,7 @@ class Engine:
         self.network_error = None
         self.submitted = False
         self.last_submission = ""
+        self.paused = False
 
         # Results page
         self.results_height = 0
@@ -98,7 +99,7 @@ class Engine:
     def run(self):
         """main game loop. Updates the game, manages inputs, buttons,
         draws UI, handles special loop cases, and maintains the game clock"""
-        self.switch_to_draw()
+        self.switch_to_welcome()
         while True:
             self.room = self.network.room
             if self.network_error is not None:
@@ -133,6 +134,7 @@ class Engine:
                 self.network.close()
                 pygame.quit()
                 break
+
             # Update the Screen
             self.draw_ui()
             pygame.display.flip()
@@ -154,6 +156,8 @@ class Engine:
             elif event.type == pygame.KEYDOWN: # pylint: disable=no-member
                 if event.key in self.key_status:
                     self.key_status[event.key] = True
+                    if event.key == pygame.K_ESCAPE: # pylint: disable=no-member
+                        self.pause_client(True)
             elif event.type == pygame.KEYUP: # pylint: disable=no-member
                 if event.key in self.key_status:
                     self.key_status[event.key] = False
@@ -179,8 +183,6 @@ class Engine:
             self.keystrokes.append("enter")
         if self.key_status[pygame.K_BACKSPACE]: # pylint: disable=no-member
             self.keystrokes.append("backspace")
-        if self.key_status[pygame.K_ESCAPE]: # pylint: disable=no-member
-            self.exit = True
 
     def draw_ui(self):
         """UI manager that draws UI to the screen. Also
@@ -220,7 +222,7 @@ class Engine:
         for button in self.active_buttons:
             if button.active or isinstance(button, TypeBox):
                 output = button.behave(self.mouse_pos, just_clicked,
-                                       self.keystrokes, self.mouse_buttons)
+                                       self.keystrokes, self.mouse_buttons, self.paused)
                 if isinstance(output, list):
                     if len(output) == 2:
                         #slider bar
@@ -231,12 +233,14 @@ class Engine:
                         self.type_text_draws.append(output[:-1])
                 if callable(output):
                     output()
+            if self.paused and not button.pause_override:
+                button.curr_hover = False
 
     def draw(self):
         """game loop for drawing screen"""
         # added by Mat for drawing window
         #keys = pygame.key.get_pressed()
-        if not self.submitted:
+        if not self.submitted and not self.paused:
             for drawing_win in self.active_drawings:
                 drawing_win.update(
                     self.mouse_pos,
@@ -337,6 +341,7 @@ class Engine:
         self.active_drawings = []
         self.draw_order = self.active_buttons + self.active_drawings +\
                           self.active_ui + self.active_animations
+        self.pause_client()
 
 
     def switch_to_writing(self):
@@ -355,6 +360,7 @@ class Engine:
                                       ]
         self.draw_order = self.active_buttons + self.active_drawings +\
                           self.active_ui + self.active_animations
+        self.pause_client()
 
     def switch_to_guessing(self):
         """switches the scene to guessing, initializing the UI."""
@@ -370,6 +376,7 @@ class Engine:
         self.active_drawings = [DrawingWindow(self.np(36, 43), self.ns(845, 455))]
         self.draw_order = self.active_buttons + self.active_ui + \
                           self.active_drawings + self.active_animations
+        self.pause_client()
 
     def switch_to_draw(self):
         pygame.mouse.set_visible(False)
@@ -379,8 +386,8 @@ class Engine:
         self.tool_text = TextUI(self.np(60, 95), self.ns(20, 20),
                                  "Current: " + self.curr_tool, (0, 0, 0))
         self.active_ui = [TimeBar(self.np(94,58), self.ns(60 * 1.5, 320 * 1.5), 60),
-                          # TextUI(self.np(50, 10), self.ns(100, 100),
-                          #      "Prompt: " + self.room.game.current_prompt.content, (0, 0, 0)),
+                          TextUI(self.np(50, 10), self.ns(100, 100),
+                                "Prompt: " + self.room.game.current_prompt.content, (0, 0, 0)),
                           TextUI(self.np(60, 90), self.ns(20, 20),
                                  "Current Tool: ", (0, 0, 0)),
                           self.tool_text,
@@ -418,6 +425,7 @@ class Engine:
         self.draw_order = self.active_buttons + self.active_ui +\
                           self.active_drawings + self.active_animations
         self.draw_order = sorted(self.draw_order, key=lambda elem: elem.z)
+        self.pause_client()
 
     def switch_to_results(self):
         """switches the scene to results, initializing the UI"""
@@ -438,6 +446,7 @@ class Engine:
         self.active_drawings = []
         self.draw_order = self.active_buttons + self.active_drawings +\
                           self.active_ui + self.active_animations
+        self.pause_client()
 
     def enable_room_code(self):
         """Enables UI for asking for room code"""
@@ -651,15 +660,19 @@ class Engine:
         """creates the overlay when you submit something"""
         for button in self.active_buttons:
             button.active = False
-        self.draw_order.append(TransparentUI(self.np(50, 50),
+        if self.paused:
+            index = -3
+        else:
+            index = -1
+        self.draw_order.insert(index, TransparentUI(self.np(50, 50),
                                             self.ns(SCREEN_LEN * 2, SCREEN_HT * 2),
                                             (0, 0, 0), 150))
         if self.scene == "writing":
-            self.draw_order.append(TextUI(self.np(50, 40),
-                                         self.ns(0, 80),
-                                     "Are you sure?", (255, 255, 255)))
+            self.draw_order.insert(index, TextUI(self.np(50, 40),
+                                     self.ns(0, 80),
+                                 "Are you sure?", (255, 255, 255)))
         elif self.scene == "drawing":
-            self.draw_order.append(TextUI(self.np(50, 35),
+            self.draw_order.insert(index, TextUI(self.np(50, 35),
                                          self.ns(0, 80),
                                      "Put that on a fridge!", (255, 255, 255)))
 
@@ -679,3 +692,28 @@ class Engine:
     def quit_game(self):
         """closes the program"""
         self.exit = True
+
+    def pause_client(self, pause = False):
+        """Pauses the client game, organizing UI and its logic"""
+        if (not self.paused and pause) or (self.paused and not pause):
+            pygame.mouse.set_visible(True)
+            self.paused = True
+            self.active_buttons.append(SliderButton(self.np(30, 50),
+                                                    self.ns(300,30),0, 100,
+                                                    self.set_sound_effects_volume,
+                                                    self.sfx_volume, 10))
+            self.active_buttons.append(SliderButton(self.np(70, 50),
+                                                    self.ns(300, 30), 0,100,
+                                                    self.set_music_volume,
+                                                    self.music_volume, 10))
+            self.draw_order.append(TransparentUI(self.np(50, 50),
+                          self.ns(SCREEN_LEN * 2, SCREEN_HT * 2),
+                          (0, 0, 0), 100))
+            self.draw_order += self.active_buttons[-2:]
+        elif self.paused and pause:
+            self.paused = False
+            self.active_buttons.pop()
+            self.active_buttons.pop()
+            self.draw_order = self.draw_order[:-3]
+            if self.scene == "drawing":
+                pygame.mouse.set_visible(False)

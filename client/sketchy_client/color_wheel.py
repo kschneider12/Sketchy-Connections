@@ -22,43 +22,45 @@ class ColorWheel(Button):
         self.bkg2 = DefaultUI(position, size, 'assets/textures/colorwheel_bkg.png')
         super().__init__(position, (size[0] / 20, size[1] / 20), img, funct)
 
-    def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state):
+    def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state, paused):
         """
         Overrides Button.behave, moving the ball around based on mouse position and
         calculating the color at that position, returning it.
         """
-        self.curr_hover = self.hovering(mouse_pos)
-        if self.get_rad(mouse_pos) <= self.bkg_size[0] / 2 and just_clicked[0]:
-            self.dragging = True
-        if self.dragging:
-            self.rel_pos = [mouse_pos[0], mouse_pos[1]]
-        if self.get_rad(self.rel_pos) > self.bkg_size[0] / 2:
-            self.set_rad_pos()
-        if mouse_state[0] == 0 and self.dragging:
-            self.dragging = False
+        if not paused or self.pause_override:
+            self.curr_hover = self.hovering(mouse_pos)
+            if self.get_rad(mouse_pos) <= self.bkg_size[0] / 2 and just_clicked[0]:
+                self.dragging = True
+            if self.dragging:
+                self.rel_pos = [mouse_pos[0], mouse_pos[1]]
+            if self.get_rad(self.rel_pos) > self.bkg_size[0] / 2:
+                self.set_rad_pos()
+            if mouse_state[0] == 0 and self.dragging:
+                self.dragging = False
 
-        #get color:
-        angle = math.degrees(self.get_angle()) + 180
-        rel_angle = int(angle) % 60
-        match angle // 60:
-            case 0:
-                self.color = [255, 0 + rel_angle * 255/60, 0]
-            case 1:
-                self.color = [255 - rel_angle * 255 / 60, 255, 0]
-            case 2:
-                self.color = [0, 255, 0 + rel_angle * 255/60]
-            case 3:
-                self.color = [0, 255 - rel_angle * 255 / 60, 255]
-            case 4:
-                self.color = [rel_angle * 255/60, 0, 255]
-            case 5:
-                self.color = [255, 0, 255 - rel_angle * 255 / 60]
-        rad = self.get_rad(self.rel_pos)
-        #normalize from 0 to 1
-        rad = 1 - rad / self.bkg_size[0] * 2
-        for i in range(3):
-            self.color[i] += int((255 - self.color[i]) * rad)
-        return [self.command, self.color]
+            #get color:
+            angle = math.degrees(self.get_angle()) + 180
+            rel_angle = int(angle) % 60
+            match angle // 60:
+                case 0:
+                    self.color = [255, 0 + rel_angle * 255/60, 0]
+                case 1:
+                    self.color = [255 - rel_angle * 255 / 60, 255, 0]
+                case 2:
+                    self.color = [0, 255, 0 + rel_angle * 255/60]
+                case 3:
+                    self.color = [0, 255 - rel_angle * 255 / 60, 255]
+                case 4:
+                    self.color = [rel_angle * 255/60, 0, 255]
+                case 5:
+                    self.color = [255, 0, 255 - rel_angle * 255 / 60]
+            rad = self.get_rad(self.rel_pos)
+            #normalize from 0 to 1
+            rad = 1 - rad / self.bkg_size[0] * 2
+            for i in range(3):
+                self.color[i] += int((255 - self.color[i]) * rad)
+            return [self.command, self.color]
+        return False
 
     def draw(self, screen, curr_color):
         """

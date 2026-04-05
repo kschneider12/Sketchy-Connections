@@ -568,12 +568,9 @@ class Engine:
 
     def set_music_volume(self, volume):
         """sets the music volume. Primarily used by buttons"""
+        #TODO: KOOL KATS FOR DRAWING?
+        #TODO: RADIO MARTINI FOR LOBBY AND WELCOME
         self.music_volume = volume
-
-    def set_global_volume(self, volume):
-        """sets the volume of both music and SFX. Primarily used by buttons"""
-        self.set_music_volume(volume)
-        self.set_sound_effects_volume(volume)
 
     def set_color(self, color):
         """sets the RGB color while drawing. Primarily used by buttons"""

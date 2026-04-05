@@ -26,8 +26,8 @@ from .slider_button import SliderButton
 from .draw_window import DrawingWindow, AnimationWindow
 from .color_wheel import ColorWheel
 # from draw_window import AnimationWindow
-SCREEN_LEN = pyautogui.size()[0] * 9/10
-SCREEN_HT = pyautogui.size()[1] * 9/10
+SCREEN_LEN = pyautogui.size()[0] * 0.5
+SCREEN_HT = pyautogui.size()[1] * 0.5
 
 class Engine:
     """Initialization of Engine, including the screen, UI elements,
@@ -201,9 +201,9 @@ class Engine:
             elif isinstance(elem, MouseStick):
                 elem.behave(self.mouse_pos, self.get_pen_state())
             elem.draw(self.screen, self.curr_color)
-        for data in self.type_text_draws:
-            # NEED TO SEPARATE FROM NORMAL DRAWS! TWO DIFFERENT VECTORS
-            self.draw_typing_text(data)
+        if not self.paused: #THIS IS BETTER THAN RECONFIGURING HOW THIS TEXT IS DRAWN!
+            for data in self.type_text_draws:
+                self.draw_typing_text(data)
         if self.scene == "drawing":
             if self.curr_shade == [240, 240, 240] and \
                 self.curr_tool == "fill":
@@ -644,8 +644,9 @@ class Engine:
         #TODO: Joe: If a player leaves the game (or crashes) it doesn't submit them,
         # and everyone sits in limbo waiting for all submissions. How do we want to approach this?
         """refers to server that a user has made a submission, and submits it"""
-        print(self.submitted)
         if self.scene == "writing" and not self.submitted:
+            if not self.curr_prompt:
+                self.curr_prompt = f"{self.player.name} didn't submit!"
             self.network.submit_entry(self.curr_prompt)
             self.submitted = True
             # disable buttons and present close screen

@@ -26,8 +26,8 @@ from .slider_button import SliderButton
 from .draw_window import DrawingWindow, AnimationWindow
 from .color_wheel import ColorWheel
 # from draw_window import AnimationWindow
-SCREEN_LEN = pyautogui.size()[0] * 0.5
-SCREEN_HT = pyautogui.size()[1] * 0.5
+SCREEN_LEN = pyautogui.size()[0] * 9/10
+SCREEN_HT = pyautogui.size()[1] * 9/10
 
 class Engine:
     """Initialization of Engine, including the screen, UI elements,
@@ -315,6 +315,7 @@ class Engine:
         self.active_drawings = []
         self.draw_order = self.active_buttons + self.active_drawings +\
                           self.active_ui + self.active_animations
+        self.pause_client()
 
     def switch_to_lobby(self):
         """switches the scene to lobby, initializing the UI."""
@@ -408,8 +409,8 @@ class Engine:
                    "assets/textures/thickness_4.png", lambda: self.set_brush_thickness(8), 8),
             #Button(self.np(74, 92), self.ns(80, 60),
                    #"assets/textures/submit.png", lambda: self.set_eraser()),
-            PenTypeButton(self.np(84, 92), self.ns(80, 60),
-                    "assets/textures/thickness_1.png", self.set_fill_tool, 0),
+            PenTypeButton(self.np(84, 92), self.ns(80, 51),
+                    "assets/textures/fill_button.png", self.set_fill_tool, 0),
             CheckboxButton(self.np(74, 92), self.ns(115, 51),
                            self.set_eraser, "", False,
                            "assets/textures/eraser_button.png"),
@@ -693,27 +694,44 @@ class Engine:
         """closes the program"""
         self.exit = True
 
+    def leave_room(self):
+        # TODO: LEAVE ROOM!
+        self.switch_to_welcome()
+        self.pause_client(True)
+
     def pause_client(self, pause = False):
         """Pauses the client game, organizing UI and its logic"""
         if (not self.paused and pause) or (self.paused and not pause):
             pygame.mouse.set_visible(True)
             self.paused = True
             self.active_buttons.append(SliderButton(self.np(30, 50),
-                                                    self.ns(300,30),0, 100,
+                                                    self.ns(200,30),0, 100,
                                                     self.set_sound_effects_volume,
                                                     self.sfx_volume, 10))
             self.active_buttons.append(SliderButton(self.np(70, 50),
-                                                    self.ns(300, 30), 0,100,
+                                                    self.ns(200, 30), 0,100,
                                                     self.set_music_volume,
                                                     self.music_volume, 10))
+            if self.scene != "welcome":
+                self.active_buttons.append(Button(self.np(50, 70), (self.ns(140 * 1.8, 51 * 1.8)),
+                                                  "assets/textures/quit.png",
+                                                  self.leave_room, z=5, pause_override=True))
+            else:
+                self.active_buttons.append(Button(self.np(50, 70), (self.ns(140 * 1.8, 51 * 1.8)),
+                                                  "assets/textures/quit.png",
+                                                  self.quit_game, z=5, pause_override=True))
             self.draw_order.append(TransparentUI(self.np(50, 50),
                           self.ns(SCREEN_LEN * 2, SCREEN_HT * 2),
                           (0, 0, 0), 100))
-            self.draw_order += self.active_buttons[-2:]
+            self.draw_order.append(DefaultUI(self.np(50, 50),
+                                                 self.ns(520 * 1.5, 300 * 1.5),
+                                                 "assets/textures/pause_screen.png"))
+            self.draw_order += self.active_buttons[-3:]
+
         elif self.paused and pause:
             self.paused = False
             self.active_buttons.pop()
             self.active_buttons.pop()
-            self.draw_order = self.draw_order[:-3]
+            self.draw_order = self.draw_order[:-5]
             if self.scene == "drawing":
                 pygame.mouse.set_visible(False)

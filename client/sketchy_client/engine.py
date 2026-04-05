@@ -26,8 +26,8 @@ from .slider_button import SliderButton
 from .draw_window import DrawingWindow, AnimationWindow
 from .color_wheel import ColorWheel
 # from draw_window import AnimationWindow
-SCREEN_LEN = pyautogui.size()[0] * 0.5
-SCREEN_HT = pyautogui.size()[1] * 0.5
+SCREEN_LEN = pyautogui.size()[0]
+SCREEN_HT = pyautogui.size()[1]
 
 class Engine:
     """Initialization of Engine, including the screen, UI elements,

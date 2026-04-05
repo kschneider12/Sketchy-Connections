@@ -25,6 +25,7 @@ from .type_box import TypeBox
 from .slider_button import SliderButton
 from .draw_window import DrawingWindow, AnimationWindow
 from .color_wheel import ColorWheel
+from .choices_button import ChoicesButton
 # from draw_window import AnimationWindow
 SCREEN_LEN = pyautogui.size()[0]
 SCREEN_HT = pyautogui.size()[1]
@@ -82,6 +83,14 @@ class Engine:
         self.curr_prompt = None
         self.room_code_attempt = None
         self.tool_text = "brush"
+
+        self.simple_colors = False
+        self.prompt_length = 20
+        self.draw_length = 120
+        self.prompt_times = [10, 20, 30, 60]
+        self.draw_times = [30, 60, 120, 180, 300]
+        self.prompt_index = 1
+        self.draw_index = 2
 
         # Backend game state management
         self.network: NetworkClient = NetworkClient()
@@ -327,16 +336,33 @@ class Engine:
                                     "assets/textures/title.png"),
                           PlayerDisplay(self.np(4, 55), self.ns(30 * 2.4, 241 * 2.4),
                                         (SCREEN_LEN, SCREEN_HT), self.network.room.players),
-                          TextUI(self.np(80, 40), self.ns(0, 50),
+                          TextUI(self.np(55, 90), self.ns(0, 40),
                                  "Room Code:", (0, 0, 0)),
-                          TextUI(self.np(80, 50), self.ns(0, 50),
+                          TextUI(self.np(70, 90), self.ns(0, 40),
                                  self.network.room.room_id.lower(), (0,0,0))]
         if self.player.is_host:
             self.active_buttons = [
                 Button(self.np(88, 90), (self.ns(115 * 1.8, 51 * 1.8)),
                        "assets/textures/play.png", self.start_game),
-                Button(self.np(65, 90), (self.ns(115 * 1.8, 51 * 1.8)),
-                       "assets/textures/options.png", self.start_game)]
+                CheckboxButton(self.np(70, 76), self.ns(40, 40),
+                               self.simple_color_select, "Simple Colors", False),
+                ChoicesButton(self.np(79.5, 55), self.ns(115, 40),
+                              self.check_box_test, [120, 180, 300, 30, 60]),
+                ChoicesButton(self.np(79.5,68), self.ns(115,40),
+                                  self.check_box_test, [30, 60, 10, 20])
+
+            ]
+            self.active_ui.append(DefaultUI(self.np(80, 41), self.ns(240, 49),
+                                "assets/textures/text_box_4.png"))
+            self.active_ui.append(
+                TextUI(self.np(80, 40), self.ns(0, 40),
+                       "Host Options", (0, 0, 0)))
+            self.active_ui.append(
+                TextUI(self.np(80, 48), self.ns(0, 30),
+                       "Write Timer Length:", (0, 0, 0)))
+            self.active_ui.append(
+                TextUI(self.np(80, 61), self.ns(0, 30),
+                       "Draw Timer Length:", (0, 0, 0)))
         else:
             self.active_buttons = []
         self.active_drawings = []
@@ -367,7 +393,7 @@ class Engine:
         """switches the scene to guessing, initializing the UI."""
         self.scene = "guessing"
         pygame.mouse.set_visible(True)
-        self.active_ui = [TimeBar(self.np(92,43), self.ns(60 * 1.5, 270 * 1.5), 10),
+        self.active_ui = [TimeBar(self.np(92,43), self.ns(60 * 1.5, 270 * 1.5), self.prompt_length),
                           DefaultUI(self.np(36, 43), self.ns(650, 400),
                                     "assets/textures/color_button.png")
         ]
@@ -386,9 +412,9 @@ class Engine:
         self.scene = "drawing"
         self.tool_text = TextUI(self.np(60, 95), self.ns(20, 20),
                                  "Current: " + self.curr_tool, (0, 0, 0))
-        self.active_ui = [TimeBar(self.np(94,58), self.ns(60 * 1.5, 320 * 1.5), 60),
-                          TextUI(self.np(50, 10), self.ns(100, 100),
-                                "Prompt: " + self.room.game.current_prompt.content, (0, 0, 0)),
+        self.active_ui = [TimeBar(self.np(94,58), self.ns(60 * 1.5, 320 * 1.5), self.draw_length),
+                          # TextUI(self.np(50, 10), self.ns(100, 100),
+                          #      "Prompt: " + self.room.game.current_prompt.content, (0, 0, 0)),
                           TextUI(self.np(60, 90), self.ns(20, 20),
                                  "Current Tool: ", (0, 0, 0)),
                           self.tool_text,
@@ -631,6 +657,20 @@ class Engine:
     def set_room_code(self, code):
         """sets the room code. Primarily used by buttons"""
         self.room_code_attempt = code.upper()
+
+    def simple_color_select(self, enabled):
+        """Sets simple_colors to true"""
+        self.simple_colors = True
+
+    def prompt_time_length(self):
+        """Sets timer length for prompt/guess phase. Primarily used by buttons"""
+        self.prompt_index = (self.prompt_index + 1) % len(self.prompt_times)
+        self.prompt_length = self.prompt_times[self.prompt_index]
+
+    def draw_time_length(self):
+        """Sets timer length for draw phase. Primarily used by buttons"""
+        self.draw_index = (self.draw_index + 1) % len(self.draw_times)
+        self.draw_length = self.draw_times[self.draw_index]
 
     def get_pen_state(self):
         if self.curr_shade == [240, 240, 240]:

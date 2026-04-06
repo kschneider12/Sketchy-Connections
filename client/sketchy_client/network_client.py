@@ -103,6 +103,7 @@ class NetworkClient:
                 self._thread.join(timeout=5)
 
         self._closed = True
+        self.room = RoomData()
 
     def __enter__(self) -> "NetworkClient":
         return self

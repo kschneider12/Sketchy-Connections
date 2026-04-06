@@ -22,11 +22,13 @@ class ChoicesButton(Button):
         else:
             self.curr_choice = start_choice
 
-        super().__init__(pos, size, 'assets/textures/play.png', funct, False)
+        super().__init__(pos, size, 'assets/textures/text_box_4.png', funct, False)
         self.left = Button((pos[0] + size[0] / 1.2, pos[1]),
-                           (size[1],size[1]), 'assets/textures/host.png', True)
+                           (size[1],size[1]), 'assets/textures/arrow.png', True)
         self.right = Button((pos[0] - size[0] / 1.2, pos[1]),
-                            (size[1],size[1]), 'assets/textures/host.png', True)
+                            (size[1],size[1]), 'assets/textures/arrow.png', True)
+        self.left.img = pygame.transform.rotate(self.left.img, 180)
+        self.left.hover_img = pygame.transform.rotate(self.left.hover_img, 180)
         self.font = pygame.font.Font(FONT_PATH, int(self.height * 0.7))
 
     def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state, paused):

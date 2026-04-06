@@ -6,14 +6,16 @@ backend
 """
 import pygame
 import pyautogui
+import csv
+import random
 from pygame.constants import K_KP_ENTER # pylint: disable=no-name-in-module
 
 from sketchy_shared.types import PlayerData,\
     RoomPhase, RoomData
 from .button import Button
 from .checkbox_button import CheckboxButton
+from .paths import resolve_asset_path
 from .slide_down_button import SlideDownButton
-#from .ChoicesButton import ChoicesButton
 from .pen_type_button import PenTypeButton
 from .brightness_slider import BrightnessSlider
 from .default_ui import DefaultUI, TransparentUI, TextUI, PlayerDisplay, MouseStick
@@ -87,6 +89,9 @@ class Engine:
         self.curr_prompt = None
         self.room_code_attempt = None
         self.tool_text = "brush"
+        self.background = DefaultUI(self.np(50, 50),
+                                     (SCREEN_LEN, SCREEN_HT),
+                                     "assets/textures/background.png")
 
         self.simple_colors = False
         self.prompt_length = 20
@@ -198,6 +203,7 @@ class Engine:
         handles TimeBar, as this is where the UI TimeBar is
         accessed every frame."""
         self.screen.fill((50, 100, 100))
+        self.background.draw(self.screen)
         for elem in self.draw_order:
             if isinstance(elem, TimeBar):
                 if elem.time_up():
@@ -319,8 +325,6 @@ class Engine:
             TypeBox(self.np(50, 90), self.ns(1300 * 0.6, 110 * 0.6),
                     "assets/textures/text_box_5.png", self.set_name,"Enter A Name",15),
             SlideDownButton(self.np(90, 0), (self.np(0, 20), self.np(0,80)), self.ns(10,50), self.slider_control)]
-        #ChoicesButton(self.np(70,50), self.ns(80,40),
-        #                   self.check_box_test, [0,1,'NICO','RYAN','KENT','LAUREL', 'SOPHIE'])]
         self.active_drawings = []
         self.draw_order = self.active_buttons + self.active_drawings +\
                           self.active_ui + self.active_animations
@@ -347,23 +351,23 @@ class Engine:
                        "assets/textures/play.png", self.start_game),
                 CheckboxButton(self.np(70, 76), self.ns(40, 40),
                                self.simple_color_select, "Simple Colors", False),
-                ChoicesButton(self.np(79.5, 55), self.ns(115, 40),
+                ChoicesButton(self.np(79.5, 55), self.ns(90, 40),
                               self.prompt_time_length, PROMPT_TIMES, 20),
-                ChoicesButton(self.np(79.5,68), self.ns(115,40),
+                ChoicesButton(self.np(79.5,68), self.ns(90,40),
                                   self.draw_time_length, DRAW_TIMES, 120)
 
             ]
             self.active_ui.append(DefaultUI(self.np(80, 41), self.ns(240, 49),
                                 "assets/textures/text_box_4.png"))
             self.active_ui.append(
-                TextUI(self.np(80, 40), self.ns(0, 40),
-                       "Host Options", (0, 0, 0)))
+                DefaultUI(self.np(80, 41), self.ns(173, 43),
+                          "assets/textures/options_txt.png"))
             self.active_ui.append(
-                TextUI(self.np(80, 48), self.ns(0, 30),
-                       "Write Timer Length:", (0, 0, 0)))
+                TextUI(self.np(80, 49), self.ns(0, 30),
+                       "Write Time", (0, 0, 0)))
             self.active_ui.append(
-                TextUI(self.np(80, 61), self.ns(0, 30),
-                       "Draw Timer Length:", (0, 0, 0)))
+                TextUI(self.np(80, 62), self.ns(0, 30),
+                       "Draw Time", (0, 0, 0)))
         else:
             self.active_buttons = []
         self.active_drawings = []
@@ -713,13 +717,18 @@ class Engine:
                                             self.ns(SCREEN_LEN * 2, SCREEN_HT * 2),
                                             (0, 0, 0), 150))
         if self.scene == "writing":
+            with open(resolve_asset_path("assets/guess_prompts.csv"), mode='r', newline='') as file:
+                text = random.choice(list(csv.reader(file)))
+            print(text)
             self.draw_order.insert(index, TextUI(self.np(50, 40),
                                      self.ns(0, 80),
-                                 "Are you sure?", (255, 255, 255)))
+                                 text[0], (255, 255, 255)))
         elif self.scene == "drawing":
+            with open(resolve_asset_path("assets/draw_prompts.csv"), mode='r', newline='') as file:
+                text = random.choice(list(csv.reader(file)))
             self.draw_order.insert(index, TextUI(self.np(50, 35),
                                          self.ns(0, 80),
-                                     "Put that on a fridge!", (255, 255, 255)))
+                                     text[0], (255, 255, 255)))
 
     def slider_control(self, offset):
         """Controls the slide bar, moving items up and down

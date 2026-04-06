@@ -3,6 +3,7 @@ CheckboxButton is a child of button, and is a toggleable trigger
 for certain settings, such as complex colors or not.
 """
 import pygame
+from .sound_manager import SoundManager
 from .button import Button
 from .paths import resolve_asset_path
 
@@ -40,6 +41,7 @@ class CheckboxButton(Button):
                 self.curr_hover = False
             if self.clicked(mouse_pos, just_clicked):
                 self.on = not self.on
+                SoundManager.get_instance().play_sfx("assets/audio/click.mp3")
                 return [self.command, self.on]
         if self.text == "":
             return [self.command, self.on]

@@ -14,7 +14,6 @@ def main():
     """
     # Init Pygame
     pygame.init() # pylint: disable=no-member
-    pygame.mixer.init()
 
     # Create and run game
     engine = Engine()

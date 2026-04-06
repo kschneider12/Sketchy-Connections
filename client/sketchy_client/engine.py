@@ -17,6 +17,7 @@ from .slide_down_button import SlideDownButton
 from .pen_type_button import PenTypeButton
 from .brightness_slider import BrightnessSlider
 from .default_ui import DefaultUI, TransparentUI, TextUI, PlayerDisplay, MouseStick
+from .sound_manager import SoundManager
 from .time_bar import TimeBar
 #from .ColorButton import ColorButton
 #from .draw_window import Grid
@@ -32,8 +33,6 @@ SCREEN_HT = pyautogui.size()[1]
 
 PROMPT_TIMES = [10, 20, 30, 60]
 DRAW_TIMES = [30, 60, 120, 180, 300]
-PROMPT_INDEX = 1
-DRAW_INDEX = 2
 
 class Engine:
     """Initialization of Engine, including the screen, UI elements,
@@ -88,7 +87,6 @@ class Engine:
         self.curr_prompt = None
         self.room_code_attempt = None
         self.tool_text = "brush"
-        #self.
 
         self.simple_colors = False
         self.prompt_length = 20
@@ -327,6 +325,7 @@ class Engine:
         self.draw_order = self.active_buttons + self.active_drawings +\
                           self.active_ui + self.active_animations
         self.pause_client()
+        SoundManager.get_instance().play_music("assets/audio/RadioMartini.mp3")
 
     def switch_to_lobby(self):
         """switches the scene to lobby, initializing the UI."""
@@ -349,9 +348,9 @@ class Engine:
                 CheckboxButton(self.np(70, 76), self.ns(40, 40),
                                self.simple_color_select, "Simple Colors", False),
                 ChoicesButton(self.np(79.5, 55), self.ns(115, 40),
-                              self.prompt_time_length, [10, 20, 30, 60], 20),
+                              self.prompt_time_length, PROMPT_TIMES, 20),
                 ChoicesButton(self.np(79.5,68), self.ns(115,40),
-                                  self.draw_time_length, [30, 60, 120, 180, 300], 120)
+                                  self.draw_time_length, DRAW_TIMES, 120)
 
             ]
             self.active_ui.append(DefaultUI(self.np(80, 41), self.ns(240, 49),
@@ -372,6 +371,9 @@ class Engine:
                           self.active_ui + self.active_animations
         self.pause_client()
 
+        SoundManager.get_instance().play_music("assets/audio/KoolKats.mp3")
+
+
 
     def switch_to_writing(self):
         """switches the scene to writing, initializing the UI."""
@@ -390,6 +392,8 @@ class Engine:
         self.draw_order = self.active_buttons + self.active_drawings +\
                           self.active_ui + self.active_animations
         self.pause_client()
+
+        SoundManager.get_instance().play_music("assets/audio/Hackbeat.mp3")
 
     def switch_to_guessing(self):
         """switches the scene to guessing, initializing the UI."""
@@ -593,12 +597,14 @@ class Engine:
     def set_sound_effects_volume(self, volume):
         """sets the sound effects volume. Primarily used by buttons"""
         self.sfx_volume = volume
+        SoundManager.get_instance().change_volume(self.sfx_volume, "sfx")
 
     def set_music_volume(self, volume):
         """sets the music volume. Primarily used by buttons"""
         #TODO: KOOL KATS FOR DRAWING?
         #TODO: RADIO MARTINI FOR LOBBY AND WELCOME
         self.music_volume = volume
+        SoundManager.get_instance().change_volume(self.music_volume, "music")
 
     def set_color(self, color):
         """sets the RGB color while drawing. Primarily used by buttons"""
@@ -743,11 +749,11 @@ class Engine:
             pygame.mouse.set_visible(True)
             self.paused = True
             self.active_buttons.append(SliderButton(self.np(30, 50),
-                                                    self.ns(200,30),0, 100,
+                                                    self.ns(200,30),0, 1,
                                                     self.set_sound_effects_volume,
                                                     self.sfx_volume, 10))
             self.active_buttons.append(SliderButton(self.np(70, 50),
-                                                    self.ns(200, 30), 0,100,
+                                                    self.ns(200, 30), 0,1,
                                                     self.set_music_volume,
                                                     self.music_volume, 10))
             if self.scene != "welcome":
@@ -758,6 +764,7 @@ class Engine:
                 self.active_buttons.append(Button(self.np(50, 70), (self.ns(140 * 1.8, 51 * 1.8)),
                                                   "assets/textures/quit.png",
                                                   self.quit_game, z=5, pause_override=True))
+
             self.draw_order.append(TransparentUI(self.np(50, 50),
                           self.ns(SCREEN_LEN * 2, SCREEN_HT * 2),
                           (0, 0, 0), 100))
@@ -768,6 +775,7 @@ class Engine:
 
         elif self.paused and pause:
             self.paused = False
+            self.active_buttons.pop()
             self.active_buttons.pop()
             self.active_buttons.pop()
             self.draw_order = self.draw_order[:-5]

@@ -4,6 +4,7 @@ including checkbox, choices, color wheel, slider, type box, color, brightness
 slider, etc. It is the core foundation of interaction within the program.
 """
 import pygame
+from .sound_manager import SoundManager
 from .paths import resolve_asset_path
 
 
@@ -27,6 +28,7 @@ class Button:
         self.img = pygame.transform.scale(self.img, size)
         self.command = funct
         self.active = True
+        self.sounds = []
         if multi_texture:
             hover_path = resolve_asset_path(img[:-4] + "_hover.png")
             self.hover_img = pygame.image.load(hover_path)
@@ -46,10 +48,12 @@ class Button:
             else:
                 self.curr_hover = False
             if self.clicked(mouse_pos, just_clicked):
+                SoundManager.get_instance().play_sfx("assets/audio/click.mp3")
                 return self.command
         return False
 
     def draw(self, screen, curr_color):
+        self.sounds = []
         """
         draw is how buttons are drawn on screen, depending on multiple textures or not.
         """

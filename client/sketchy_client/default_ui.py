@@ -3,6 +3,7 @@ Stores all types of generic UI, such as images and the player display
 """
 import pygame
 
+from .sound_manager import SoundManager
 from .paths import resolve_asset_path
 from .paths import asset_path
 

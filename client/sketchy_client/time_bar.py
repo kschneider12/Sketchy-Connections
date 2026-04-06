@@ -35,15 +35,16 @@ class TimeBar(DefaultUI):
         """
         self.bar_pos =  (self.pos[0] - self.width / 2.15,
                          self.pos[1] - self.height / 2.05 + (self.start_time - self.time)
-                         * (self.height / self.start_time * 0.964))
+                         * (self.height / self.start_time * 0.964)) # start_time multiplied by 0.964
         color = (255 - int(255 * self.time / self.start_time), int(255 * self.time / self.start_time), 0)
         for val in color:
             if val < 0 or val > 255:
                 color = (0,0,0)
         pygame.draw.rect(screen, color,
-                         pygame.Rect(self.pos[0] - self.width / 2.17, self.bar_pos[1] + 5,
-                                     self.width * 9/10, self.height * 1.245 - self.bar_pos[1] + 5))
+                         pygame.Rect(self.pos[0] - self.width / 2.17, self.bar_pos[1] + self.height * 0.02,
+                                     self.width * 9/10, self.height - self.bar_pos[1] + self.height / 3.99))
         screen.blit(self.bar_img, self.bar_pos)
+        #TODO FIX RECTANGLE!!!
         screen.blit(self.img, (self.pos[0] - self.width / 2, self.pos[1] - self.height / 2))
 
 

@@ -341,9 +341,11 @@ class Engine:
                                     "assets/textures/title.png"),
                           PlayerDisplay(self.np(4, 55), self.ns(30 * 2.4, 241 * 2.4),
                                         (SCREEN_LEN, SCREEN_HT), self.network.room.players),
-                          TextUI(self.np(55, 90), self.ns(0, 40),
-                                 "Room Code:", (0, 0, 0)),
-                          TextUI(self.np(70, 90), self.ns(0, 40),
+                          DefaultUI(self.np(35, 5), self.ns(65 * 2, 23 * 2),
+                                    "assets/textures/code.png"),
+                          #DefaultUI(self.np(50, 5.5), self.ns(160, 60),
+                                    #"assets/textures/text_box_4.png"),
+                          TextUI(self.np(50, 5), self.ns(0, 60),
                                  self.network.room.room_id.lower(), (0,0,0))]
         if self.player.is_host:
             self.active_buttons = [

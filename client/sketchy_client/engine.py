@@ -347,9 +347,9 @@ class Engine:
                 CheckboxButton(self.np(70, 76), self.ns(40, 40),
                                self.simple_color_select, "Simple Colors", False),
                 ChoicesButton(self.np(79.5, 55), self.ns(115, 40),
-                              self.check_box_test, [120, 180, 300, 30, 60]),
+                              self.prompt_time_length, [10, 20, 30, 60], 20),
                 ChoicesButton(self.np(79.5,68), self.ns(115,40),
-                                  self.check_box_test, [30, 60, 10, 20])
+                                  self.draw_time_length, [30, 60, 120, 180, 300], 120)
 
             ]
             self.active_ui.append(DefaultUI(self.np(80, 41), self.ns(240, 49),
@@ -374,7 +374,7 @@ class Engine:
     def switch_to_writing(self):
         """switches the scene to writing, initializing the UI."""
         self.scene = "writing"
-        self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), 10),
+        self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), self.prompt_length),
                           TextUI(self.np(50, 10), self.ns(100,100),
                                  "Create a Prompt!", (0,0,0))]
         self.active_buttons = [TypeBox(self.np(45,50), self.ns(1300 * 0.6, 110 * 0.6),
@@ -662,15 +662,15 @@ class Engine:
         """Sets simple_colors to true"""
         self.simple_colors = True
 
-    def prompt_time_length(self):
+    def prompt_time_length(self, selected_value):
         """Sets timer length for prompt/guess phase. Primarily used by buttons"""
-        self.prompt_index = (self.prompt_index + 1) % len(self.prompt_times)
-        self.prompt_length = self.prompt_times[self.prompt_index]
+        self.prompt_length = selected_value
 
-    def draw_time_length(self):
+    def draw_time_length(self, selected_value):
         """Sets timer length for draw phase. Primarily used by buttons"""
         self.draw_index = (self.draw_index + 1) % len(self.draw_times)
-        self.draw_length = self.draw_times[self.draw_index]
+        #self.draw_length = self.draw_times[self.draw_index]
+        self.draw_length = selected_value
 
     def get_pen_state(self):
         if self.curr_shade == [240, 240, 240]:

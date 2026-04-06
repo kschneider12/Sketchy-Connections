@@ -273,8 +273,6 @@ class Engine:
         for animation in self.active_animations:
             animation.update(False)
 
-
-    # When any timer in the game runs out, figure out which timer it was and behave accordingly
     def time_up(self):
         """accessed when any timer runs out, this manages logic
         when time runs out"""
@@ -292,6 +290,7 @@ class Engine:
         """short for normalize position, this normalizes UI elements
         regardless of screen size"""
         return [int(x * SCREEN_LEN / 100), int(y * SCREEN_HT / 100)]
+
     # normalize scale in relation to screen size
     def ns(self, x, y):
         """short for normalize scale, this normalizes UI elements
@@ -303,9 +302,7 @@ class Engine:
         regardless of screen size"""
         return x * SCREEN_LEN / 1000.0, x * SCREEN_LEN / 1000.0 * 175/325.0
 
-    #TODO: Pause screen with volume bars and leave game
     #TODO: Drawing only starts when you click on canvas
-    #TODO: Better drawing update disable (for pause menu)
 
 #------------------------------------------------------------------------------------------------
 #Button Commands listed below
@@ -608,8 +605,6 @@ class Engine:
 
     def set_music_volume(self, volume):
         """sets the music volume. Primarily used by buttons"""
-        #TODO: KOOL KATS FOR DRAWING?
-        #TODO: RADIO MARTINI FOR LOBBY AND WELCOME
         self.music_volume = volume
         SoundManager.get_instance().change_volume(self.music_volume, "music")
 

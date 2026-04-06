@@ -30,6 +30,11 @@ from .choices_button import ChoicesButton
 SCREEN_LEN = pyautogui.size()[0]
 SCREEN_HT = pyautogui.size()[1]
 
+PROMPT_TIMES = [10, 20, 30, 60]
+DRAW_TIMES = [30, 60, 120, 180, 300]
+PROMPT_INDEX = 1
+DRAW_INDEX = 2
+
 class Engine:
     """Initialization of Engine, including the screen, UI elements,
     vectors that store UI data, input collection, and server
@@ -83,14 +88,11 @@ class Engine:
         self.curr_prompt = None
         self.room_code_attempt = None
         self.tool_text = "brush"
+        #self.
 
         self.simple_colors = False
         self.prompt_length = 20
         self.draw_length = 120
-        self.prompt_times = [10, 20, 30, 60]
-        self.draw_times = [30, 60, 120, 180, 300]
-        self.prompt_index = 1
-        self.draw_index = 2
 
         # Backend game state management
         self.network: NetworkClient = NetworkClient()
@@ -668,8 +670,6 @@ class Engine:
 
     def draw_time_length(self, selected_value):
         """Sets timer length for draw phase. Primarily used by buttons"""
-        self.draw_index = (self.draw_index + 1) % len(self.draw_times)
-        #self.draw_length = self.draw_times[self.draw_index]
         self.draw_length = selected_value
 
     def get_pen_state(self):

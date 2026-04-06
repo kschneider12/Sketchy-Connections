@@ -34,13 +34,13 @@ class ChoicesButton(Button):
         Overrides Button.behave, rotating through options based on user interaction
         """
         if not paused or self.pause_override:
-            if (self.left.behave(mouse_pos, just_clicked, keystrokes, mouse_state)
+            if (self.left.behave(mouse_pos, just_clicked, keystrokes, mouse_state, paused)
                     and self.curr_choice != self.choices[-1]):
                 for i, val in enumerate(self.choices):
                     if val == self.curr_choice:
                         self.curr_choice = self.choices[i + 1]
                         break
-            if (self.right.behave(mouse_pos, just_clicked, keystrokes, mouse_state)
+            if (self.right.behave(mouse_pos, just_clicked, keystrokes, mouse_state, paused)
                     and self.curr_choice != self.choices[0]):
                 for i, val in enumerate(self.choices):
                     if val == self.curr_choice:

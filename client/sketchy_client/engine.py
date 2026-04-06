@@ -323,8 +323,8 @@ class Engine:
             Button(self.np(97, 4), (self.ns(50, 50)),
                    "assets/textures/exit.png", self.quit_game),
             TypeBox(self.np(50, 90), self.ns(1300 * 0.6, 110 * 0.6),
-                    "assets/textures/text_box_5.png", self.set_name,"Enter A Name",15),
-            SlideDownButton(self.np(90, 0), (self.np(0, 20), self.np(0,80)), self.ns(10,50), self.slider_control)]
+                    "assets/textures/text_box_5.png", self.set_name,"Enter A Name",15)]
+        #SlideDownButton(self.np(90, 0), (self.np(0, 20), self.np(0,80)), self.ns(10,50), self.slider_control)
         self.active_drawings = []
         self.draw_order = self.active_buttons + self.active_drawings +\
                           self.active_ui + self.active_animations

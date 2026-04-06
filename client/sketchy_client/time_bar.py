@@ -7,6 +7,7 @@ import pygame
 import time as t
 
 from .default_ui import DefaultUI
+from. sound_manager import SoundManager
 from .paths import resolve_asset_path
 
 class TimeBar(DefaultUI):
@@ -18,6 +19,7 @@ class TimeBar(DefaultUI):
         self.bar_pos = position
         self.start_time = time
         self.end_time = t.time() + time
+        self.beep = 3
         self.time = self.start_time
         print(self.time)
         self.returned = False
@@ -53,6 +55,10 @@ class TimeBar(DefaultUI):
         """
         if not self.returned:
             self.time = self.end_time - t.time()
+            if self.beep > self.time:
+                self.beep-= 1
+                if self.beep >= 0:
+                    SoundManager.get_instance().play_sfx("assets/audio/ding.mp3")
             if self.end_time <= t.time():
                 self.returned = True
                 return True

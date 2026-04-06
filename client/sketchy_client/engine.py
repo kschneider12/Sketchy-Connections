@@ -30,8 +30,8 @@ from .draw_window import DrawingWindow, AnimationWindow
 from .color_wheel import ColorWheel
 from .choices_button import ChoicesButton
 # from draw_window import AnimationWindow
-SCREEN_LEN = pyautogui.size()[0]
-SCREEN_HT = pyautogui.size()[1]
+SCREEN_LEN = pyautogui.size()[0] / 2
+SCREEN_HT = pyautogui.size()[1] / 2
 
 PROMPT_TIMES = [10, 20, 30, 60]
 DRAW_TIMES = [30, 60, 120, 180, 300]
@@ -208,7 +208,7 @@ class Engine:
             if isinstance(elem, TimeBar):
                 if elem.time_up():
                     print("time up!")
-                    self.submit()
+                    self.submit(True)
             elif isinstance(elem, PlayerDisplay):
                 elem.set_active_players(self.network.room.players)
             elif isinstance(elem, PenTypeButton):
@@ -687,10 +687,10 @@ class Engine:
             return "eraser"
         return self.curr_tool
 
-    def submit(self):
-        #TODO: Joe: If a player leaves the game (or crashes) it doesn't submit them,
-        # and everyone sits in limbo waiting for all submissions. How do we want to approach this?
+    def submit(self, time_up = False):
         """refers to server that a user has made a submission, and submits it"""
+        if not time_up:
+            SoundManager.get_instance().play_sfx("assets/audio/yay.mp3")
         if self.scene == "writing" and not self.submitted:
             if not self.curr_prompt:
                 self.curr_prompt = f"{self.player.name} didn't submit!"
@@ -700,10 +700,10 @@ class Engine:
             self.submit_ui()
         elif self.scene == "drawing" and not self.submitted:
             # disable buttons and present close screen
-            self.submit_ui()
             self.network.submit_entry(self.active_drawings[0].drawn_pixels)
             print(self.network.room.to_dict())
             self.submitted = True
+            self.submit_ui()
 
     def submit_ui(self):
         """creates the overlay when you submit something"""

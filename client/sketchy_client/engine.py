@@ -10,8 +10,7 @@ import csv
 import random
 from pygame.constants import K_KP_ENTER # pylint: disable=no-name-in-module
 
-from sketchy_shared.types import PlayerData,\
-    RoomPhase, RoomData
+from sketchy_shared.types import PlayerData, RoomPhase, RoomData, BookData, EntryData, EntryType
 from .button import Button
 from .checkbox_button import CheckboxButton
 from .paths import resolve_asset_path
@@ -101,6 +100,9 @@ class Engine:
         self.network: NetworkClient = NetworkClient()
         self.room: RoomData = RoomData()
         self.player: PlayerData = PlayerData()
+        self.current_entry: EntryData | None = None # Safe to access after first prompt, look at impl for fields
+        self.current_entry_type: EntryType = EntryType.PROMPT # When drawing this has type PROMPT, when guessing this has type DRAWING
+        self.books: list[BookData] | None = None # This only gets set when we have reached results!!
         self.network_error = None
         self.submitted = False
         self.last_submission = ""
@@ -115,7 +117,7 @@ class Engine:
         draws UI, handles special loop cases, and maintains the game clock"""
         self.switch_to_welcome()
         while True:
-            self.room = self.network.room
+            self.update_room()
             if self.network_error is not None:
                 print(self.network_error)
                 self.network_error = None
@@ -137,10 +139,10 @@ class Engine:
                         case 'drawing':
                             self.switch_to_draw()
                         case 'guessing':
-                            print(self.room.game.current_prompt.content) # We can see here that we do infact have the drawing
                             self.switch_to_guessing()
             elif self.room.phase == RoomPhase.RESULTS:
-                if self.room.game and self.scene != self.room.phase:
+                if self.room.game.books and self.scene != self.room.phase:
+                    self.books = self.room.game.books
                     self.switch_to_results()
             # Behaviors depending on scene
             if self.scene == "drawing":
@@ -156,6 +158,16 @@ class Engine:
             self.draw_ui()
             pygame.display.flip()
             self.clock.tick(60)
+
+    def update_room(self):
+        self.room = self.network.room
+
+        if self.room.game:
+            if self.room.game.current_prompt:
+                self.current_entry = self.room.game.current_prompt
+                self.current_entry_type = self.current_entry.type
+            if self.room.game.books:
+                self.books = self.room.game.books
 
     def get_inputs(self):
         """Collects all inputs from the user every frame, and stores it
@@ -410,7 +422,15 @@ class Engine:
         self.active_buttons = [TypeBox(self.np(50, 86), self.ns(1550 * 0.6, 70 * 0.6),
                                        "assets/textures/text_box_5.png",
                                        self.set_curr_guess,"Type A Response")]
-        self.active_drawings = [DrawingWindow(self.np(36, 43), self.ns(845, 455))]
+
+        pixels = []
+        if self.room.game.current_prompt:
+            pixels = self.room.game.current_prompt.content
+
+        self.active_animations = [
+            AnimationWindow(self.np(36, 43), self.ns(845, 455), pixels)
+        ]
+        self.active_drawings = []
         self.draw_order = self.active_buttons + self.active_ui + \
                           self.active_drawings + self.active_animations
         self.pause_client()
@@ -747,6 +767,7 @@ class Engine:
 
     def leave_room(self):
         # TODO: LEAVE ROOM!
+        self.network.close()
         self.switch_to_welcome()
         self.pause_client(True)
 

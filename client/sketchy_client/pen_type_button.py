@@ -4,7 +4,7 @@ thickness or fill tool. Same behavior but unique draw function.
 """
 import pygame
 from .paths import resolve_asset_path
-from client.sketchy_client.button import Button
+from sketchy_client.button import Button
 
 
 class PenTypeButton(Button):

@@ -137,8 +137,11 @@ class Engine:
                         case 'drawing':
                             self.switch_to_draw()
                         case 'guessing':
+                            print(self.room.game.current_prompt.content) # We can see here that we do infact have the drawing
                             self.switch_to_guessing()
-
+            elif self.room.phase == RoomPhase.RESULTS:
+                if self.room.game and self.scene != self.room.phase:
+                    self.switch_to_results()
             # Behaviors depending on scene
             if self.scene == "drawing":
                 self.draw()

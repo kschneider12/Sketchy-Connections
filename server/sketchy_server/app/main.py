@@ -14,6 +14,7 @@ import time
 from collections import defaultdict
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect, status
+from fastapi.websockets import WebSocketState
 from fastapi.logger import logging
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from starlette.datastructures import Address
@@ -283,6 +284,9 @@ async def send_websocket_error(
 ):
     """Best-effort websocket error response helper."""
 
+    if websocket.application_state != WebSocketState.CONNECTED:
+        return
+
     try:
         await websocket.send_json({"type": "error", "code": code, "message": message})
     except Exception:
@@ -290,6 +294,8 @@ async def send_websocket_error(
             logger.exception(_format_message(websocket.client, "Failed to send websocket error response"))
         else:
             logger.exception("Failed to send websocket error response")
+    except WebSocketDisconnect:
+        return
 
 def _format_message(client: Address, msg: str) -> str:
     return f"{client.host}:{client.port} - {msg}"

@@ -16,7 +16,7 @@ class TypeBox(Button):
     that the normal button class does not require.
     """
     def __init__(self,  position, size, img, funct, default_message = "",
-                 character_limit = 60, z = 0):
+                 character_limit = 40, z = 0):
         self.selected = False
         self.character_limit = character_limit
         self.accum = 0
@@ -64,8 +64,8 @@ class TypeBox(Button):
             bonus = "|"
         else:
             bonus = ""
-            if len(self.curr_string) > self.character_limit:
-                self.curr_string = self.curr_string[:self.character_limit]
+        if len(self.curr_string) > self.character_limit:
+            self.curr_string = self.curr_string[:self.character_limit]
         if self.curr_string == "" and not self.selected:
             # return default gray message
             return [self.default_message,  # written text

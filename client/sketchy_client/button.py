@@ -81,3 +81,12 @@ class Button:
         """
         return (abs(mouse_pos[0] - self.pos[0]) <= self.width / 2
                 and abs(mouse_pos[1] - self.pos[1]) <= self.height / 2)
+
+    def replace_texture(self, img, multi_texture=True):
+        """switches the texture of a button"""
+        self.img = pygame.image.load(resolve_asset_path(img))
+        self.img = pygame.transform.scale(self.img, (self.width, self.height))
+        if multi_texture:
+            hover_path = resolve_asset_path(img[:-4] + "_hover.png")
+            self.hover_img = pygame.image.load(hover_path)
+            self.hover_img = pygame.transform.scale(self.hover_img, (self.width, self.height))

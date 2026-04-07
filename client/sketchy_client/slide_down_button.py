@@ -3,7 +3,7 @@ from .button import Button
 class SlideDownButton(Button):
     def __init__(self, pos, y_bounds, size, funct, z=1):
         y_bounds = (y_bounds[0][1], y_bounds[1][1])
-        img = 'assets/textures/play.png'
+        img = 'assets/textures/slide_down_bar.png'
         self.dragging = False
         self.bounds = (y_bounds[0] + size[1] / 2, y_bounds[1] - size[1] / 2)
         super().__init__([pos[0],y_bounds[1] - size[1] / 2] , size, img, funct, z=z)

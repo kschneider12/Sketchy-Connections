@@ -96,6 +96,7 @@ class Engine:
         self.simple_colors = False
         self.prompt_length = 20
         self.draw_length = 120
+        self.curr_book_name = ''
 
         # Backend game state management
         self.network: NetworkClient = NetworkClient()
@@ -140,17 +141,17 @@ class Engine:
                     self.submitted = False
                     match self.room.game.phase:
                         case 'writing':
-                            self.draw_length = self.room.draw_time
-                            self.prompt_length= self.room.prompt_time
+                            #self.draw_length = self.room.draw_time
+                            #self.prompt_length= self.room.prompt_time
                             #TODO REMOVE!
-                            #self.draw_length = 1
-                            #self.prompt_length = 1
+                            self.draw_length = 1
+                            self.prompt_length = 10
                             self.switch_to_writing()
                         case 'drawing':
                             self.switch_to_draw()
                         case 'guessing':
                             self.switch_to_guessing()
-            elif self.room.phase == RoomPhase.RESULTS:
+            elif self.room.phase == RoomPhase.RESULTS and not self.scene == "lobby":
                 if self.room.game.books and self.scene != self.room.phase:
                     self.books = self.room.game.books
                     self.switch_to_results()
@@ -490,11 +491,6 @@ class Engine:
             Button(self.np(36, 92.5), (self.ns(140 * 1.8, 51 * 1.8)),
                   "assets/textures/submit.png", self.submit)]
         # Mat changed this line
-        #TODO: MAT- self.nl works- I use it for the colorbutton texture you put behind
-        #TODO: the drawing window for reference. Mess around with DrawingWindow and change 680.
-        #TODO: See how it snaps? The calculation for size of drawing window is not consistent with
-        #TODO: the other UI elements- please look at this and solve it, as it's out of my scope now.
-        #TODO: The objective is that it can be ANY size- especially for the results page.
         self.active_animations = []
         self.active_drawings = [DrawingWindow(self.np(36,53), self.nl(640))]
         self.draw_order = self.active_buttons + self.active_ui +\
@@ -518,8 +514,13 @@ class Engine:
                                                    self.np(0,95)),
                                                    self.ns(20,150), self.slider_control, z=2))
         if self.player.is_host:
-            self.active_buttons.append(Button(self.np(30, 70), (self.ns(115 * 2.2, 51 * 2.2)),
-                   "assets/textures/host.png", self.broadcast_next_result))
+            self.active_buttons.append(Button(self.np(25, 93), (self.ns(75 * 1.5, 51 * 1.5)),
+                   "assets/textures/next.png", self.broadcast_next_result))
+            self.active_buttons.append(Button((90000,90000), (self.ns(75 * 1.5, 51 * 1.5)),
+                                              "assets/textures/play.png", self.return_to_lobby))
+        else:
+            self.active_buttons.append(Button(self.np(25, 93), (self.ns(75 * 1.5, 51 * 1.5)),
+                                              "assets/textures/play.png", self.return_to_lobby))
 
         self.active_animations = []
         self.active_drawings = []
@@ -528,7 +529,6 @@ class Engine:
         self.draw_order = sorted(self.draw_order, key=lambda elem: elem.z)
         self.pause_client()
         SoundManager.get_instance().play_music("assets/audio/BrightlyFancy.mp3")
-
 
     def enable_room_code(self):
         """Enables UI for asking for room code"""
@@ -589,6 +589,7 @@ class Engine:
             self.draw_text([str(vec[4] - len(vec[-1])),
                             (vec[-2], vec[1][1]), vec[2], (100,100,100)])
         self.draw_text(vec[:-3])
+
         #(self.pos[0] - self.width / 2.2, self.pos[1] - self.height / 3)
 
     def _start_room(self):
@@ -731,6 +732,7 @@ class Engine:
         self.network.set_options(self.draw_length, self.prompt_length)
 
     def get_pen_state(self):
+        """returns the pen state"""
         if self.curr_shade == [240, 240, 240]:
             return "eraser"
         return self.curr_tool
@@ -853,6 +855,8 @@ class Engine:
 
     def show_next_result(self):
         """When new increment, this adds new result to book"""
+        if self.room.phase == RoomPhase.LOBBY:
+            return
         while self.results_shown < self.room.book_idx:
             if not self.get_next_element():
                 break
@@ -860,19 +864,52 @@ class Engine:
             #ADD ITEM TO THE DISPLAY
         self.draw_order = self.active_buttons + self.active_drawings + \
                           self.active_ui + self.active_animations + self.active_results
+        if self.paused:
+            self.draw_order.append(TransparentUI(self.np(50, 50),
+                                                 self.ns(SCREEN_LEN * 5, SCREEN_HT * 5),
+                                                 (0, 0, 0), 100, z=8))
+            self.draw_order.append(DefaultUI(self.np(50, 50),
+                                             self.ns(520 * 1.5, 300 * 1.5),
+                                             "assets/textures/pause_screen.png", z=9))
+        if self.curr_book_name:
+            book_text = f"{self.curr_book_name}'s Book"
+        else:
+            book_text = ""
+        self.draw_order.append(TextUI(self.np(50, 35),
+                                     self.ns(30, 80),
+                                 book_text, (0, 0, 0), z=7))
         self.draw_order = sorted(self.draw_order, key=lambda elem: elem.z)
+        if (self.results_shown % len(self.books[0].entries)) == 0:
+            for button in self.active_buttons:
+                if (button.pos == self.np(25, 93) and self.player.is_host and
+                        self.results_shown != (len(self.books[0].entries) * len(self.books))):
+                    button.replace_texture("assets/textures/next_book.png")
+        elif (self.results_shown % len(self.books[0].entries)) == 1 and self.player.is_host:
+            for button in self.active_buttons:
+                if button.pos == self.np(25, 93):
+                    button.replace_texture("assets/textures/next.png")
 
     def get_next_element(self):
         """Helper function that sends the appropriate
         UI back to the show_next_result function"""
-        if self.results_shown >= len(self.books[0].entries) * len(self.books):
-            return False
+        if self.results_shown == len(self.books[0].entries) * len(self.books) - 1 and self.player.is_host:
+            for button in self.active_buttons:
+                #swap button!
+                if button.pos == self.np(25, 93):
+                    button.pos = (1000000, 1000000)
+                    print("moved first button!")
+                    button.active = False
+                    for button2 in self.active_buttons:
+                        if button2.pos == (90000,90000):
+                            button2.pos = self.np(25, 93)
+                            print("moved second button!")
+                            break
+                    break
         curr_book = self.results_shown // len(self.books[0].entries)
         id = self.books[curr_book].owner_id
         for player in self.room.players:
             if player.id == id:
-                #TODO set self.curr_book_name to this value!
-                pass
+                self.curr_book_name = player.name
 
         data = self.books[curr_book].entries[self.results_shown % len(self.books[0].entries)]
 
@@ -884,19 +921,35 @@ class Engine:
         if data.type == "prompt":
             #print("prompt!")
             for elem in self.active_results:
-                elem.init_y -= self.ns(0, 70)[1]
-            text = TextUI(self.np(50, 90), self.ns(0, 60),
-                   data.content, (0, 0, 0), z=4, draggable=True)
+                elem.init_y -= self.ns(0, 60)[1]
+            text = TextUI(self.np(35, 90), self.ns(0, 40),
+                   data.content, (0, 0, 0), z=4, draggable=True,
+                          animate=True, wrapping = self.ns(600,0)[0])
             self.active_results.append(text)
-            self.results_height += self.ns(0, 70)[1]
+            self.active_results.append(DefaultUI(self.np(62, 90), self.ns(550 * 1.06, 125 * 0.9),
+                                                 "assets/textures/results_box.png", draggable=True, z=2))
+            self.results_height += self.ns(0, 80)[1]
         elif data.type == "drawing":
             for elem in self.active_results:
-                elem.init_y -= self.ns(0, 300)[1]
+                elem.init_y -= self.ns(0, 400)[1]
+
             #print("drawing!")
             #drawing:
-            drawing = AnimationWindow(self.np(50, 80 + self.results_height), self.ns(845 / 2, 455 / 2),
-                                     data.content, draggable=True, z=4)
+            drawing = AnimationWindow(self.np(70, 70), self.ns(845 / 2, 455 / 2),
+                                     data.content, draggable=True, z=4, animated = True)
             self.active_results.append(drawing)
-            self.results_height += self.ns(0, 300)[1]
+            self.active_results.append(DefaultUI(self.np(70, 70), self.ns(845 / 1.9, 455 / 1.9),
+                      "assets/textures/back_template.png", draggable=True, z=3))
+            self.results_height += self.ns(0, 400)[1]
         return True
 
+    def return_to_lobby(self):
+        """Returns the player to the lobby AFTER a game has ended"""
+        self.room.phase = RoomPhase.LOBBY
+        if self.player.is_host:
+            #TODO: END GAME!!!
+            #TODO: TEST: After game ended, see if players
+            # who stay in results get warped to write screen
+            # or not if host starts new game
+            pass
+        self.switch_to_lobby()

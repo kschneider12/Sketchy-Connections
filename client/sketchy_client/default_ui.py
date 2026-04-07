@@ -71,17 +71,68 @@ class TransparentUI(DefaultUI):
 
 class TextUI(DefaultUI):
     """Extending DefaultUI, this UI is plain text on the background."""
-    def __init__(self, position, size, text, color, z = 0, draggable = False):
+    def __init__(self, position, size, text, color, z = 0,
+                 draggable = False, animate=False,
+                 wrapping = 0):
         self.text = text
         self.font = pygame.font.Font(asset_path("fonts", "MoreSugar-Regular.ttf"), int(size[1]))
         self.color = color
+        self.wrapping = wrapping
+        self.animate = (not animate) * len(self.text)
         DefaultUI.__init__(self, position, size, None, z, draggable=draggable)
 
     def draw(self, screen, curr_color=None):
         """Overrides DefaultUI.draw, and creates the text surface before drawing."""
-        text_surface = self.font.render(self.text, True, self.color)
-        screen.blit(text_surface, (self.pos[0] - self.font.size(self.text)[0] / 2,
-                                   self.pos[1] - self.height / 2))
+        if self.animate != len(self.text):
+            txt = self.text[:self.animate]
+            self.animate += 1
+        else:
+            txt = self.text
+
+        text_surface = self.font.render(txt, True, self.color)
+        if self.wrapping:
+            if text_surface.get_width() > self.wrapping:
+                texts = self.wrap_text(txt)
+                screen.blit(texts[0], (self.pos[0],
+                                  self.pos[1] - self.height * 1.2))
+                screen.blit(texts[1], (self.pos[0],
+                                  self.pos[1]))
+
+            else:
+                screen.blit(text_surface, (self.pos[0],
+                                       self.pos[1]))
+        else:
+            screen.blit(text_surface, (self.pos[0] - self.font.size(self.text)[0] / 2,
+                                        self.pos[1] - self.height / 2))
+
+    def wrap_text(self, text):
+        words = text.split()
+        text_surface = self.font.render(text, True, self.color)
+        can_split = True
+        count = len(words)
+        #print(f'WORDS: {words}')
+        new_string = ""
+        while text_surface.get_width() > self.wrapping:
+            new_string = ""
+            for word in words[:count]:
+                new_string += word + " "
+            text_surface = self.font.render(new_string, True, self.color)
+            #print(text_surface.get_width() > self.wrapping)
+            #print(text_surface.get_width())
+            #print(self.wrapping)
+            count -= 1
+            if count == 0:
+                can_split = False
+                #print("Can't split the text")
+                break
+        if can_split:
+            #print("SUCCESSFUL SPLIT!")
+            second_string = ""
+            for word in words[count + 1:]:
+                second_string += word + " "
+            return [text_surface, self.font.render(second_string, True, self.color)]
+        return [self.font.render(text[:20] + "-", True, self.color),
+                self.font.render(text[20:], True, self.color)]
 
 class PlayerDisplay(DefaultUI):
     """Extending DefaultUI, this UI is specifically for the player listing in the lobby.

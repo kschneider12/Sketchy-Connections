@@ -430,7 +430,7 @@ class DrawingWindow:
 
 class AnimationWindow:
     """Replays drawing operations as an animation or display"""
-    def __init__(self, center_pos, size, drawn_pixels, animated, draggable=False, z=1):
+    def __init__(self, center_pos, size, drawn_pixels, animated = False, draggable=False, z=1):
         """Initializes the animation window"""
         self.center = [center_pos[0], center_pos[1]]
         self.init_y = center_pos[1]

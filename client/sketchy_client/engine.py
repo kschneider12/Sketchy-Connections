@@ -96,7 +96,6 @@ class Engine:
         self.simple_colors = False
         self.prompt_length = 20
         self.draw_length = 120
-        self.curr_book_name = ''
 
         # Backend game state management
         self.network: NetworkClient = NetworkClient()
@@ -116,7 +115,7 @@ class Engine:
 
         # Results page
         self.results_height = 0
-
+        self.curr_book_id = ''
 
     def run(self):
         """main game loop. Updates the game, manages inputs, buttons,
@@ -871,13 +870,10 @@ class Engine:
             self.draw_order.append(DefaultUI(self.np(50, 50),
                                              self.ns(520 * 1.5, 300 * 1.5),
                                              "assets/textures/pause_screen.png", z=9))
-        if self.curr_book_name:
-            book_text = f"{self.curr_book_name}'s Book"
-        else:
-            book_text = ""
-        self.draw_order.append(TextUI(self.np(50, 35),
-                                     self.ns(30, 80),
-                                 book_text, (0, 0, 0), z=7))
+        for element in self.active_ui:
+            if isinstance(element, PlayerDisplay):
+                element.make_blue(self.curr_book_id)
+
         self.draw_order = sorted(self.draw_order, key=lambda elem: elem.z)
         if (self.results_shown % len(self.books[0].entries)) == 0:
             for button in self.active_buttons:
@@ -897,19 +893,17 @@ class Engine:
                 #swap button!
                 if button.pos == self.np(25, 93):
                     button.pos = (1000000, 1000000)
-                    print("moved first button!")
                     button.active = False
                     for button2 in self.active_buttons:
                         if button2.pos == (90000,90000):
                             button2.pos = self.np(25, 93)
-                            print("moved second button!")
                             break
                     break
         curr_book = self.results_shown // len(self.books[0].entries)
         id = self.books[curr_book].owner_id
         for player in self.room.players:
             if player.id == id:
-                self.curr_book_name = player.name
+                self.curr_book_id = player.id
 
         data = self.books[curr_book].entries[self.results_shown % len(self.books[0].entries)]
 
@@ -924,7 +918,7 @@ class Engine:
                 elem.init_y -= self.ns(0, 60)[1]
             text = TextUI(self.np(35, 90), self.ns(0, 40),
                    data.content, (0, 0, 0), z=4, draggable=True,
-                          animate=True, wrapping = self.ns(600,0)[0])
+                          animate=True, wrapping = self.ns(550,0)[0])
             self.active_results.append(text)
             self.active_results.append(DefaultUI(self.np(62, 90), self.ns(550 * 1.06, 125 * 0.9),
                                                  "assets/textures/results_box.png", draggable=True, z=2))
@@ -932,10 +926,8 @@ class Engine:
         elif data.type == "drawing":
             for elem in self.active_results:
                 elem.init_y -= self.ns(0, 400)[1]
-
-            #print("drawing!")
-            #drawing:
-            drawing = AnimationWindow(self.np(70, 70), self.ns(845 / 2, 455 / 2),
+            #drawing
+            drawing = AnimationWindow(self.np(70, 52.2), self.ns(845 / 2, 455 / 2),
                                      data.content, draggable=True, z=4, animated = True)
             self.active_results.append(drawing)
             self.active_results.append(DefaultUI(self.np(70, 70), self.ns(845 / 1.9, 455 / 1.9),

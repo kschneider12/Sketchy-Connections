@@ -143,27 +143,40 @@ class PlayerDisplay(DefaultUI):
         self.screen_size = screen_size
         self.light = pygame.image.load(resolve_asset_path("assets/textures/player_light.png"))
         self.light = pygame.transform.scale(self.light, (size[0] * 0.7,size[0] * 0.7))
+        self.blue_light = pygame.image.load(resolve_asset_path("assets/textures/player_light_blue.png"))
+        self.blue_light = pygame.transform.scale(self.blue_light, (size[0] * 0.7, size[0] * 0.7))
         self.active_players = active_players
         self.abbrev = abbrev
         self.font = pygame.font.Font(asset_path("fonts", "MoreSugar-Regular.ttf"),
                                      int(size[0] * 0.7))
+        self.blue_player = None
 
     def set_active_players(self, active_players):
         """sets the local active players to the players in the lobby"""
         self.active_players = active_players
 
+    def make_blue(self, player):
+        self.blue_player = player
+
     def draw(self, screen, curr_color=None):
         """Overrides DefaultUI.draw, showing not only the graphics
         but text too, in the appropriate position."""
         screen.blit(self.img, (self.pos[0] - self.width / 2, self.pos[1] - self.height / 2))
-        for i, name in enumerate(self.active_players):
-            name = name.name
+        for i, name2 in enumerate(self.active_players):
+            name = name2.name
             if self.abbrev:
                 name = name[:3].upper()
-            screen.blit(self.light,
-                        (self.pos[0] - self.width / 2.5,
-                         self.pos[1] - (self.height / 2) +
-                         self.ns(0,26)[1] + i * self.ns(0,69.8)[1]))
+            if self.blue_player == name2.id:
+                screen.blit(self.blue_light,
+                            (self.pos[0] - self.width / 2.5,
+                             self.pos[1] - (self.height / 2) +
+                             self.ns(0, 26)[1] + i * self.ns(0, 69.8)[1]))
+            else:
+                screen.blit(self.light,
+                            (self.pos[0] - self.width / 2.5,
+                             self.pos[1] - (self.height / 2) +
+                             self.ns(0,26)[1] + i * self.ns(0,69.8)[1]))
+
             text_surface = self.font.render(name, True, (0,0,0))
             screen.blit(text_surface,
                         (self.pos[0] + self.width / 2,

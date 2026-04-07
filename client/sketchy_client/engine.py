@@ -120,7 +120,7 @@ class Engine:
     def run(self):
         """main game loop. Updates the game, manages inputs, buttons,
         draws UI, handles special loop cases, and maintains the game clock"""
-        self.switch_to_draw()
+        self.switch_to_welcome()
         while True:
             self.update_room()
             if self.network_error is not None:
@@ -374,7 +374,7 @@ class Engine:
                                  self.network.room.room_id.lower(), (0,0,0))]
         if self.player.is_host:
             self.active_buttons = [
-                Button(self.np(88, 90), (self.ns(115 * 1.8, 51 * 1.8)),
+                Button(self.np(80, 90), (self.ns(115 * 1.8, 51 * 1.8)),
                        "assets/textures/play.png", self.start_game),
                 CheckboxButton(self.np(70, 76), self.ns(40, 40),
                                self.simple_color_select, "Simple Colors", False),

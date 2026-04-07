@@ -88,6 +88,9 @@ class NetworkClient:
     def set_options(self, draw_time: int, prompt_time: int) -> None:
         return self._run_coroutine(self._set_options(draw_time, prompt_time))
 
+    def incr_book(self) -> None:
+        return self._run_coroutine(self._send_message({"type": "incr_book"}))
+
     def close(self):
         """Close the underlying aiohttp session and stop the worker loop."""
 

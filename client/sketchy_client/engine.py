@@ -29,8 +29,8 @@ from .draw_window import DrawingWindow, AnimationWindow
 from .color_wheel import ColorWheel
 from .choices_button import ChoicesButton
 # from draw_window import AnimationWindow
-SCREEN_LEN = pyautogui.size()[0]
-SCREEN_HT = pyautogui.size()[1]
+SCREEN_LEN = pyautogui.size()[0] / 2
+SCREEN_HT = pyautogui.size()[1] / 2
 
 PROMPT_TIMES = [10, 20, 30, 60]
 DRAW_TIMES = [30, 60, 120, 180, 300]
@@ -138,6 +138,8 @@ class Engine:
                     self.submitted = False
                     match self.room.game.phase:
                         case 'writing':
+                            self.draw_length = self.room.draw_time
+                            self.prompt_length= self.room.prompt_time
                             self.switch_to_writing()
                         case 'drawing':
                             self.switch_to_draw()
@@ -225,7 +227,6 @@ class Engine:
         for elem in self.draw_order:
             if isinstance(elem, TimeBar):
                 if elem.time_up():
-                    print("time up!")
                     self.submit(True)
             elif isinstance(elem, PlayerDisplay):
                 elem.set_active_players(self.network.room.players)
@@ -325,6 +326,7 @@ class Engine:
     def switch_to_welcome(self):
         """switches the scene to welcome, initializing the UI."""
         self.scene = "welcome"
+
         self.active_ui = [DefaultUI(self.np(50, 30), self.ns(169 * 3.5, 97 * 3.5),
                                     "assets/textures/title.png")]
         self.active_buttons = [
@@ -702,11 +704,16 @@ class Engine:
 
     def prompt_time_length(self, selected_value):
         """Sets timer length for prompt/guess phase. Primarily used by buttons"""
+        print("WE ARE HERE!")
         self.prompt_length = selected_value
+        print(f"Local prompt time is {self.prompt_length}. Updating...")
+        self.network.set_options(self.draw_length, self.prompt_lengthx)
+        print(f"Network prompt time is {self.network.room.prompt_time}")
 
     def draw_time_length(self, selected_value):
         """Sets timer length for draw phase. Primarily used by buttons"""
         self.draw_length = selected_value
+        self.network.set_options(self.draw_length, self.prompt_length)
 
     def get_pen_state(self):
         if self.curr_shade == [240, 240, 240]:
@@ -745,7 +752,6 @@ class Engine:
         if self.scene == "writing":
             with open(resolve_asset_path("assets/guess_prompts.csv"), mode='r', newline='') as file:
                 text = random.choice(list(csv.reader(file)))
-            print(text)
             self.draw_order.insert(index, TextUI(self.np(50, 40),
                                      self.ns(0, 80),
                                  text[0], (255, 255, 255)))
@@ -774,10 +780,10 @@ class Engine:
         self.exit = True
 
     def leave_room(self):
-        # TODO: LEAVE ROOM!
         self.network.close()
-        self.switch_to_welcome()
+        self.room.phase = RoomPhase.LOBBY
         self.pause_client(True)
+        self.switch_to_welcome()
 
     def pause_client(self, pause = False):
         """Pauses the client game, organizing UI and its logic"""

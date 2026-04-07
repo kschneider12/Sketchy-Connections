@@ -29,8 +29,8 @@ from .draw_window import DrawingWindow, AnimationWindow
 from .color_wheel import ColorWheel
 from .choices_button import ChoicesButton
 # from draw_window import AnimationWindow
-SCREEN_LEN = pyautogui.size()[0] / 2
-SCREEN_HT = pyautogui.size()[1] / 2
+SCREEN_LEN = pyautogui.size()[0]
+SCREEN_HT = pyautogui.size()[1]
 
 PROMPT_TIMES = [10, 20, 30, 60]
 DRAW_TIMES = [30, 60, 120, 180, 300]
@@ -100,9 +100,12 @@ class Engine:
         self.network: NetworkClient = NetworkClient()
         self.room: RoomData = RoomData()
         self.player: PlayerData = PlayerData()
-        self.current_entry: EntryData | None = None # Safe to access after first prompt, look at impl for fields
-        self.current_entry_type: EntryType = EntryType.PROMPT # When drawing this has type PROMPT, when guessing this has type DRAWING
-        self.books: list[BookData] | None = None # This only gets set when we have reached results!!
+        self.current_entry: EntryData | None = None # Safe to access after
+        # first prompt, look at impl for fields
+        self.current_entry_type: EntryType = EntryType.PROMPT # When drawing this has type PROMPT,
+        # when guessing this has type DRAWING
+        self.books: list[BookData] | None = None # This only gets set
+        # when we have reached results!!
         self.network_error = None
         self.submitted = False
         self.last_submission = ""
@@ -338,6 +341,7 @@ class Engine:
                     "assets/textures/text_box_5.png", self.set_name,"Enter A Name",15)]
         #SlideDownButton(self.np(90, 0), (self.np(0, 20), self.np(0,80)), self.ns(10,50), self.slider_control)
         self.active_drawings = []
+        self.active_animations = []
         self.draw_order = self.active_buttons + self.active_drawings +\
                           self.active_ui + self.active_animations
         self.pause_client()
@@ -385,6 +389,7 @@ class Engine:
         else:
             self.active_buttons = []
         self.active_drawings = []
+        self.active_animations = []
         self.draw_order = self.active_buttons + self.active_drawings +\
                           self.active_ui + self.active_animations
         self.pause_client()
@@ -445,8 +450,8 @@ class Engine:
         self.tool_text = TextUI(self.np(60, 95), self.ns(20, 20),
                                  "Current: " + self.curr_tool, (0, 0, 0))
         self.active_ui = [TimeBar(self.np(94,58), self.ns(60 * 1.5, 320 * 1.5), self.draw_length),
-                          # TextUI(self.np(50, 10), self.ns(100, 100),
-                          #      "Prompt: " + self.room.game.current_prompt.content, (0, 0, 0)),
+                           TextUI(self.np(50, 10), self.ns(0, 50),
+                                self.room.game.current_prompt.content, (0, 0, 0)),
                           TextUI(self.np(60, 90), self.ns(20, 20),
                                  "Current Tool: ", (0, 0, 0)),
                           self.tool_text,
@@ -480,6 +485,7 @@ class Engine:
         #TODO: See how it snaps? The calculation for size of drawing window is not consistent with
         #TODO: the other UI elements- please look at this and solve it, as it's out of my scope now.
         #TODO: The objective is that it can be ANY size- especially for the results page.
+        self.active_animations = []
         self.active_drawings = [DrawingWindow(self.np(36,53), self.nl(680))]
         self.draw_order = self.active_buttons + self.active_ui +\
                           self.active_drawings + self.active_animations

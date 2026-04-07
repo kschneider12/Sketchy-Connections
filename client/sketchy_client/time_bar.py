@@ -25,7 +25,7 @@ class TimeBar(DefaultUI):
         self.returned = False
         super().__init__(position, size, img)
         self.bar_img = pygame.image.load(resolve_asset_path("assets/textures/time_line.png"))
-        self.bar_img = pygame.transform.scale(self.bar_img, (size[0] * 9/10, 10))
+        self.bar_img = pygame.transform.scale(self.bar_img, (size[0] * 9/10, size[0] * 2/10))
 
 
     def draw(self, screen, curr_color = None):
@@ -33,18 +33,21 @@ class TimeBar(DefaultUI):
         Overrides DefaultUI.draw, including the correct height of the bar and the
         colorful pygame Rect to fill in the space.
         """
-        self.bar_pos =  (self.pos[0] - self.width / 2.15,
+        self.bar_pos =  (self.pos[0] - self.width / 2.3,
                          self.pos[1] - self.height / 2.05 + (self.start_time - self.time)
-                         * (self.height / self.start_time * 0.964)) # start_time multiplied by 0.964
+                         * (self.height / self.start_time * 0.964))
+
         color = (255 - int(255 * self.time / self.start_time), int(255 * self.time / self.start_time), 0)
         for val in color:
             if val < 0 or val > 255:
                 color = (0,0,0)
+        #pygame.draw.rect(screen, color,
+                         #pygame.Rect(self.pos[0] - self.width / 2.17, self.bar_pos[1] + self.height * 0.02,
+                                     #self.width * 9/10, self.height - self.bar_pos[1] + self.height / 4.2))
         pygame.draw.rect(screen, color,
-                         pygame.Rect(self.pos[0] - self.width / 2.17, self.bar_pos[1] + self.height * 0.02,
-                                     self.width * 9/10, self.height - self.bar_pos[1] + self.height / 3.99))
+                         pygame.Rect(self.pos[0] - self.width / 2.17, self.bar_pos[1] + self.bar_img.get_height() / 2.0,
+                                     self.width * 9 / 10, ((self.pos[1] + self.height / 2.0) - self.bar_pos[1]) - self.bar_img.get_height()))
         screen.blit(self.bar_img, self.bar_pos)
-        #TODO FIX RECTANGLE!!!
         screen.blit(self.img, (self.pos[0] - self.width / 2, self.pos[1] - self.height / 2))
 
 

@@ -140,11 +140,11 @@ class Engine:
                     self.submitted = False
                     match self.room.game.phase:
                         case 'writing':
-                            #self.draw_length = self.room.draw_time
-                            #self.prompt_length= self.room.prompt_time
+                            self.draw_length = self.room.draw_time
+                            self.prompt_length= self.room.prompt_time
                             #TODO REMOVE!
-                            self.draw_length = 1
-                            self.prompt_length = 10
+                            # self.draw_length = 1
+                            # self.prompt_length = 10
                             self.switch_to_writing()
                         case 'drawing':
                             self.switch_to_draw()
@@ -157,6 +157,8 @@ class Engine:
             # Behaviors depending on scene
             if self.scene == "drawing":
                 self.draw()
+            elif self.scene == "guessing":
+                self.guessing()
             elif self.scene == "results":
                 self.results()
             if self.exit:
@@ -291,8 +293,18 @@ class Engine:
     def results(self):
         """game loop for the game over screen"""
         for animation in self.active_animations:
-            animation.update(False)
+            animation.update()
+        for result in self.active_results:
+            if isinstance(result, AnimationWindow):
+                result.update()
         self.show_next_result()
+
+    def guessing(self):
+        """game loop for guessing screen"""
+        if self.paused:
+            return
+        for animation in self.active_animations:
+            animation.update()
 
     def time_up(self):
         """accessed when any timer runs out, this manages logic
@@ -460,8 +472,8 @@ class Engine:
         self.tool_text = TextUI(self.np(60, 95), self.ns(20, 20),
                                  "Current: " + self.curr_tool, (0, 0, 0))
         self.active_ui = [TimeBar(self.np(94,58), self.ns(60 * 1.5, 320 * 1.5), self.draw_length),
-                          # TextUI(self.np(50, 10), self.ns(100, 100),
-                        #     "Prompt: " + self.current_entry.content, (0, 0, 0)),
+                          TextUI(self.np(50, 10), self.ns(100, 100),
+                            "Prompt: " + self.current_entry.content, (0, 0, 0)),
                           TextUI(self.np(60, 90), self.ns(20, 20),
                                  "Current Tool: ", (0, 0, 0)),
                           self.tool_text,

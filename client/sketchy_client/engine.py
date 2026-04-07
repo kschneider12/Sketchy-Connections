@@ -29,8 +29,8 @@ from .draw_window import DrawingWindow, AnimationWindow
 from .color_wheel import ColorWheel
 from .choices_button import ChoicesButton
 # from draw_window import AnimationWindow
-SCREEN_LEN = pyautogui.size()[0] / 2
-SCREEN_HT = pyautogui.size()[1] / 2
+SCREEN_LEN = pyautogui.size()[0] * 0.5
+SCREEN_HT = pyautogui.size()[1] * 0.5
 
 PROMPT_TIMES = [10, 20, 30, 60]
 DRAW_TIMES = [30, 60, 120, 180, 300]
@@ -116,6 +116,7 @@ class Engine:
         """main game loop. Updates the game, manages inputs, buttons,
         draws UI, handles special loop cases, and maintains the game clock"""
         self.switch_to_welcome()
+
         while True:
             self.update_room()
             if self.network_error is not None:
@@ -480,7 +481,7 @@ class Engine:
         #TODO: See how it snaps? The calculation for size of drawing window is not consistent with
         #TODO: the other UI elements- please look at this and solve it, as it's out of my scope now.
         #TODO: The objective is that it can be ANY size- especially for the results page.
-        self.active_drawings = [DrawingWindow(self.np(36,53), self.nl(680))]
+        self.active_drawings = [DrawingWindow(self.np(36,53), self.nl(640))]
         self.draw_order = self.active_buttons + self.active_ui +\
                           self.active_drawings + self.active_animations
         self.draw_order = sorted(self.draw_order, key=lambda elem: elem.z)

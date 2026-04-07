@@ -275,7 +275,7 @@ class DrawingWindow:
         self.cell_width = size[0] / (GRID_WIDTH * 1.0)
         self.cell_height = size[1] / (GRID_HEIGHT * 1.0)
 
-        self.cell_size = int(min((self.cell_width, self.cell_height)))
+        self.cell_size = min((self.cell_width, self.cell_height))
 
         self.pixel_width = self.cell_size * GRID_WIDTH
         self.pixel_height = self.cell_size * GRID_HEIGHT
@@ -283,8 +283,8 @@ class DrawingWindow:
         self.drawn_pixels = []
 
         self.pos = (
-            self.center[0] - self.pixel_width // 2,
-            self.center[1] - self.pixel_height // 2
+            self.center[0] - self.pixel_width / 2,
+            self.center[1] - self.pixel_height / 2
         )
         self.init_y = center_pos[1]
 
@@ -339,21 +339,24 @@ class DrawingWindow:
                         (this_x, this_y),
                         curr_color,
                         brush_radius)
-                    ops = [(r, col) for (r, col, _) in drawing]
+                    pos = [(r, col) for (r, col, _) in drawing]
                     self.drawn_pixels.append({"color": curr_color,
-                                              "ops": ops})
+                                              "pos": pos,
+                                               "tool": 0})
                 else:
                     drawing = self.grid.draw_brush(row, col, curr_color, brush_radius)
-                    ops = [(r, col) for (r, col, _) in drawing]
+                    pos = [(r, col) for (r, col, _) in drawing]
                     self.drawn_pixels.append({"color": curr_color,
-                                              "ops": ops})
+                                              "pos": pos,
+                                              "tool": 0})
                 self.last_pos = (this_x, this_y)
             elif current_tool == "fill":
                 if not self.last_mouse:
                     drawing = self.grid.fill_tool(row, col, curr_color)
-                    ops = [(r, col) for (r, col, _) in drawing]
+                    pos = [(r, col) for (r, col, _) in drawing]
                     self.drawn_pixels.append({"color": curr_color,
-                                              "ops": ops})
+                                              "pos": pos,
+                                              "tool": 1})
         else:
             self.last_pos = None
 
@@ -406,14 +409,14 @@ class DrawingWindow:
         Returns:
             A list of drawing actions:
                 - "color": RGB tuple
-                - "ops": list of row, col cells
+                - "pos": list of row, col cells
         """
         return self.drawn_pixels
 
 
 class AnimationWindow:
     """Replays drawing operations as an animation or display"""
-    def __init__(self, center_pos, size, drawn_pixels):
+    def __init__(self, center_pos, size, drawn_pixels, animated):
         """Initializes the animation window"""
         self.center = center_pos
         self.size = size
@@ -441,8 +444,9 @@ class AnimationWindow:
 
         self.pixels_per_frame = max(20, self.total_pixels // (self.fps * self.max_seconds))
         self.done = False
+        self.animated = animated
 
-    def update(self, animated):
+    def update(self):
         """Updates the animation window by 'drawing' list of stored pixels
 
         Args:
@@ -451,7 +455,7 @@ class AnimationWindow:
         if self.done:
             return
         self.clock.tick(self.fps)
-        if animated:
+        if self.animated:
             p = self.pixels_per_frame
         else:
             p = self.total_pixels
@@ -462,9 +466,10 @@ class AnimationWindow:
 
             action = self.drawn_pixels[self.index]
             color = action["color"]
-            ops = action["ops"]
+            pos = action["pos"]
+            tool = action["tool"]
 
-            for row, col in ops:
+            for row, col in pos:
                 self. grid.set_pixel(row, col, color)
 
             self.index += 1
@@ -611,6 +616,7 @@ def run_animation(window, drawn_pixels):
     total_pixels = len(drawn_pixels)
 
     pixels_per_frame = max(20, total_pixels // (fps * max_seconds))
+    # pixels_per_frame = 100000000
 
     index = 0
     running = True

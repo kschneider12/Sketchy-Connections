@@ -138,7 +138,8 @@ class Engine:
                     self.submitted = False
                     match self.room.game.phase:
                         case 'writing':
-                            #TODO UPDATE PLAYER TIMERS FROM SERVER BEFORE START
+                            self.draw_length = self.room.draw_time
+                            self.prompt_length= self.room.prompt_time
                             self.switch_to_writing()
                         case 'drawing':
                             self.switch_to_draw()
@@ -703,8 +704,11 @@ class Engine:
 
     def prompt_time_length(self, selected_value):
         """Sets timer length for prompt/guess phase. Primarily used by buttons"""
+        print("WE ARE HERE!")
         self.prompt_length = selected_value
-        self.network.set_options(self.draw_length, self.prompt_length)
+        print(f"Local prompt time is {self.prompt_length}. Updating...")
+        self.network.set_options(self.draw_length, self.prompt_lengthx)
+        print(f"Network prompt time is {self.network.room.prompt_time}")
 
     def draw_time_length(self, selected_value):
         """Sets timer length for draw phase. Primarily used by buttons"""

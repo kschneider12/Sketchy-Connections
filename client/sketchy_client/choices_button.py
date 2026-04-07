@@ -41,14 +41,13 @@ class ChoicesButton(Button):
                 for i, val in enumerate(self.choices):
                     if val == self.curr_choice:
                         self.curr_choice = self.choices[i + 1]
-                        break
+                        return [self.command, self.curr_choice]
             if (self.right.behave(mouse_pos, just_clicked, keystrokes, mouse_state, paused)
                     and self.curr_choice != self.choices[0]):
                 for i, val in enumerate(self.choices):
                     if val == self.curr_choice:
                         self.curr_choice = self.choices[i - 1]
-                        break
-            return self.command, self.curr_choice
+                        return [self.command, self.curr_choice]
         return False
 
     def draw(self, screen, curr_color):

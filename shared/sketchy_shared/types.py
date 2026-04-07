@@ -147,6 +147,11 @@ class RoomData:
     host_id: str = ""
     players: list[PlayerData] = field(default_factory=list)
     game: GameStateData | None = None
+    draw_time: int = 120
+    prompt_time: int = 20
+    book_idx: int = 0
+
+
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -155,6 +160,9 @@ class RoomData:
             "host_id": self.host_id,
             "players": [player.to_dict() for player in self.players],
             "game": self.game.to_dict() if self.game is not None else None,
+            "draw_time": self.draw_time,
+            "prompt_time": self.prompt_time,
+            "book_idx": self.book_idx,
         }
 
     @classmethod
@@ -166,6 +174,9 @@ class RoomData:
             host_id=str(data["host_id"]),
             players=[PlayerData.from_dict(player) for player in data.get("players", [])],
             game=GameStateData.from_dict(game) if isinstance(game, dict) else None,
+            draw_time=int(data["draw_time"]),
+            prompt_time=int(data["prompt_time"]),
+            book_idx=int(data["book_idx"])
         )
 
 

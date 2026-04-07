@@ -10,16 +10,17 @@ from .paths import asset_path
 class DefaultUI:
     """The parent and building block for UI- stores positioning and
     can draw to the screen appropriately"""
-    def __init__(self, position, size, img, z = 0, draggable = False):
+    def __init__(self, position, size, img, z = 0, draggable = False, rotate=0):
         self.z = z
         self.draggable = draggable
         self.init_y = position[1]
-        self.pos = position
+        self.pos = [position[0], position[1]]
         self.width = size[0]
         self.height = size[1]
         if img:
             self.img = pygame.image.load(resolve_asset_path(img))
             self.img = pygame.transform.scale(self.img, size)
+            self.img = pygame.transform.rotate(self.img, rotate)
 
     def draw(self, screen, curr_color = None):
         """draws the ui on the screen"""
@@ -70,11 +71,11 @@ class TransparentUI(DefaultUI):
 
 class TextUI(DefaultUI):
     """Extending DefaultUI, this UI is plain text on the background."""
-    def __init__(self, position, size, text, color, z = 0):
+    def __init__(self, position, size, text, color, z = 0, draggable = False):
         self.text = text
         self.font = pygame.font.Font(asset_path("fonts", "MoreSugar-Regular.ttf"), int(size[1]))
         self.color = color
-        DefaultUI.__init__(self, position, size, None, z)
+        DefaultUI.__init__(self, position, size, None, z, draggable=draggable)
 
     def draw(self, screen, curr_color=None):
         """Overrides DefaultUI.draw, and creates the text surface before drawing."""
@@ -86,12 +87,13 @@ class PlayerDisplay(DefaultUI):
     """Extending DefaultUI, this UI is specifically for the player listing in the lobby.
     This is its own UI due to the unique behavior of added players, as well
     as light and name alignment"""
-    def __init__(self, pos, size, screen_size, active_players):
+    def __init__(self, pos, size, screen_size, active_players, abbrev = False):
         DefaultUI.__init__(self, pos, size, "assets/textures/players_tab.png")
         self.screen_size = screen_size
         self.light = pygame.image.load(resolve_asset_path("assets/textures/player_light.png"))
         self.light = pygame.transform.scale(self.light, (size[0] * 0.7,size[0] * 0.7))
         self.active_players = active_players
+        self.abbrev = abbrev
         self.font = pygame.font.Font(asset_path("fonts", "MoreSugar-Regular.ttf"),
                                      int(size[0] * 0.7))
 
@@ -104,11 +106,14 @@ class PlayerDisplay(DefaultUI):
         but text too, in the appropriate position."""
         screen.blit(self.img, (self.pos[0] - self.width / 2, self.pos[1] - self.height / 2))
         for i, name in enumerate(self.active_players):
+            name = name.name
+            if self.abbrev:
+                name = name[:3].upper()
             screen.blit(self.light,
                         (self.pos[0] - self.width / 2.5,
                          self.pos[1] - (self.height / 2) +
                          self.ns(0,26)[1] + i * self.ns(0,69.8)[1]))
-            text_surface = self.font.render(name.name, True, (0,0,0))
+            text_surface = self.font.render(name, True, (0,0,0))
             screen.blit(text_surface,
                         (self.pos[0] + self.width / 2,
                          self.pos[1] - (self.height / 2) +

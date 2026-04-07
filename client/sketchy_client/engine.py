@@ -138,8 +138,11 @@ class Engine:
                     self.submitted = False
                     match self.room.game.phase:
                         case 'writing':
-                            self.draw_length = self.room.draw_time
-                            self.prompt_length= self.room.prompt_time
+                            #self.draw_length = self.room.draw_time
+                            #self.prompt_length= self.room.prompt_time
+                            #TODO REMOVE!
+                            self.draw_length = 5
+                            self.prompt_length = 5
                             self.switch_to_writing()
                         case 'drawing':
                             self.switch_to_draw()
@@ -707,7 +710,7 @@ class Engine:
         print("WE ARE HERE!")
         self.prompt_length = selected_value
         print(f"Local prompt time is {self.prompt_length}. Updating...")
-        self.network.set_options(self.draw_length, self.prompt_lengthx)
+        self.network.set_options(self.draw_length, self.prompt_length)
         print(f"Network prompt time is {self.network.room.prompt_time}")
 
     def draw_time_length(self, selected_value):

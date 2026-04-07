@@ -243,9 +243,9 @@ class NetworkClient:
 
     async def _set_options(self, draw_time: int, prompt_time: int) -> None:
         await self._send_message({
-            "type": "submit_entry",
-            "draw_time": draw_time,
-            "prompt_time": prompt_time,
+            "type": "set_options",
+            "draw_time": str(draw_time),
+            "prompt_time": str(prompt_time),
         })
 
     async def _request_json(

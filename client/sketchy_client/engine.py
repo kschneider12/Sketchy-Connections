@@ -120,7 +120,7 @@ class Engine:
     def run(self):
         """main game loop. Updates the game, manages inputs, buttons,
         draws UI, handles special loop cases, and maintains the game clock"""
-        self.switch_to_welcome()
+        self.switch_to_draw()
         while True:
             self.update_room()
             if self.network_error is not None:
@@ -459,8 +459,8 @@ class Engine:
         self.tool_text = TextUI(self.np(60, 95), self.ns(20, 20),
                                  "Current: " + self.curr_tool, (0, 0, 0))
         self.active_ui = [TimeBar(self.np(94,58), self.ns(60 * 1.5, 320 * 1.5), self.draw_length),
-                          TextUI(self.np(50, 10), self.ns(100, 100),
-                               "Prompt: " + self.current_entry.content, (0, 0, 0)),
+                          # TextUI(self.np(50, 10), self.ns(100, 100),
+                        #     "Prompt: " + self.current_entry.content, (0, 0, 0)),
                           TextUI(self.np(60, 90), self.ns(20, 20),
                                  "Current Tool: ", (0, 0, 0)),
                           self.tool_text,

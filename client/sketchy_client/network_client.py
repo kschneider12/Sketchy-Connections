@@ -91,6 +91,9 @@ class NetworkClient:
     def incr_book(self) -> None:
         return self._run_coroutine(self._send_message({"type": "incr_book"}))
 
+    def leave_room(self):
+        return self._run_coroutine(self._leave_room())
+
     def close(self):
         """Close the underlying aiohttp session and stop the worker loop."""
 
@@ -109,7 +112,6 @@ class NetworkClient:
                 self._thread.join(timeout=5)
 
         self._closed = True
-        self.room = RoomData()
 
     def __enter__(self) -> "NetworkClient":
         return self
@@ -231,6 +233,14 @@ class NetworkClient:
         self.player.id = self._registration.player_id
         self.player.is_host = False
 
+    async def _leave_room(self) -> None:
+        await self._send_message({"type": "leave_room"})
+
+        await self._stop_websocket_listener()
+        await self._close_websocket()
+
+        self.room = RoomData()
+        self.player = PlayerData()
 
     async def _start_game(self) -> None:
         await self._send_message({"type": "start_game"})

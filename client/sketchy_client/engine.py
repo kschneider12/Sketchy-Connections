@@ -160,7 +160,6 @@ class Engine:
             elif self.scene == "results":
                 self.results()
             if self.exit:
-                self.network.close()
                 pygame.quit()
                 break
 
@@ -800,10 +799,11 @@ class Engine:
 
     def quit_game(self):
         """closes the program"""
+        self.network.close()
         self.exit = True
 
     def leave_room(self):
-        self.network.close()
+        self.network.leave_room()
         self.room.phase = RoomPhase.LOBBY
         self.pause_client(True)
         self.switch_to_welcome()

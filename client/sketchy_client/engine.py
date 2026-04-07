@@ -426,11 +426,11 @@ class Engine:
                                        self.set_curr_guess,"Type A Response")]
 
         pixels = []
-        if self.room.game.current_prompt:
-            pixels = self.room.game.current_prompt.content
+        if self.current_entry:
+            pixels = self.current_entry.content
 
         self.active_animations = [
-            AnimationWindow(self.np(36, 43), self.ns(845, 455), pixels)
+            AnimationWindow(self.np(36, 43), self.ns(845, 455), pixels, )
         ]
         self.active_drawings = []
         self.draw_order = self.active_buttons + self.active_ui + \
@@ -445,8 +445,8 @@ class Engine:
         self.tool_text = TextUI(self.np(60, 95), self.ns(20, 20),
                                  "Current: " + self.curr_tool, (0, 0, 0))
         self.active_ui = [TimeBar(self.np(94,58), self.ns(60 * 1.5, 320 * 1.5), self.draw_length),
-                          # TextUI(self.np(50, 10), self.ns(100, 100),
-                          #      "Prompt: " + self.room.game.current_prompt.content, (0, 0, 0)),
+                          TextUI(self.np(50, 10), self.ns(100, 100),
+                               "Prompt: " + self.current_entry.content, (0, 0, 0)),
                           TextUI(self.np(60, 90), self.ns(20, 20),
                                  "Current Tool: ", (0, 0, 0)),
                           self.tool_text,

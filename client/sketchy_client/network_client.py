@@ -85,6 +85,9 @@ class NetworkClient:
     def submit_entry(self, content: str | list) -> None:
         return self._run_coroutine(self._submit_entry(content))
 
+    def set_options(self, draw_time: int, prompt_time: int) -> None:
+        return self._run_coroutine(self._set_options(draw_time, prompt_time))
+
     def close(self):
         """Close the underlying aiohttp session and stop the worker loop."""
 
@@ -233,6 +236,13 @@ class NetworkClient:
         await self._send_message({
             "type": "submit_entry",
             "content": content,
+        })
+
+    async def _set_options(self, draw_time: int, prompt_time: int) -> None:
+        await self._send_message({
+            "type": "submit_entry",
+            "draw_time": draw_time,
+            "prompt_time": prompt_time,
         })
 
     async def _request_json(

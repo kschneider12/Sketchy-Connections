@@ -217,6 +217,25 @@ async def handle_client_message(
         await runtime.broadcast_room_state(room_code)
         return False
 
+    if message_type == "incr_book":
+        async with runtime.lock:
+            room = runtime.rooms.get_room(room_code)
+            room.book_idx += 1
+
+        await runtime.broadcast_room_state(room_code)
+        return False
+
+    if message_type == "set_options":
+        draw_time = int(message.get("draw_time"))
+        prompt_time = int(message.get("prompt_time"))
+        async with runtime.lock:
+            room = runtime.rooms.get_room(room_code)
+            room.draw_time = draw_time
+            room.prompt_time = prompt_time
+
+        await runtime.broadcast_room_state(room_code)
+        return False
+
     if message_type == "leave_room":
         should_broadcast = False
         async with runtime.lock:

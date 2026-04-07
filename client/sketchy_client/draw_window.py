@@ -90,15 +90,25 @@ class Grid:
         self.cell_size = cell_size
         self.cells = self.create_cells()
 
-        # for optimization
-        self.surface = pygame.Surface(
-            (GRID_WIDTH * self.cell_size, GRID_HEIGHT * self.cell_size)
-        )
-        self.surface.fill(COLORS['background'])
-
         self.brush_cache = {}
         for r in [1, 2, 4, 8]:
             self.brush_cache[r] = self.brush_offsets(r)
+
+        surface_width = int(GRID_WIDTH * self.cell_size)
+        surface_height = int(GRID_HEIGHT * self.cell_size)
+        self.surface = pygame.Surface((surface_width, surface_height))
+        self.surface.fill(COLORS['background'])
+
+    def get_cell_rect(self, row, col):
+        """Calculates precise int bounds to prevent rounding gaps"""
+        x = int(col * self.cell_size)
+        y = int(row * self.cell_size)
+
+        next_x = int((col + 1) * self.cell_size)
+        next_y = int((row + 1) * self.cell_size)
+
+        return (x, y, next_x - x, next_y - y)
+
 
     def create_cells(self):
         """Creates the cells on the grid
@@ -133,11 +143,11 @@ class Grid:
             col (int): the column of the cell
             color (tuple): RGB color of the cell
         """
+        row, col = int(row), int(col)
         if 0 <= row < GRID_HEIGHT and 0 <= col < GRID_WIDTH:
             self.cells[row][col].color = color
             pygame.draw.rect(self.surface, color,
-                        (col * self.cell_size, row * self.cell_size,
-                            self.cell_size, self.cell_size))
+                             self.get_cell_rect(row, col))
 
     def brush_offsets(self, radius):
         """Generates relative offsets for a circular brush
@@ -175,11 +185,9 @@ class Grid:
             r = int(row + dr)
             c = int(col + dc)
             if 0 <= r < GRID_HEIGHT and 0 <= c < GRID_WIDTH:
-                pygame.draw.rect(
-                    self.surface, color,
-               (c * self.cell_size, r * self.cell_size,
-                    self.cell_size + 1, self.cell_size + 1)
-                )
+                self.cells[r][c].color = color
+                pygame.draw.rect(self.surface, color,
+                                self.get_cell_rect(r, c))
                 drawn_pixels.append((r, c, color))
 
         return drawn_pixels
@@ -228,6 +236,7 @@ class Grid:
         """
         drawn_pixels = []
         visited = set()
+        start_row, start_col = int(start_row), int(start_col)
         start_cell = self.get_cell(start_row, start_col)
         if not start_cell:
             return drawn_pixels
@@ -282,8 +291,8 @@ class DrawingWindow:
         self.cell_height = size[1] / GRID_HEIGHT
         self.cell_size = min(self.cell_width, self.cell_height)
 
-        self.pixel_width = self.cell_size * GRID_WIDTH
-        self.pixel_height = self.cell_size * GRID_HEIGHT
+        self.pixel_width = int(self.cell_size * GRID_WIDTH)
+        self.pixel_height = int(self.cell_size * GRID_HEIGHT)
 
         self.drawn_pixels = []
 
@@ -332,8 +341,8 @@ class DrawingWindow:
         if this_x < 0 or this_y < 0:
             return
 
-        row = this_y // self.grid.cell_size
-        col = this_x // self.grid.cell_size
+        row = int(this_y / self.grid.cell_size)
+        col = int(this_x / self.grid.cell_size)
 
         # call drawing logic for all tools
         if mouse_pressed:
@@ -344,13 +353,13 @@ class DrawingWindow:
                         (this_x, this_y),
                         curr_color,
                         brush_radius)
-                    pos = [(r, col) for (r, col, _) in drawing]
+                    pos = list({(r, c) for (r, c, _) in drawing})
                     self.drawn_pixels.append({"color": curr_color,
                                               "pos": pos,
                                               "tool": 0})
                 else:
                     drawing = self.grid.draw_brush(row, col, curr_color, brush_radius)
-                    pos = [(r, col) for (r, col, _) in drawing]
+                    pos = list({(r, c) for (r, c, _) in drawing})
                     self.drawn_pixels.append({"color": curr_color,
                                               "pos": pos,
                                               "tool": 0})
@@ -433,8 +442,8 @@ class AnimationWindow:
         self.cell_height = size[1] / GRID_HEIGHT
         self.cell_size = min(self.cell_width, self.cell_height)
 
-        self.pixel_width = self.cell_size * GRID_WIDTH
-        self.pixel_height = self.cell_size * GRID_HEIGHT
+        self.pixel_width = int(self.cell_size * GRID_WIDTH)
+        self.pixel_height = int(self.cell_size * GRID_HEIGHT)
 
         self.pos = [
             self.center[0] - self.pixel_width / 2,

@@ -121,6 +121,9 @@ class Room:
 
         host = self._create_player(host_name)
         self.host_id: str = host.id
+        self.draw_time: int = 120
+        self.prompt_time: int = 20
+        self.book_idx: int = 0
 
     def add_player(self, name: str) -> PlayerData:
         if self.phase != RoomPhase.LOBBY:
@@ -190,6 +193,9 @@ class Room:
             host_id=self.host_id,
             players=players,
             game=game,
+            draw_time=self.draw_time,
+            prompt_time=self.prompt_time,
+            book_idx=self.book_idx,
         )
 
     def to_dict(self, player_id: str | None = None) -> dict:

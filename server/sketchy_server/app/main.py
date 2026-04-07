@@ -10,14 +10,20 @@ updates and send gameplay actions.
 """
 
 import asyncio
+import time
 from collections import defaultdict
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect, status
+from fastapi.websockets import WebSocketState
+from fastapi.logger import logging
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from starlette.datastructures import Address
 
 from sketchy_server.model import RoomManager
 from sketchy_shared.types import PlayerRegistrationData
 
+
+logger = logging.getLogger('uvicorn.error')
 
 class PlayerRegistrationRequest(BaseModel):
     """Request body for creating a player or joining a room."""
@@ -54,10 +60,24 @@ class ServerRuntime:
     lock: Global async lock protecting room and connection mutations.
     """
 
-    def __init__(self):
+    def __init__(self, *, room_prune_interval_seconds: int = 30, empty_room_ttl_seconds: int = 120):
         self.rooms = RoomManager()
         self.connections: dict[str, dict[str, WebSocket]] = defaultdict(dict)
         self.lock = asyncio.Lock()
+        self.room_prune_interval_seconds = room_prune_interval_seconds
+        self.empty_room_ttl_seconds = empty_room_ttl_seconds
+        self._rooms_empty_since: dict[str, float] = {}
+
+    def _remove_room_locked(self, room_code: str):
+        """Delete a room and all associated runtime bookkeeping.
+
+        Caller must hold ``self.lock``.
+        """
+
+        normalized_code = room_code.upper()
+        self.connections.pop(normalized_code, None)
+        self._rooms_empty_since.pop(normalized_code, None)
+        self.rooms.remove_room(normalized_code)
 
     async def register_socket(self, room_code: str, player_id: str, websocket: WebSocket) -> str:
         """Register a player's WebSocket after validating room and player ids."""
@@ -67,6 +87,7 @@ class ServerRuntime:
             room = self.rooms.get_room(normalized_code)
             room.get_player(player_id)
             self.connections[room.room_id][player_id] = websocket
+            self._rooms_empty_since.pop(room.room_id, None)
             return room.room_id
 
     async def unregister_socket(self, room_code: str, player_id: str):
@@ -81,6 +102,36 @@ class ServerRuntime:
             room_connections.pop(player_id, None)
             if not room_connections:
                 self.connections.pop(normalized_code, None)
+
+                if normalized_code in self.rooms.rooms:
+                    self._rooms_empty_since.setdefault(normalized_code, time.monotonic())
+
+    async def prune_empty_rooms(self) -> list[str]:
+        """Remove rooms that have been without active sockets past the TTL."""
+
+        now = time.monotonic()
+        removed_rooms: list[str] = []
+
+        async with self.lock:
+            active_room_codes = set(self.rooms.rooms.keys())
+
+            for room_code in list(self._rooms_empty_since):
+                if room_code not in active_room_codes:
+                    self._rooms_empty_since.pop(room_code, None)
+
+            for room_code in active_room_codes:
+                if self.connections.get(room_code):
+                    self._rooms_empty_since.pop(room_code, None)
+                    continue
+
+                empty_since = self._rooms_empty_since.setdefault(room_code, now)
+                if now - empty_since < self.empty_room_ttl_seconds:
+                    continue
+
+                self._remove_room_locked(room_code)
+                removed_rooms.append(room_code)
+
+        return removed_rooms
 
     async def send_room_state(self, room_code: str, player_id: str):
         """Send the latest room snapshot to a single connected player."""
@@ -122,6 +173,41 @@ class ServerRuntime:
 
 runtime = ServerRuntime()
 app = FastAPI(title="Sketchy Connections API")
+
+
+async def room_pruner():
+    """Background task that periodically clears inactive empty rooms."""
+
+    try:
+        while True:
+            await asyncio.sleep(runtime.room_prune_interval_seconds)
+            removed_rooms = await runtime.prune_empty_rooms()
+            if len(removed_rooms) > 0:
+                logger.info(f"Pruned {len(removed_rooms)} inactive rooms")
+    except asyncio.CancelledError:
+        return
+
+
+@app.on_event("startup")
+async def startup():
+    """Start background runtime maintenance tasks."""
+
+    app.state.room_pruner_task = asyncio.create_task(room_pruner())
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    """Stop background runtime maintenance tasks."""
+
+    room_pruner_task = getattr(app.state, "room_pruner_task", None)
+    if room_pruner_task is None:
+        return
+
+    room_pruner_task.cancel()
+    try:
+        await room_pruner_task
+    except asyncio.CancelledError:
+        pass
 
 
 def to_http_exception(exc: ValueError) -> HTTPException:
@@ -172,6 +258,48 @@ def validate_entry_content(content):
     raise ValueError("Entry content must be a string or a list.")
 
 
+def parse_positive_int_field(message: dict, field_name: str) -> int:
+    """Read and validate a required positive integer field from a payload."""
+
+    raw_value = message.get(field_name)
+    if raw_value is None:
+        raise ValueError(f"Missing required field: {field_name}.")
+
+    try:
+        parsed_value = int(raw_value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{field_name} must be an integer.") from exc
+
+    if parsed_value <= 0:
+        raise ValueError(f"{field_name} must be greater than zero.")
+
+    return parsed_value
+
+
+async def send_websocket_error(
+        websocket: WebSocket,
+        message: str,
+        *,
+        code: str = "invalid_request"
+):
+    """Best-effort websocket error response helper."""
+
+    if websocket.application_state != WebSocketState.CONNECTED:
+        return
+
+    try:
+        await websocket.send_json({"type": "error", "code": code, "message": message})
+    except Exception:
+        if websocket.client:
+            logger.exception(_format_message(websocket.client, "Failed to send websocket error response"))
+        else:
+            logger.exception("Failed to send websocket error response")
+    except WebSocketDisconnect:
+        return
+
+def _format_message(client: Address, msg: str) -> str:
+    return f"{client.host}:{client.port} - {msg}"
+
 async def handle_client_message(
         room_code: str,
         player_id: str,
@@ -196,6 +324,11 @@ async def handle_client_message(
 
     message_type = message.get("type")
 
+    if websocket.client:
+        client = websocket.client
+        msg = f"\"WebSocket {websocket.url.path}\" [{message_type}]"
+        logger.info(_format_message(client, msg))
+
     if message_type == "sync":
         await runtime.send_room_state(room_code, player_id)
         return False
@@ -204,7 +337,6 @@ async def handle_client_message(
         async with runtime.lock:
             room = runtime.rooms.get_room(room_code)
             room.start_game(player_id)
-            print(f"Game started: {room.to_dict()}")
         await runtime.broadcast_room_state(room_code)
         return False
 
@@ -226,8 +358,8 @@ async def handle_client_message(
         return False
 
     if message_type == "set_options":
-        draw_time = int(message.get("draw_time"))
-        prompt_time = int(message.get("prompt_time"))
+        draw_time = parse_positive_int_field(message, "draw_time")
+        prompt_time = parse_positive_int_field(message, "prompt_time")
         async with runtime.lock:
             room = runtime.rooms.get_room(room_code)
             room.draw_time = draw_time
@@ -245,8 +377,8 @@ async def handle_client_message(
             room_connections = runtime.connections.get(room.room_id, {})
             room_connections.pop(player_id, None)
             if not room.players or len(room.players) == 0:
-                runtime.connections.pop(room.room_id, None)
-                runtime.rooms.remove_room(room.room_id)
+                room_id = room.room_id
+                runtime._remove_room_locked(room_id)
             else:
                 should_broadcast = True
 
@@ -291,22 +423,6 @@ async def create_room(request: PlayerRegistrationRequest):
 
     return response
 
-@app.post("/rooms/{room_code}/end", status_code=status.HTTP_200_OK)
-async def delete_room(room_code: str, player_id: str | None = Query(default=None)):
-    """Delete a room by code.
-
-    Only the host can delete a room
-    """
-
-    async with runtime.lock:
-        print(runtime.rooms.get_room(room_code).host_id)
-        print(player_id)
-        if runtime.rooms.get_room(room_code).host_id == player_id:
-            runtime.rooms.remove_room(room_code)
-        else:
-            raise to_http_exception(ValueError("unauthorized"))
-
-    return {"detail": f"Room {room_code} removed"}
 
 @app.post("/rooms/{room_code}/players", response_model=PlayerRegistrationResponse)
 async def join_room(room_code: str, request: PlayerRegistrationRequest):
@@ -352,19 +468,40 @@ async def room_socket(websocket: WebSocket, room_code: str, player_id: str):
     """
 
     await websocket.accept()
+    normalized_code = room_code.upper()
+    is_registered = False
 
     try:
         normalized_code = await runtime.register_socket(room_code, player_id, websocket)
+        is_registered = True
     except ValueError as exc:
-        await websocket.send_json({"type": "error", "message": str(exc)})
+        await send_websocket_error(websocket, str(exc), code="registration_error")
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
-    await runtime.broadcast_room_state(normalized_code)
+    try:
+        await runtime.broadcast_room_state(normalized_code)
+    except ValueError as exc:
+        await send_websocket_error(websocket, str(exc), code="room_error")
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        if is_registered:
+            await runtime.unregister_socket(normalized_code, player_id)
+        return
 
     try:
         while True:
-            message = await websocket.receive_json()
+            try:
+                message = await websocket.receive_json()
+            except WebSocketDisconnect:
+                break
+            except ValueError:
+                await send_websocket_error(
+                    websocket,
+                    "Invalid JSON payload. Expected a JSON object.",
+                    code="invalid_json",
+                )
+                continue
+
             try:
                 should_stop = await handle_client_message(
                     normalized_code,
@@ -375,8 +512,21 @@ async def room_socket(websocket: WebSocket, room_code: str, player_id: str):
                 if should_stop:
                     break
             except ValueError as exc:
-                await websocket.send_json({"type": "error", "message": str(exc)})
-    except WebSocketDisconnect:
-        await runtime.unregister_socket(normalized_code, player_id)
+                if websocket.client:
+                    logger.warning(_format_message(websocket.client, str(exc)))
+                else:
+                    logger.warning(str(exc))
+                await send_websocket_error(websocket, str(exc), code="invalid_request")
+            except Exception as exc:
+                if websocket.client:
+                    logger.exception(_format_message(websocket.client, f"Unhandled message error: {exc}"))
+                else:
+                    logger.exception(f"Unhandled message error: {exc}")
+                await send_websocket_error(
+                    websocket,
+                    "Unexpected server error while processing your message.",
+                    code="server_error",
+                )
     finally:
-        await runtime.unregister_socket(normalized_code, player_id)
+        if is_registered:
+            await runtime.unregister_socket(normalized_code, player_id)

@@ -374,7 +374,7 @@ class Engine:
                                  self.network.room.room_id.lower(), (0,0,0))]
         if self.player.is_host:
             self.active_buttons = [
-                Button(self.np(88, 90), (self.ns(115 * 1.8, 51 * 1.8)),
+                Button(self.np(80, 90), (self.ns(115 * 1.8, 51 * 1.8)),
                        "assets/textures/play.png", self.start_game),
                 CheckboxButton(self.np(70, 76), self.ns(40, 40),
                                self.simple_color_select, "Simple Colors", False),
@@ -444,7 +444,7 @@ class Engine:
             pixels = self.current_entry.content
 
         self.active_animations = [
-            AnimationWindow(self.np(36, 43), self.ns(845, 455), pixels, )
+            AnimationWindow(self.np(36, 43), self.ns(845, 455), pixels)
         ]
         self.active_drawings = []
         self.draw_order = self.active_buttons + self.active_ui + \
@@ -459,8 +459,8 @@ class Engine:
         self.tool_text = TextUI(self.np(60, 95), self.ns(20, 20),
                                  "Current: " + self.curr_tool, (0, 0, 0))
         self.active_ui = [TimeBar(self.np(94,58), self.ns(60 * 1.5, 320 * 1.5), self.draw_length),
-                          TextUI(self.np(50, 10), self.ns(100, 100),
-                               "Prompt: " + self.current_entry.content, (0, 0, 0)),
+                          # TextUI(self.np(50, 10), self.ns(100, 100),
+                        #     "Prompt: " + self.current_entry.content, (0, 0, 0)),
                           TextUI(self.np(60, 90), self.ns(20, 20),
                                  "Current Tool: ", (0, 0, 0)),
                           self.tool_text,
@@ -495,7 +495,7 @@ class Engine:
         #TODO: the other UI elements- please look at this and solve it, as it's out of my scope now.
         #TODO: The objective is that it can be ANY size- especially for the results page.
         self.active_animations = []
-        self.active_drawings = [DrawingWindow(self.np(36,53), self.nl(680))]
+        self.active_drawings = [DrawingWindow(self.np(36,53), self.nl(640))]
         self.draw_order = self.active_buttons + self.active_ui +\
                           self.active_drawings + self.active_animations
         self.draw_order = sorted(self.draw_order, key=lambda elem: elem.z)

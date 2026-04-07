@@ -6,7 +6,12 @@ Main file for the program
 """
 import pygame
 
-from .engine import Engine
+try:
+    # Package execution path (python -m sketchy_client.main)
+    from .engine import Engine
+except ImportError:
+    # Script/frozen execution path (e.g. PyInstaller bootloader)
+    from sketchy_client.engine import Engine
 
 def main():
     """

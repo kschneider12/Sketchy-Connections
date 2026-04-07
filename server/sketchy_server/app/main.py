@@ -10,14 +10,18 @@ updates and send gameplay actions.
 """
 
 import asyncio
+import time
 from collections import defaultdict
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect, status
+from fastapi.logger import logging
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from sketchy_server.model import RoomManager
 from sketchy_shared.types import PlayerRegistrationData
 
+
+logger = logging.getLogger('uvicorn.error')
 
 class PlayerRegistrationRequest(BaseModel):
     """Request body for creating a player or joining a room."""
@@ -54,10 +58,24 @@ class ServerRuntime:
     lock: Global async lock protecting room and connection mutations.
     """
 
-    def __init__(self):
+    def __init__(self, *, room_prune_interval_seconds: int = 30, empty_room_ttl_seconds: int = 120):
         self.rooms = RoomManager()
         self.connections: dict[str, dict[str, WebSocket]] = defaultdict(dict)
         self.lock = asyncio.Lock()
+        self.room_prune_interval_seconds = room_prune_interval_seconds
+        self.empty_room_ttl_seconds = empty_room_ttl_seconds
+        self._rooms_empty_since: dict[str, float] = {}
+
+    def _remove_room_locked(self, room_code: str):
+        """Delete a room and all associated runtime bookkeeping.
+
+        Caller must hold ``self.lock``.
+        """
+
+        normalized_code = room_code.upper()
+        self.connections.pop(normalized_code, None)
+        self._rooms_empty_since.pop(normalized_code, None)
+        self.rooms.remove_room(normalized_code)
 
     async def register_socket(self, room_code: str, player_id: str, websocket: WebSocket) -> str:
         """Register a player's WebSocket after validating room and player ids."""
@@ -67,6 +85,7 @@ class ServerRuntime:
             room = self.rooms.get_room(normalized_code)
             room.get_player(player_id)
             self.connections[room.room_id][player_id] = websocket
+            self._rooms_empty_since.pop(room.room_id, None)
             return room.room_id
 
     async def unregister_socket(self, room_code: str, player_id: str):
@@ -81,6 +100,36 @@ class ServerRuntime:
             room_connections.pop(player_id, None)
             if not room_connections:
                 self.connections.pop(normalized_code, None)
+
+                if normalized_code in self.rooms.rooms:
+                    self._rooms_empty_since.setdefault(normalized_code, time.monotonic())
+
+    async def prune_empty_rooms(self) -> list[str]:
+        """Remove rooms that have been without active sockets past the TTL."""
+
+        now = time.monotonic()
+        removed_rooms: list[str] = []
+
+        async with self.lock:
+            active_room_codes = set(self.rooms.rooms.keys())
+
+            for room_code in list(self._rooms_empty_since):
+                if room_code not in active_room_codes:
+                    self._rooms_empty_since.pop(room_code, None)
+
+            for room_code in active_room_codes:
+                if self.connections.get(room_code):
+                    self._rooms_empty_since.pop(room_code, None)
+                    continue
+
+                empty_since = self._rooms_empty_since.setdefault(room_code, now)
+                if now - empty_since < self.empty_room_ttl_seconds:
+                    continue
+
+                self._remove_room_locked(room_code)
+                removed_rooms.append(room_code)
+
+        return removed_rooms
 
     async def send_room_state(self, room_code: str, player_id: str):
         """Send the latest room snapshot to a single connected player."""
@@ -122,6 +171,41 @@ class ServerRuntime:
 
 runtime = ServerRuntime()
 app = FastAPI(title="Sketchy Connections API")
+
+
+async def room_pruner():
+    """Background task that periodically clears inactive empty rooms."""
+
+    try:
+        while True:
+            await asyncio.sleep(runtime.room_prune_interval_seconds)
+            removed_rooms = await runtime.prune_empty_rooms()
+            if len(removed_rooms) > 0:
+                logger.info(f"Pruned {len(removed_rooms)} inactive rooms")
+    except asyncio.CancelledError:
+        return
+
+
+@app.on_event("startup")
+async def startup():
+    """Start background runtime maintenance tasks."""
+
+    app.state.room_pruner_task = asyncio.create_task(room_pruner())
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    """Stop background runtime maintenance tasks."""
+
+    room_pruner_task = getattr(app.state, "room_pruner_task", None)
+    if room_pruner_task is None:
+        return
+
+    room_pruner_task.cancel()
+    try:
+        await room_pruner_task
+    except asyncio.CancelledError:
+        pass
 
 
 def to_http_exception(exc: ValueError) -> HTTPException:
@@ -196,6 +280,10 @@ async def handle_client_message(
 
     message_type = message.get("type")
 
+    if websocket.client:
+        client = websocket.client
+        logger.info(f"{client.host}:{client.port} - \"WebSocket {websocket.url.path}\" [{message_type}]")
+
     if message_type == "sync":
         await runtime.send_room_state(room_code, player_id)
         return False
@@ -204,7 +292,7 @@ async def handle_client_message(
         async with runtime.lock:
             room = runtime.rooms.get_room(room_code)
             room.start_game(player_id)
-            print(f"Game started: {room.to_dict()}")
+            logger.info(f"Game started: {room.to_dict()}")
         await runtime.broadcast_room_state(room_code)
         return False
 
@@ -245,8 +333,8 @@ async def handle_client_message(
             room_connections = runtime.connections.get(room.room_id, {})
             room_connections.pop(player_id, None)
             if not room.players or len(room.players) == 0:
-                runtime.connections.pop(room.room_id, None)
-                runtime.rooms.remove_room(room.room_id)
+                room_id = room.room_id
+                runtime._remove_room_locked(room_id)
             else:
                 should_broadcast = True
 
@@ -299,10 +387,8 @@ async def delete_room(room_code: str, player_id: str | None = Query(default=None
     """
 
     async with runtime.lock:
-        print(runtime.rooms.get_room(room_code).host_id)
-        print(player_id)
         if runtime.rooms.get_room(room_code).host_id == player_id:
-            runtime.rooms.remove_room(room_code)
+            runtime._remove_room_locked(room_code)
         else:
             raise to_http_exception(ValueError("unauthorized"))
 

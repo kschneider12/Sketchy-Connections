@@ -413,10 +413,13 @@ class DrawingWindow:
 
 class AnimationWindow:
     """Replays drawing operations as an animation or display"""
-    def __init__(self, center_pos, size, drawn_pixels):
+    def __init__(self, center_pos, size, drawn_pixels, draggable=False, z=1):
         """Initializes the animation window"""
-        self.center = center_pos
+        self.center = [center_pos[0], center_pos[1]]
+        self.init_y = center_pos[1]
         self.size = size
+        self.draggable = draggable
+        self.z = z
 
         self.cell_width = size[0] / GRID_WIDTH
         self.cell_height = size[1] / GRID_HEIGHT
@@ -425,10 +428,10 @@ class AnimationWindow:
         self.pixel_width = self.cell_size * GRID_WIDTH
         self.pixel_height = self.cell_size * GRID_HEIGHT
 
-        self.pos = (
+        self.pos = [
             self.center[0] - self.pixel_width // 2,
             self.center[1] - self.pixel_height // 2
-        )
+        ]
 
         self.grid = Grid(self.pos, self.cell_size)
         self.drawn_pixels = drawn_pixels

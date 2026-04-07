@@ -1,12 +1,12 @@
 from .button import Button
 
 class SlideDownButton(Button):
-    def __init__(self, pos, y_bounds, size, funct):
+    def __init__(self, pos, y_bounds, size, funct, z=1):
         y_bounds = (y_bounds[0][1], y_bounds[1][1])
         img = 'assets/textures/play.png'
         self.dragging = False
         self.bounds = (y_bounds[0] + size[1] / 2, y_bounds[1] - size[1] / 2)
-        super().__init__([pos[0],y_bounds[1] - size[1] / 2] , size, img, funct)
+        super().__init__([pos[0],y_bounds[1] - size[1] / 2] , size, img, funct, z=z)
 
     def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state, paused):
         if not paused or self.pause_override:
@@ -32,5 +32,5 @@ class SlideDownButton(Button):
                 self.dragging = False
             #return offset positioning for objects that it applies to (make an optional parameter meaning slide)
             #print((self.pos[1] - self.bounds[0]) / (self.bounds[1] - self.bounds[0]))
-        return [self.command, (self.pos[1] - self.bounds[0]) / (self.bounds[1] - self.bounds[0])]
+        return [self.command, -1 * (self.pos[1] - self.bounds[0]) / (self.bounds[1] - self.bounds[0]) + 1]
 

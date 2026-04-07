@@ -75,6 +75,7 @@ class Engine:
         self.active_buttons = []
         self.active_animations = []
         self.active_drawings = []
+        self.active_results = []
         self.frame = 0
         self.curr_color = [120,250,250]
         self.curr_shade = [0,0,0]
@@ -110,6 +111,7 @@ class Engine:
         self.submitted = False
         self.last_submission = ""
         self.paused = False
+        self.results_shown = 0
 
         # Results page
         self.results_height = 0
@@ -141,8 +143,8 @@ class Engine:
                             #self.draw_length = self.room.draw_time
                             #self.prompt_length= self.room.prompt_time
                             #TODO REMOVE!
-                            self.draw_length = 5
-                            self.prompt_length = 5
+                            self.draw_length = 1
+                            self.prompt_length = 1
                             self.switch_to_writing()
                         case 'drawing':
                             self.switch_to_draw()
@@ -291,6 +293,7 @@ class Engine:
         """game loop for the game over screen"""
         for animation in self.active_animations:
             animation.update(False)
+        self.show_next_result()
 
     def time_up(self):
         """accessed when any timer runs out, this manages logic
@@ -329,6 +332,7 @@ class Engine:
     def switch_to_welcome(self):
         """switches the scene to welcome, initializing the UI."""
         self.scene = "welcome"
+        pygame.mouse.set_visible(True)
 
         self.active_ui = [DefaultUI(self.np(50, 30), self.ns(169 * 3.5, 97 * 3.5),
                                     "assets/textures/title.png")]
@@ -429,8 +433,8 @@ class Engine:
         pygame.mouse.set_visible(True)
         self.active_ui = [TimeBar(self.np(92,43), self.ns(60 * 1.5, 270 * 1.5), self.prompt_length),
                           DefaultUI(self.np(36, 43), self.ns(650, 400),
-                                    "assets/textures/color_button.png")
-        ]
+                                    "assets/textures/color_button.png")]
+
         self.active_buttons = [TypeBox(self.np(50, 86), self.ns(1550 * 0.6, 70 * 0.6),
                                        "assets/textures/text_box_5.png",
                                        self.set_curr_guess,"Type A Response")]
@@ -500,22 +504,28 @@ class Engine:
     def switch_to_results(self):
         """switches the scene to results, initializing the UI"""
         self.scene = "results"
-        self.active_ui = []
-        self.active_buttons = [
-            Button(self.np(80, 95), (self.ns(140 * 2.2, 51 * 2.2)),
-                   "assets/textures/submit.png", self.switch_to_lobby)
+        pygame.mouse.set_visible(True)
+        self.active_ui = [PlayerDisplay(self.np(4, 55), self.ns(30 * 2.4, 241 * 2.4),
+                                        (SCREEN_LEN, SCREEN_HT),
+                                        self.network.room.players, True),
+                          DefaultUI(self.np(88, 20), self.ns(520 * 2.2, 300 * 2.2),
+                                    "assets/textures/back_template.png", rotate=90)
+                          ]
+        self.active_buttons = []
+        print("HERE!")
+        self.active_buttons.append(SlideDownButton(self.np(95, 0),
+                                         (self.np(0, 5),
+                                                   self.np(0,95)),
+                                                   self.ns(20,150), self.slider_control, z=2))
+        if self.player.is_host:
+            self.active_buttons.append(Button(self.np(30, 70), (self.ns(115 * 2.2, 51 * 2.2)),
+                   "assets/textures/host.png", self.broadcast_next_result))
 
-        ]
-        pixels = []
-        if self.active_drawings:
-            pixels = self.active_drawings[0].get_drawn_pixels()
-
-        self.active_animations = [
-            AnimationWindow(self.np(50, 50), self.ns(845, 455), pixels)
-        ]
+        self.active_animations = []
         self.active_drawings = []
         self.draw_order = self.active_buttons + self.active_drawings +\
                           self.active_ui + self.active_animations
+        self.draw_order = sorted(self.draw_order, key=lambda elem: elem.z)
         self.pause_client()
 
     def enable_room_code(self):
@@ -740,6 +750,13 @@ class Engine:
             print(self.network.room.to_dict())
             self.submitted = True
             self.submit_ui()
+        elif self.scene == "guessing" and not self.submitted:
+            if not self.curr_guess:
+                self.curr_guess = f"{self.player.name} didn't submit!"
+            self.network.submit_entry(self.curr_guess)
+            self.submitted = True
+            # disable buttons and present close screen
+            self.submit_ui()
 
     def submit_ui(self):
         """creates the overlay when you submit something"""
@@ -752,7 +769,7 @@ class Engine:
         self.draw_order.insert(index, TransparentUI(self.np(50, 50),
                                             self.ns(SCREEN_LEN * 2, SCREEN_HT * 2),
                                             (0, 0, 0), 150))
-        if self.scene == "writing":
+        if self.scene == "writing" or self.scene == "guessing":
             with open(resolve_asset_path("assets/guess_prompts.csv"), mode='r', newline='') as file:
                 text = random.choice(list(csv.reader(file)))
             self.draw_order.insert(index, TextUI(self.np(50, 40),
@@ -770,13 +787,13 @@ class Engine:
         based on the offset from the UI element"""
         # compare results height to the height of the window: A constant for now.
         # The excess height is
-        results_window_ht = self.ns(0, 500) #random value for now, proof of concept complete!
+        results_window_ht = self.ns(0, 600)
         mult =  self.results_height - results_window_ht[1]
         if mult < 0:
             mult = 0
         for element in self.draw_order:
             if not isinstance(element, SlideDownButton) and element.draggable:
-                element.pos[1] = element.init_y - offset * mult
+                element.pos[1] = (element.init_y + offset * mult)
 
     def quit_game(self):
         """closes the program"""
@@ -804,18 +821,18 @@ class Engine:
             if self.scene != "welcome":
                 self.active_buttons.append(Button(self.np(50, 70), (self.ns(140 * 1.8, 51 * 1.8)),
                                                   "assets/textures/quit.png",
-                                                  self.leave_room, z=5, pause_override=True))
+                                                  self.leave_room, z=11, pause_override=True))
             else:
                 self.active_buttons.append(Button(self.np(50, 70), (self.ns(140 * 1.8, 51 * 1.8)),
                                                   "assets/textures/quit.png",
-                                                  self.quit_game, z=5, pause_override=True))
+                                                  self.quit_game, z=11, pause_override=True))
 
             self.draw_order.append(TransparentUI(self.np(50, 50),
-                          self.ns(SCREEN_LEN * 2, SCREEN_HT * 2),
-                          (0, 0, 0), 100))
+                          self.ns(SCREEN_LEN * 5, SCREEN_HT * 5),
+                          (0, 0, 0), 100, z=9))
             self.draw_order.append(DefaultUI(self.np(50, 50),
                                                  self.ns(520 * 1.5, 300 * 1.5),
-                                                 "assets/textures/pause_screen.png"))
+                                                 "assets/textures/pause_screen.png", z=10))
             self.draw_order += self.active_buttons[-3:]
 
         elif self.paused and pause:
@@ -826,3 +843,51 @@ class Engine:
             self.draw_order = self.draw_order[:-5]
             if self.scene == "drawing":
                 pygame.mouse.set_visible(False)
+
+    def broadcast_next_result(self):
+        """Ran by the host, this broadcasts to show the next result"""
+        self.network.incr_book()
+
+    def show_next_result(self):
+        """When new increment, this adds new result to book"""
+        while self.results_shown < self.room.book_idx:
+            if not self.get_next_element():
+                break
+            self.results_shown += 1
+            #ADD ITEM TO THE DISPLAY
+        self.draw_order = self.active_buttons + self.active_drawings + \
+                          self.active_ui + self.active_animations + self.active_results
+        self.draw_order = sorted(self.draw_order, key=lambda elem: elem.z)
+
+    def get_next_element(self):
+        """Helper function that sends the appropriate
+        UI back to the show_next_result function"""
+        if self.results_shown >= len(self.books[0].entries) * len(self.books):
+            return False
+        curr_book = self.results_shown // len(self.books[0].entries)
+        data = self.books[curr_book].entries[self.results_shown % len(self.books[0].entries)]
+
+        if (self.results_shown % len(self.books[0].entries)) == 0:
+            # start of new book, clear board
+            self.results_height = 0
+            self.active_results = []
+
+        if data.type == "prompt":
+            #print("prompt!")
+            for elem in self.active_results:
+                elem.init_y -= self.ns(0, 70)[1]
+            text = TextUI(self.np(50, 90), self.ns(0, 60),
+                   data.content, (0, 0, 0), z=4, draggable=True)
+            self.active_results.append(text)
+            self.results_height += self.ns(0, 70)[1]
+        elif data.type == "drawing":
+            for elem in self.active_results:
+                elem.init_y -= self.ns(0, 300)[1]
+            #print("drawing!")
+            #drawing:
+            drawing = AnimationWindow(self.np(50, 80 + self.results_height), self.ns(845 / 2, 455 / 2),
+                                     data.content, draggable=True, z=4)
+            self.active_results.append(drawing)
+            self.results_height += self.ns(0, 300)[1]
+        return True
+

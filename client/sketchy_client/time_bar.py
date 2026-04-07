@@ -34,7 +34,7 @@ class TimeBar(DefaultUI):
         colorful pygame Rect to fill in the space.
         """
         self.bar_pos =  (self.pos[0] - self.width / 2.3,
-                         self.pos[1] - self.height / 2.08 + (self.start_time - self.time)
+                         self.pos[1] - self.height / 1.95 + (self.start_time - self.time)
                          * (self.height / self.start_time * 0.964))
 
         color = (255 - int(255 * self.time / self.start_time), int(255 * self.time / self.start_time), 0)

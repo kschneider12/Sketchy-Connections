@@ -6,30 +6,35 @@ from typing import Any
 
 
 class RoomPhase(str, Enum):
+    """Enumeration for current room phase"""
     LOBBY = "lobby"
     PLAYING = "playing"
     RESULTS = "results"
 
 
 class GamePhase(str, Enum):
+    """Enumeration for current game phase"""
     WRITING = "writing"
     DRAWING = "drawing"
     GUESSING = "guessing"
 
 
 class EntryType(str, Enum):
+    """Enumeration for current entry type"""
     DRAWING = "drawing"
     PROMPT = "prompt"
 
 
 @dataclass(slots=True)
 class PlayerData:
+    """Represents an instance of a player for communication"""
     id: str = ""
     name: str = ""
     has_submitted: bool = False
     is_host: bool = False
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the data for sending"""
         return {
             "id": self.id,
             "name": self.name,
@@ -39,6 +44,7 @@ class PlayerData:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "PlayerData":
+        """Parse the data when receiving"""
         return cls(
             id=str(data["id"]),
             name=str(data["name"]),
@@ -49,11 +55,13 @@ class PlayerData:
 
 @dataclass(slots=True)
 class EntryData:
+    """Represents an instance of an entry for communication"""
     author_id: str
     type: EntryType
     content: str | list[Any]
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the data for sending"""
         return {
             "author_id": self.author_id,
             "type": self.type.value,
@@ -62,6 +70,7 @@ class EntryData:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "EntryData":
+        """Parse the data when receiving"""
         return cls(
             author_id=str(data["author_id"]),
             type=EntryType(data["type"]),
@@ -71,6 +80,7 @@ class EntryData:
 
 @dataclass(slots=True)
 class BookData:
+    """Represents an instance of a book for communication"""
     owner_id: str
     entries: list[EntryData] = field(default_factory=list)
 
@@ -91,6 +101,7 @@ class BookData:
         return self.entries[-1]
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the data for sending"""
         return {
             "owner_id": self.owner_id,
             "entries": [entry.to_dict() for entry in self.entries],
@@ -98,6 +109,7 @@ class BookData:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "BookData":
+        """Parse the data when receiving"""
         return cls(
             owner_id=str(data["owner_id"]),
             entries=[EntryData.from_dict(entry) for entry in data.get("entries", [])],
@@ -113,11 +125,14 @@ class GameStateData:
     books: list[BookData] | None = None
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the data for sending"""
         payload: dict[str, Any] = {
             "phase": self.phase.value,
             "round_number": self.round_number,
             "current_prompt": self.current_prompt.to_dict() if self.current_prompt else None,
-            "expected_entry_type": self.expected_entry_type.value if self.expected_entry_type else None,
+            "expected_entry_type": (
+                self.expected_entry_type.value if self.expected_entry_type else None
+            ),
         }
 
         if self.books is not None:
@@ -127,6 +142,7 @@ class GameStateData:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "GameStateData":
+        """Parse the data when receiving"""
         current_prompt = data.get("current_prompt")
         expected_entry_type = data.get("expected_entry_type")
         books = data.get("books")
@@ -134,7 +150,10 @@ class GameStateData:
         return cls(
             phase=GamePhase(data["phase"]),
             round_number=int(data["round_number"]),
-            current_prompt=EntryData.from_dict(current_prompt) if isinstance(current_prompt, dict) else None,
+            current_prompt=(
+                EntryData.from_dict(current_prompt)
+                if isinstance(current_prompt, dict) else None
+            ),
             expected_entry_type=EntryType(expected_entry_type) if expected_entry_type else None,
             books=[BookData.from_dict(book) for book in books] if isinstance(books, list) else None,
         )
@@ -151,9 +170,8 @@ class RoomData:
     prompt_time: int = 20
     book_idx: int = 0
 
-
-
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the data for sending"""
         return {
             "room_id": self.room_id,
             "phase": self.phase.value,
@@ -167,6 +185,7 @@ class RoomData:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "RoomData":
+        """Parse the data when receiving"""
         game = data.get("game")
         return cls(
             room_id=str(data["room_id"]),
@@ -189,6 +208,7 @@ class PlayerRegistrationData:
     room: RoomData
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the data for sending"""
         return {
             "room_code": self.room_code,
             "player_id": self.player_id,
@@ -199,6 +219,7 @@ class PlayerRegistrationData:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "PlayerRegistrationData":
+        """Parse the data when receiving"""
         return cls(
             room_code=str(data["room_code"]),
             player_id=str(data["player_id"]),

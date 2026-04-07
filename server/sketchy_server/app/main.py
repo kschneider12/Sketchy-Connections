@@ -12,6 +12,7 @@ updates and send gameplay actions.
 import asyncio
 import time
 from collections import defaultdict
+from dataclasses import dataclass
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect, status
 from fastapi.websockets import WebSocketState
@@ -25,6 +26,7 @@ from sketchy_shared.types import PlayerRegistrationData
 
 logger = logging.getLogger('uvicorn.error')
 
+@dataclass
 class PlayerRegistrationRequest(BaseModel):
     """Request body for creating a player or joining a room."""
 
@@ -41,7 +43,7 @@ class PlayerRegistrationRequest(BaseModel):
             raise ValueError("Player name cannot be empty.")
         return stripped
 
-
+@dataclass
 class PlayerRegistrationResponse(BaseModel):
     """Serialized room join/create response returned to the client."""
 
@@ -68,7 +70,7 @@ class ServerRuntime:
         self.empty_room_ttl_seconds = empty_room_ttl_seconds
         self._rooms_empty_since: dict[str, float] = {}
 
-    def _remove_room_locked(self, room_code: str):
+    def remove_room_locked(self, room_code: str):
         """Delete a room and all associated runtime bookkeeping.
 
         Caller must hold ``self.lock``.
@@ -128,7 +130,7 @@ class ServerRuntime:
                 if now - empty_since < self.empty_room_ttl_seconds:
                     continue
 
-                self._remove_room_locked(room_code)
+                self.remove_room_locked(room_code)
                 removed_rooms.append(room_code)
 
         return removed_rooms
@@ -291,7 +293,9 @@ async def send_websocket_error(
         await websocket.send_json({"type": "error", "code": code, "message": message})
     except Exception:
         if websocket.client:
-            logger.exception(_format_message(websocket.client, "Failed to send websocket error response"))
+            logger.exception(
+                _format_message(websocket.client, "Failed to send websocket error response")
+            )
         else:
             logger.exception("Failed to send websocket error response")
     except WebSocketDisconnect:
@@ -378,7 +382,7 @@ async def handle_client_message(
             room_connections.pop(player_id, None)
             if not room.players or len(room.players) == 0:
                 room_id = room.room_id
-                runtime._remove_room_locked(room_id)
+                runtime.remove_room_locked(room_id)
             else:
                 should_broadcast = True
 
@@ -474,15 +478,9 @@ async def room_socket(websocket: WebSocket, room_code: str, player_id: str):
     try:
         normalized_code = await runtime.register_socket(room_code, player_id, websocket)
         is_registered = True
-    except ValueError as exc:
-        await send_websocket_error(websocket, str(exc), code="registration_error")
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-        return
-
-    try:
         await runtime.broadcast_room_state(normalized_code)
     except ValueError as exc:
-        await send_websocket_error(websocket, str(exc), code="room_error")
+        await send_websocket_error(websocket, str(exc), code="registration_error")
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         if is_registered:
             await runtime.unregister_socket(normalized_code, player_id)
@@ -512,16 +510,10 @@ async def room_socket(websocket: WebSocket, room_code: str, player_id: str):
                 if should_stop:
                     break
             except ValueError as exc:
-                if websocket.client:
-                    logger.warning(_format_message(websocket.client, str(exc)))
-                else:
-                    logger.warning(str(exc))
+                logger.warning(str(exc))
                 await send_websocket_error(websocket, str(exc), code="invalid_request")
             except Exception as exc:
-                if websocket.client:
-                    logger.exception(_format_message(websocket.client, f"Unhandled message error: {exc}"))
-                else:
-                    logger.exception(f"Unhandled message error: {exc}")
+                logger.exception(f"Unhandled message error: {exc}")
                 await send_websocket_error(
                     websocket,
                     "Unexpected server error while processing your message.",

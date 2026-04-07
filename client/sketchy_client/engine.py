@@ -140,11 +140,11 @@ class Engine:
                     self.submitted = False
                     match self.room.game.phase:
                         case 'writing':
-                            #self.draw_length = self.room.draw_time
-                            #self.prompt_length= self.room.prompt_time
+                            self.draw_length = self.room.draw_time
+                            self.prompt_length= self.room.prompt_time
                             #TODO REMOVE!
-                            self.draw_length = 1
-                            self.prompt_length = 1
+                            #self.draw_length = 1
+                            #self.prompt_length = 1
                             self.switch_to_writing()
                         case 'drawing':
                             self.switch_to_draw()
@@ -441,14 +441,16 @@ class Engine:
 
         pixels = []
         if self.current_entry:
-            pixels = self.current_entry.content
+            print("WE HAVE PIXELS")
+            assert(isinstance(self.current_entry.content, list))
+            pixels = self.current_entry.content.copy()
 
         self.active_animations = [
-            AnimationWindow(self.np(36, 43), self.ns(845, 455), pixels)
+            AnimationWindow(self.np(36, 43), self.ns(845, 455), pixels, True)
         ]
         self.active_drawings = []
         self.draw_order = self.active_buttons + self.active_ui + \
-                          self.active_drawings + self.active_animations
+                          self.active_animations + self.active_drawings
         self.pause_client()
 
     def switch_to_draw(self):

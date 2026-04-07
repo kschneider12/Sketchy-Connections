@@ -512,7 +512,6 @@ class Engine:
                                     "assets/textures/back_template.png", rotate=90)
                           ]
         self.active_buttons = []
-        print("HERE!")
         self.active_buttons.append(SlideDownButton(self.np(95, 0),
                                          (self.np(0, 5),
                                                    self.np(0,95)),
@@ -527,6 +526,8 @@ class Engine:
                           self.active_ui + self.active_animations
         self.draw_order = sorted(self.draw_order, key=lambda elem: elem.z)
         self.pause_client()
+        SoundManager.get_instance().play_music("assets/audio/BrightlyFancy.mp3")
+
 
     def enable_room_code(self):
         """Enables UI for asking for room code"""
@@ -865,6 +866,12 @@ class Engine:
         if self.results_shown >= len(self.books[0].entries) * len(self.books):
             return False
         curr_book = self.results_shown // len(self.books[0].entries)
+        id = self.books[curr_book].owner_id
+        for player in self.room.players:
+            if player.id == id:
+                #TODO set self.curr_book_name to this value!
+                pass
+
         data = self.books[curr_book].entries[self.results_shown % len(self.books[0].entries)]
 
         if (self.results_shown % len(self.books[0].entries)) == 0:

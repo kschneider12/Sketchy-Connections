@@ -14,8 +14,12 @@ else:
 
 sys.path.append(os.path.join(BASE_DIR, "client"))
 sys.path.append(os.path.join(BASE_DIR, "shared"))
-
-from sketchy_client.engine import Engine
+try:
+    # Package execution path (python -m sketchy_client.main)
+    from .engine import Engine
+except ImportError:
+    # Script/frozen execution path (e.g. PyInstaller bootloader)
+    from sketchy_client.engine import Engine
 def main():
     """
     main function that holds and begins Engine

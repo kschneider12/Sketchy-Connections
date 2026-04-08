@@ -72,13 +72,14 @@ class TransparentUI(DefaultUI):
 class TextUI(DefaultUI):
     """Extending DefaultUI, this UI is plain text on the background."""
     def __init__(self, position, size, text, color, z = 0,
-                 draggable = False, animate=False,
+                 draggable = False, animate=False, dynamic_size = 0,
                  wrapping = 0):
         self.text = text
         self.font = pygame.font.Font(asset_path("fonts", "MoreSugar-Regular.ttf"), int(size[1]))
         self.color = color
         self.wrapping = wrapping
         self.animate = (not animate) * len(self.text)
+        self.dynamic_size = dynamic_size
         DefaultUI.__init__(self, position, size, None, z, draggable=draggable)
 
     def draw(self, screen, curr_color=None):
@@ -90,6 +91,14 @@ class TextUI(DefaultUI):
             txt = self.text
 
         text_surface = self.font.render(txt, True, self.color)
+        if self.dynamic_size != 0:
+            #need to resize to size of screen!
+            while text_surface.get_width() > self.dynamic_size:
+                self.height -= 1
+                self.font = pygame.font.Font(asset_path("fonts", "MoreSugar-Regular.ttf"), int(self.height))
+                text_surface = self.font.render(txt, True, self.color)
+                if self.height == 0:
+                    break
         if self.wrapping:
             if text_surface.get_width() > self.wrapping:
                 texts = self.wrap_text(txt)

@@ -29,8 +29,8 @@ from .draw_window import DrawingWindow, AnimationWindow
 from .color_wheel import ColorWheel
 from .choices_button import ChoicesButton
 # from draw_window import AnimationWindow
-SCREEN_LEN = pyautogui.size()[0] / 2
-SCREEN_HT = pyautogui.size()[1] / 2
+SCREEN_LEN = pyautogui.size()[0]
+SCREEN_HT = pyautogui.size()[1]
 
 PROMPT_TIMES = [10, 20, 30, 60]
 DRAW_TIMES = [30, 60, 120, 180, 300]
@@ -142,9 +142,6 @@ class Engine:
                         case 'writing':
                             self.draw_length = self.room.draw_time
                             self.prompt_length= self.room.prompt_time
-                            #TODO REMOVE!
-                            # self.draw_length = 1
-                            # self.prompt_length = 10
                             self.switch_to_writing()
                         case 'drawing':
                             self.switch_to_draw()
@@ -275,7 +272,13 @@ class Engine:
                     output()
             if self.paused and not button.pause_override:
                 button.curr_hover = False
-
+        for item in self.active_results:
+            if isinstance(item, Button):
+                output = item.behave(self.mouse_pos, just_clicked,
+                                       self.keystrokes, self.mouse_buttons, self.paused)
+                if callable(output):
+                    output()
+                    item.pos = [1000000,item.pos[1]]
     def draw(self):
         """game loop for drawing screen"""
         # added by Mat for drawing window
@@ -335,13 +338,13 @@ class Engine:
         regardless of screen size"""
         return x * SCREEN_LEN / 1000.0, x * SCREEN_LEN / 1000.0 * 175/325.0
 
-    #TODO: Drawing only starts when you click on canvas
 
 #------------------------------------------------------------------------------------------------
 #Button Commands listed below
 #------------------------------------------------------------------------------------------------
     def switch_to_welcome(self):
         """switches the scene to welcome, initializing the UI."""
+        SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
         self.scene = "welcome"
         pygame.mouse.set_visible(True)
 
@@ -369,6 +372,7 @@ class Engine:
 
     def switch_to_lobby(self):
         """switches the scene to lobby, initializing the UI."""
+        SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
         self.scene = "lobby"
         self.active_animations = []
         self.active_ui = [DefaultUI(self.np(10, 5), self.ns(130 * 1.5, 50 * 1),
@@ -420,13 +424,14 @@ class Engine:
 
     def switch_to_writing(self):
         """switches the scene to writing, initializing the UI."""
+        SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
         self.scene = "writing"
         self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), self.prompt_length),
                           TextUI(self.np(50, 10), self.ns(100,100),
                                  "Create a Prompt!", (0,0,0))]
         self.active_buttons = [TypeBox(self.np(45,50), self.ns(1300 * 0.6, 110 * 0.6),
                                        "assets/textures/text_box_5.png",
-                                       self.set_curr_prompt, "Enter A Prompt"),
+                                       self.set_curr_prompt, "Type A Prompt!"),
                                Button(self.np(50,90), (self.ns(140 * 2.2, 51 * 2.2)),
                                       "assets/textures/submit.png", self.submit),
                                # SliderButton(self.np(20, 20), self.ns(300,30),
@@ -440,24 +445,33 @@ class Engine:
 
     def switch_to_guessing(self):
         """switches the scene to guessing, initializing the UI."""
+        SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
         self.scene = "guessing"
         pygame.mouse.set_visible(True)
         self.active_ui = [TimeBar(self.np(92,43), self.ns(60 * 1.5, 270 * 1.5), self.prompt_length),
-                          DefaultUI(self.np(36, 43), self.ns(650, 400),
-                                    "assets/textures/color_button.png")]
+                          DefaultUI(self.np(44, 44), self.ns(845 * 0.96, 455 * 0.96),
+                                    "assets/textures/back_template.png"),
+                          DefaultUI(self.np(44, 44), self.ns(845 * 0.91, 455 * 0.91),
+                                    "assets/textures/color_button.png"),
+                          DefaultUI(self.np(50, 5), self.ns(240, 50),
+                                    "assets/textures/guess_it.png")
+                          ]
 
-        self.active_buttons = [TypeBox(self.np(50, 86), self.ns(1550 * 0.6, 70 * 0.6),
+        self.active_buttons = [TypeBox(self.np(40, 89), self.ns(1200 * 0.6, 90 * 0.6),
                                        "assets/textures/text_box_5.png",
-                                       self.set_curr_guess,"Type A Response")]
+                                       self.set_curr_guess,"Make A Guess!"),
+                               Button(self.np(89, 89), (self.ns(140 * 1.4, 51 * 1.4)),
+                                      "assets/textures/submit.png", self.submit)
+                               ]
 
         pixels = []
         if self.current_entry:
-            print("WE HAVE PIXELS")
+            #print("WE HAVE PIXELS")
             assert(isinstance(self.current_entry.content, list))
             pixels = self.current_entry.content.copy()
 
-        self.active_animations = [
-            AnimationWindow(self.np(36, 43), self.ns(845, 455), pixels, True)
+        self.active_animations = [ #TODO: ORDER NOT RIGHT WHEN SUBMISSION!
+            AnimationWindow(self.np(44, 44), self.ns(845 * 0.9, 455 * 0.9), pixels, True)
         ]
         self.active_drawings = []
         self.draw_order = self.active_buttons + self.active_ui + \
@@ -467,18 +481,22 @@ class Engine:
     def switch_to_draw(self):
         pygame.mouse.set_visible(False)
         """switches the scene to drawing, initializing the UI."""
+        SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
         # note from Mat - this makes the drawing window displayable, not fully functional
         self.scene = "drawing"
         self.tool_text = TextUI(self.np(60, 95), self.ns(20, 20),
                                  "Current: " + self.curr_tool, (0, 0, 0))
         self.active_ui = [TimeBar(self.np(94,58), self.ns(60 * 1.5, 320 * 1.5), self.draw_length),
-                          TextUI(self.np(50, 10), self.ns(100, 100),
-                            "Prompt: " + self.current_entry.content, (0, 0, 0)),
+                          TextUI(self.np(50, 13), self.ns(1, 65),
+                            self.current_entry.content, (0, 0, 0),
+                                 dynamic_size=SCREEN_LEN * 0.98),
                           TextUI(self.np(60, 90), self.ns(20, 20),
                                  "Current Tool: ", (0, 0, 0)),
                           self.tool_text,
                           DefaultUI(self.np(36, 53), self.nl(660),
                                 "assets/textures/color_button.png"),
+                          DefaultUI(self.np(50, 5), self.ns(220, 50),
+                                    "assets/textures/draw_it.png"),
                           MouseStick(self.ns(20, 20))]
         self.active_buttons = [
             ColorWheel(self.np(79, 36), (self.ns(180, 180)), self.set_color),
@@ -511,6 +529,7 @@ class Engine:
 
     def switch_to_results(self):
         """switches the scene to results, initializing the UI"""
+        SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
         self.scene = "results"
         pygame.mouse.set_visible(True)
         self.active_ui = [PlayerDisplay(self.np(4, 55), self.ns(30 * 2.4, 241 * 2.4),
@@ -835,11 +854,13 @@ class Engine:
                                                     self.set_music_volume,
                                                     self.music_volume, 10))
             if self.scene != "welcome":
-                self.active_buttons.append(Button(self.np(50, 70), (self.ns(140 * 1.8, 51 * 1.8)),
+                self.active_buttons.append(Button(self.np(50, 70),
+                                                  (self.ns(140 * 1.8, 51 * 1.8)),
                                                   "assets/textures/quit.png",
                                                   self.leave_room, z=11, pause_override=True))
             else:
-                self.active_buttons.append(Button(self.np(50, 70), (self.ns(140 * 1.8, 51 * 1.8)),
+                self.active_buttons.append(Button(self.np(50, 70),
+                                                  (self.ns(140 * 1.8, 51 * 1.8)),
                                                   "assets/textures/quit.png",
                                                   self.quit_game, z=11, pause_override=True))
 
@@ -900,7 +921,8 @@ class Engine:
     def get_next_element(self):
         """Helper function that sends the appropriate
         UI back to the show_next_result function"""
-        if self.results_shown == len(self.books[0].entries) * len(self.books) - 1 and self.player.is_host:
+        if (self.results_shown == len(self.books[0].entries) *
+                len(self.books) - 1 and self.player.is_host):
             for button in self.active_buttons:
                 #swap button!
                 if button.pos == self.np(25, 93):
@@ -933,7 +955,8 @@ class Engine:
                           animate=True, wrapping = self.ns(550,0)[0])
             self.active_results.append(text)
             self.active_results.append(DefaultUI(self.np(62, 90), self.ns(550 * 1.06, 125 * 0.9),
-                                                 "assets/textures/results_box.png", draggable=True, z=2))
+                                                 "assets/textures/results_box.png",
+                                                 draggable=True, z=2))
             self.results_height += self.ns(0, 80)[1]
         elif data.type == "drawing":
             for elem in self.active_results:
@@ -944,6 +967,10 @@ class Engine:
             self.active_results.append(drawing)
             self.active_results.append(DefaultUI(self.np(70, 70), self.ns(845 / 1.9, 455 / 1.9),
                       "assets/textures/back_template.png", draggable=True, z=3))
+            self.active_results.append(Button(self.np(45, 70), self.ns(50, 50),
+                                                 "assets/textures/download.png",
+                                              lambda: self.download_image(drawing),
+                                              draggable=True, z=3))
             self.results_height += self.ns(0, 400)[1]
         return True
 
@@ -957,3 +984,11 @@ class Engine:
             # or not if host starts new game
             pass
         self.switch_to_lobby()
+
+    def download_image(self, data):
+        pygame.image.save(data.grid.surface,
+                          f"saved_drawings/screenshot_{self.network.room.room_id}"
+                          f".{int(random.random() * 10000)}.png")
+
+#TODO: When a player leaves the game mid-round, it can be problematic for submissions. When they try to close, should autosubmit or do something else? Joe problem?
+#TODO: PLAYTEST!

@@ -126,6 +126,7 @@ class Engine:
             if self.network_error is not None:
                 print(self.network_error)
                 self.network_error = None
+                self.network._listener_error = None
             self.frame += 1
             if self.frame > 65535:
                 self.frame = 0
@@ -599,7 +600,13 @@ class Engine:
     def start_game(self):
         """starts the game by calling network.
         Used when play button pressed."""
-        self.network.start_game()
+        try:
+            self.network.start_game()
+        except NetworkClientError as exc:
+            self.network_error = str(exc)
+            self.draw_order[-1] = TextUI(self.np(50, 68),
+                                         self.ns(0, 20),
+                                         str(exc), (255, 255, 255))
 
     def draw_text(self, vec):
         """Draws text on screen from draw_typing_text"""

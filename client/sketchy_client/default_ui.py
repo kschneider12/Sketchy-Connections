@@ -2,6 +2,7 @@
 Stores all types of generic UI, such as images and the player display
 """
 import pygame
+from pygame.mixer import Sound
 
 from .sound_manager import SoundManager
 from .paths import resolve_asset_path
@@ -162,6 +163,8 @@ class PlayerDisplay(DefaultUI):
 
     def set_active_players(self, active_players):
         """sets the local active players to the players in the lobby"""
+        if self.active_players != active_players:
+            SoundManager.get_instance().play_sfx(resolve_asset_path("assets/audio/plop.mp3"))
         self.active_players = active_players
 
     def make_blue(self, player):

@@ -29,8 +29,8 @@ from .draw_window import DrawingWindow, AnimationWindow
 from .color_wheel import ColorWheel
 from .choices_button import ChoicesButton
 # from draw_window import AnimationWindow
-SCREEN_LEN = pyautogui.size()[0]
-SCREEN_HT = pyautogui.size()[1]
+SCREEN_LEN = pyautogui.size()[0] / 2
+SCREEN_HT = pyautogui.size()[1] / 2
 
 PROMPT_TIMES = [10, 20, 30, 60]
 DRAW_TIMES = [30, 60, 120, 180, 300]
@@ -295,8 +295,8 @@ class Engine:
 
     def results(self):
         """game loop for the game over screen"""
-        for animation in self.active_animations:
-            animation.update()
+        #for animation in self.active_animations:
+            #animation.update()
         for result in self.active_results:
             if isinstance(result, AnimationWindow):
                 result.update()
@@ -367,6 +367,7 @@ class Engine:
         self.active_animations = []
         self.draw_order = self.active_buttons + self.active_drawings +\
                           self.active_ui + self.active_animations
+
         self.pause_client()
         SoundManager.get_instance().play_music("assets/audio/RadioMartini.mp3")
 
@@ -427,8 +428,8 @@ class Engine:
         SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
         self.scene = "writing"
         self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), self.prompt_length),
-                          TextUI(self.np(50, 10), self.ns(100,100),
-                                 "Create a Prompt!", (0,0,0))]
+                          DefaultUI(self.np(50, 9), self.ns(358 * 2.6, 35 * 2.6),
+                                    "assets/textures/create_prompt.png")]
         self.active_buttons = [TypeBox(self.np(45,50), self.ns(1300 * 0.6, 110 * 0.6),
                                        "assets/textures/text_box_5.png",
                                        self.set_curr_prompt, "Type A Prompt!"),
@@ -470,7 +471,7 @@ class Engine:
             assert(isinstance(self.current_entry.content, list))
             pixels = self.current_entry.content.copy()
 
-        self.active_animations = [ #TODO: ORDER NOT RIGHT WHEN SUBMISSION!
+        self.active_animations = [
             AnimationWindow(self.np(44, 44), self.ns(845 * 0.9, 455 * 0.9), pixels, True)
         ]
         self.active_drawings = []
@@ -536,7 +537,9 @@ class Engine:
                                         (SCREEN_LEN, SCREEN_HT),
                                         self.network.room.players, True),
                           DefaultUI(self.np(88, 20), self.ns(520 * 2.2, 300 * 2.2),
-                                    "assets/textures/back_template.png", rotate=90)
+                                    "assets/textures/back_template.png", rotate=90),
+                          DefaultUI(self.np(13, 4), self.ns(171 * 1.2, 44 * 1.2),
+                                    "assets/textures/results.png")
                           ]
         self.active_buttons = []
         self.active_buttons.append(SlideDownButton(self.np(95, 0),
@@ -546,11 +549,8 @@ class Engine:
         if self.player.is_host:
             self.active_buttons.append(Button(self.np(25, 93), (self.ns(75 * 1.5, 51 * 1.5)),
                    "assets/textures/next.png", self.broadcast_next_result))
-            self.active_buttons.append(Button((90000,90000), (self.ns(75 * 1.5, 51 * 1.5)),
-                                              "assets/textures/play.png", self.return_to_lobby))
-        else:
-            self.active_buttons.append(Button(self.np(25, 93), (self.ns(75 * 1.5, 51 * 1.5)),
-                                              "assets/textures/play.png", self.return_to_lobby))
+        self.active_buttons.append(Button((90000,90000), (self.ns(75 * 1.5, 51 * 1.5)),
+                                          "assets/textures/lobby_return.png", self.return_to_lobby))
 
         self.active_animations = []
         self.active_drawings = []
@@ -576,13 +576,12 @@ class Engine:
             self.active_buttons.append(TypeBox(self.np(50, 40), (self.ns(150 * 1.4, 64 * 1.4)),
                                                "assets/textures/text_box_4.png", self.set_room_code,
                                                "CODE", 4, 2))
-
             self.draw_order = self.active_buttons + self.active_drawings +\
                               self.active_ui + self.active_animations
             self.draw_order = sorted(self.draw_order, key=lambda elem: elem.z)
             self.draw_order.append(TextUI(self.np(50, 68),
-                                         self.ns(0, 20),
-                                     "", (255, 255, 255)))
+                                          self.ns(0, 20),
+                                          "", (255, 255, 255)))
 
     def disable_room_code(self):
         """Turns off the room code popup and returns
@@ -750,11 +749,8 @@ class Engine:
 
     def prompt_time_length(self, selected_value):
         """Sets timer length for prompt/guess phase. Primarily used by buttons"""
-        print("WE ARE HERE!")
         self.prompt_length = selected_value
-        print(f"Local prompt time is {self.prompt_length}. Updating...")
         self.network.set_options(self.draw_length, self.prompt_length)
-        print(f"Network prompt time is {self.network.room.prompt_time}")
 
     def draw_time_length(self, selected_value):
         """Sets timer length for draw phase. Primarily used by buttons"""
@@ -781,7 +777,7 @@ class Engine:
         elif self.scene == "drawing" and not self.submitted:
             # disable buttons and present close screen
             self.network.submit_entry(self.active_drawings[0].drawn_pixels)
-            print(self.network.room.to_dict())
+            #print(self.network.room.to_dict())
             self.submitted = True
             self.submit_ui()
         elif self.scene == "guessing" and not self.submitted:
@@ -797,24 +793,24 @@ class Engine:
         for button in self.active_buttons:
             button.active = False
         if self.paused:
-            index = -3
+            index = len(self.draw_order) - 3
         else:
-            index = -1
+            index = len(self.draw_order)
         self.draw_order.insert(index, TransparentUI(self.np(50, 50),
                                             self.ns(SCREEN_LEN * 2, SCREEN_HT * 2),
                                             (0, 0, 0), 150))
         if self.scene == "writing" or self.scene == "guessing":
             with open(resolve_asset_path("assets/guess_prompts.csv"), mode='r', newline='') as file:
                 text = random.choice(list(csv.reader(file)))
-            self.draw_order.insert(index, TextUI(self.np(50, 40),
+            self.draw_order.insert(index + 1, TextUI(self.np(50, 40),
                                      self.ns(0, 80),
-                                 text[0], (255, 255, 255)))
+                                 text[0], (255, 255, 255), dynamic_size=SCREEN_LEN))
         elif self.scene == "drawing":
             with open(resolve_asset_path("assets/draw_prompts.csv"), mode='r', newline='') as file:
                 text = random.choice(list(csv.reader(file)))
-            self.draw_order.insert(index, TextUI(self.np(50, 35),
+            self.draw_order.insert(index + 1, TextUI(self.np(50, 35),
                                          self.ns(0, 80),
-                                     text[0], (255, 255, 255)))
+                                     text[0], (255, 255, 255), dynamic_size=SCREEN_LEN))
 
     def slider_control(self, offset):
         """Controls the slide bar, moving items up and down
@@ -922,16 +918,16 @@ class Engine:
         """Helper function that sends the appropriate
         UI back to the show_next_result function"""
         if (self.results_shown == len(self.books[0].entries) *
-                len(self.books) - 1 and self.player.is_host):
+                len(self.books) - 1):
             for button in self.active_buttons:
                 #swap button!
                 if button.pos == self.np(25, 93):
                     button.pos = (1000000, 1000000)
                     button.active = False
-                    for button2 in self.active_buttons:
-                        if button2.pos == (90000,90000):
-                            button2.pos = self.np(25, 93)
-                            break
+                    break
+            for button2 in self.active_buttons:
+                if button2.pos == (90000,90000):
+                    button2.pos = self.np(25, 93)
                     break
         curr_book = self.results_shown // len(self.books[0].entries)
         id = self.books[curr_book].owner_id
@@ -949,7 +945,7 @@ class Engine:
         if data.type == "prompt":
             #print("prompt!")
             for elem in self.active_results:
-                elem.init_y -= self.ns(0, 60)[1]
+                elem.init_y -= self.ns(0, 75)[1]
             text = TextUI(self.np(35, 90), self.ns(0, 40),
                    data.content, (0, 0, 0), z=4, draggable=True,
                           animate=True, wrapping = self.ns(550,0)[0])
@@ -957,10 +953,10 @@ class Engine:
             self.active_results.append(DefaultUI(self.np(62, 90), self.ns(550 * 1.06, 125 * 0.9),
                                                  "assets/textures/results_box.png",
                                                  draggable=True, z=2))
-            self.results_height += self.ns(0, 80)[1]
+            self.results_height += self.ns(0, 75)[1]
         elif data.type == "drawing":
             for elem in self.active_results:
-                elem.init_y -= self.ns(0, 400)[1]
+                elem.init_y -= self.ns(0, 330)[1]
             #drawing
             drawing = AnimationWindow(self.np(70, 52.2), self.ns(845 / 2, 455 / 2),
                                      data.content, draggable=True, z=4, animated = True)
@@ -971,7 +967,7 @@ class Engine:
                                                  "assets/textures/download.png",
                                               lambda: self.download_image(drawing),
                                               draggable=True, z=3))
-            self.results_height += self.ns(0, 400)[1]
+            self.results_height += self.ns(0, 330)[1]
         return True
 
     def return_to_lobby(self):

@@ -20,8 +20,7 @@ from .brightness_slider import BrightnessSlider
 from .default_ui import DefaultUI, TransparentUI, TextUI, PlayerDisplay, MouseStick
 from .sound_manager import SoundManager
 from .time_bar import TimeBar
-#from .ColorButton import ColorButton
-#from .draw_window import Grid
+from .color_button import ColorButton
 from .network_client import NetworkClient, NetworkClientError
 from .type_box import TypeBox
 from .slider_button import SliderButton
@@ -283,7 +282,6 @@ class Engine:
     def draw(self):
         """game loop for drawing screen"""
         # added by Mat for drawing window
-        #keys = pygame.key.get_pressed()
         if not self.submitted and not self.paused:
             for drawing_win in self.active_drawings:
                 drawing_win.update(
@@ -501,8 +499,6 @@ class Engine:
                                     "assets/textures/draw_it.png"),
                           MouseStick(self.ns(20, 20))]
         self.active_buttons = [
-            ColorWheel(self.np(79, 36), (self.ns(180, 180)), self.set_color),
-            BrightnessSlider(self.np(85, 69), (self.ns(1.2 * 50, 4 * 50)), self.set_brightness),
             #ColorButton(self.np(10, 80), self.ns(40, 40), self.set_color, "red"),
             PenTypeButton(self.np(75, 57), self.ns(100, 40),
                    "assets/textures/thickness_1.png", lambda: self.set_brush_thickness(1), 1),
@@ -521,6 +517,33 @@ class Engine:
                            "assets/textures/eraser_button.png"),
             Button(self.np(36, 92.5), (self.ns(140 * 1.8, 51 * 1.8)),
                   "assets/textures/submit.png", self.submit)]
+        if self.simple_colors:
+            self.curr_color = (0,0,0)
+            self.active_buttons.insert(0,ColorButton(
+                self.np(72.5, 48.5), self.ns(45, 45), self.set_color, "black"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5, 40), self.ns(45, 45), self.set_color, "green"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5, 31.5), self.ns(45, 45), self.set_color, "blue"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5+8.5, 48.5), self.ns(45, 45), self.set_color, "purple"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5+8.5, 40), self.ns(45, 45), self.set_color, "red"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5+8.5, 31.5), self.ns(45, 45), self.set_color, "orange"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5 + 17, 48.5), self.ns(45, 45), self.set_color, "yellow"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5 + 17, 40), self.ns(45, 45), self.set_color, "grey"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5 + 17+8.5, 31.5), self.ns(45, 45), self.set_color, "sky_blue"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5 + 17+8.5, 40), self.ns(45, 45), self.set_color, "white"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5 + 17+8.5, 48.5), self.ns(45, 45), self.set_color, "brown"))
+        else:
+            self.active_buttons.insert(0,ColorWheel(self.np(79, 36), (self.ns(180, 180)), self.set_color))
+            self.active_buttons.insert(1,BrightnessSlider(self.np(85, 69), (self.ns(1.2 * 50, 4 * 50)), self.set_brightness))
         # Mat changed this line
         self.active_animations = []
         self.active_drawings = [DrawingWindow(self.np(36,53), self.nl(640))]
@@ -733,6 +756,8 @@ class Engine:
         if enabled:
             #self.curr_color = [240, 240, 240]
             self.curr_shade = [240, 240, 240]
+        else:
+            self.curr_shade = self.curr_color
 
     def set_name(self, name):
         """sets the name of the user. Primarily used by buttons"""

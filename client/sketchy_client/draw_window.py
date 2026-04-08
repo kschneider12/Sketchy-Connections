@@ -7,7 +7,7 @@ a broader project engine if necessary.
 
 Also includes code for a simple animation loop to display the history
 of drawings made in the window, great little bonus feature for implementation
-or for an aspiring pixel artists.
+or for an aspiring pixel artist.
 
 Authored by Mathew Neves with edits from Kent Schneider
 Direct comments or bug reports to
@@ -19,6 +19,9 @@ and modified for without express consent of the authors.
 We would love to hear from you or see your drawings
 if you use this window!
 """
+
+# pylint doesn't like pygame members
+# pylint: disable=no-member
 
 import math
 import pygame

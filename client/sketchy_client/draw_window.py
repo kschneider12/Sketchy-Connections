@@ -385,7 +385,7 @@ class DrawingWindow:
             screen: (pygame.Surface): the screen being displayed
             curr_color (tuple): current user color
         """
-        print(f"C: {curr_color}")
+        # print(f"C: {curr_color}")
         self.grid.draw(screen)
 
     def color_switch(self, input_color=None):
@@ -496,7 +496,7 @@ class AnimationWindow:
         Args:
             screen: (pygame.Surface): the screen being displayed
         """
-        print(f"C: {curr_color}")
+        # print(f"C: {curr_color}")
         self.grid.draw(screen)
 
 

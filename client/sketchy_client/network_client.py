@@ -33,7 +33,7 @@ class NetworkClient:
     ``_run_coroutine`` registers an event to be triggered
     """
 
-    def __init__(self, base_url: str = "http://127.0.0.1:8000/", *, request_timeout: float = 100.0):
+    def __init__(self, base_url: str = "https://api.sketchy-connections.com/", *, request_timeout: float = 100.0):
         self._base_url = base_url.rstrip("/")
         self._request_timeout = request_timeout
 

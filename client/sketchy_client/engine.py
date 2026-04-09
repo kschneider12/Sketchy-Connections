@@ -418,6 +418,9 @@ class Engine:
         self.active_animations = []
         self.draw_order = self.active_buttons + self.active_drawings +\
                           self.active_ui + self.active_animations
+        self.draw_order.append(TextUI(self.np(50, 68),
+                                      self.ns(0, 20),
+                                      "", (255, 255, 255)))
         self.pause_client()
 
         SoundManager.get_instance().play_music("assets/audio/KoolKats.mp3")
@@ -664,7 +667,7 @@ class Engine:
             self.network.start_game()
         except NetworkClientError as exc:
             self.network_error = str(exc)
-            self.draw_order[-1] = TextUI(self.np(50, 68),
+            self.draw_order[-1] = TextUI(self.np(80, 81),
                                          self.ns(0, 20),
                                          str(exc), (255, 255, 255))
 

@@ -340,7 +340,7 @@ class DrawingWindow:
             brush_radius (int): Radius of the brush.
             current_tool (string): Current user tool.
         """
-        # mouse coords to grid coords
+        # mouse pos to grid pos
         this_x = mouse_pos[0] - self.pos[0]
         this_y = mouse_pos[1] - self.pos[1]
 
@@ -579,7 +579,7 @@ def run_animation(window, drawn_pixels):
         anim.update()
 
         window.fill(COLORS['background'])
-        anim.draw(window, None)
+        anim.draw(window, (0,0,0))
         pygame.display.update()
 
 if __name__ == '__main__':

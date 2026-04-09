@@ -48,14 +48,14 @@ COLORS = {
 
 class GridCell:
     """Represents a single cell in the drawing grid."""
-    def __init__(self, row, col, cell_size):
+    def __init__(self, row, col, cell_size, color = COLORS['background']):
         """Initialize a new instance of the GridCell class."""
         self.row = row
         self.col = col
         self.cell_size = cell_size
         self.x = col * cell_size
         self.y = row * cell_size
-        self.color = COLORS['background']
+        self.color = color
 
     def get_position(self):
         """Return the row, col position of the cell.
@@ -76,11 +76,11 @@ class GridCell:
 
 class Grid:
     """Represents the drawable grid and handles drawing logic."""
-    def __init__(self, pos, cell_size):
+    def __init__(self, pos, cell_size, cells = None, surface = None):
         """Initializes a new instance of the Grid class."""
         self.pos = pos
         self.cell_size = cell_size
-        self.cells = self.create_cells()
+        self.cells = self.create_cells(cells)
 
         # pre-calculating offset shapes
         self.brush_cache = {}
@@ -90,7 +90,10 @@ class Grid:
         surface_width = int(GRID_WIDTH * self.cell_size)
         surface_height = int(GRID_HEIGHT * self.cell_size)
         self.surface = pygame.Surface((surface_width, surface_height))
-        self.surface.fill(COLORS['background'])
+        if not cells:
+            self.surface.fill(COLORS['background'])
+        else:
+            self.surface.blit(surface, (0,0))
 
     def get_cell_rect(self, row, col):
         """Calculate precise int bounds to prevent rounding gaps.
@@ -112,12 +115,17 @@ class Grid:
         return (x, y, next_x - x, next_y - y)
 
 
-    def create_cells(self):
+    def create_cells(self, cell_data):
         """Create the GridCell objects.
 
         Returns:
             List of the cells on the grid.
         """
+        if cell_data:
+            return [
+                [GridCell(row, col, self.cell_size, cell_data[row][col].color) for col in range(GRID_WIDTH)]
+                for row in range(GRID_HEIGHT)
+            ]
         return [
             [GridCell(row, col, self.cell_size) for col in range(GRID_WIDTH)]
             for row in range(GRID_HEIGHT)
@@ -288,8 +296,10 @@ class DrawingWindow:
     def __init__(self, center_pos, size, draggable = False):
         """Initialize the drawing window."""
         self.center = center_pos
+        self.init_pos = center_pos[2]
+        self.init_size = size[2]
         self.draggable = draggable
-        self.size = size
+        self.size = size[:2]
         self.z = 1
 
         self.cell_width = size[0] / GRID_WIDTH
@@ -434,6 +444,27 @@ class DrawingWindow:
             A list of drawing actions.
         """
         return self.drawn_pixels
+
+    def resize(self, len, ht):
+        pos = [int(self.init_pos[0] * len / 100), int(self.init_pos[1] * ht / 100)]
+        size = self.init_size[0] * len / 1000.0, self.init_size[0] * len / 1000.0 * 175 / 325.0
+        self.center = pos
+        self.size = size
+
+        self.cell_width = size[0] / GRID_WIDTH
+        self.cell_height = size[1] / GRID_HEIGHT
+        self.cell_size = min(self.cell_width, self.cell_height)
+
+        self.pixel_width = int(self.cell_size * GRID_WIDTH)
+        self.pixel_height = int(self.cell_size * GRID_HEIGHT)
+
+        self.pos = (
+            self.center[0] - self.pixel_width / 2,
+            self.center[1] - self.pixel_height / 2
+        )
+        self.init_y = pos[1]
+        self.grid.surface = pygame.transform.scale(self.grid.surface, self.size)
+        self.grid = Grid(self.pos, self.cell_size, self.grid.cells, self.grid.surface)
 
 
 class AnimationWindow:

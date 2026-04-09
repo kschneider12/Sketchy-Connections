@@ -67,3 +67,7 @@ class TimeBar(DefaultUI):
                 self.returned = True
                 return True
         return False
+
+    def resize(self, wid, ht):
+        """resizes the timebar"""
+        super().resize(wid,ht)

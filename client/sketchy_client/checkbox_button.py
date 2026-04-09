@@ -22,9 +22,11 @@ class CheckboxButton(Button):
             tick_texture = 'assets/textures/checkbox_tick.png'
         else:
             tick_texture = resolve_asset_path(texture[:-4] + "_select.png")
+        self.texture = texture
+        self.tick_texture = tick_texture
         super().__init__(position, size, texture, funct)
         self.check_img = pygame.image.load(resolve_asset_path(tick_texture))
-        self.check_img = pygame.transform.scale(self.check_img, size)
+        self.check_img = pygame.transform.scale(self.check_img, size[:2])
         self.font = pygame.font.Font(FONT_PATH, int(self.height * 0.8))
         self.text = text
         self.text_surface = self.font.render(self.text, True, (0,0,0))
@@ -61,3 +63,10 @@ class CheckboxButton(Button):
                                          self.pos[1] - self.height / 2))
         screen.blit(self.text_surface, (self.pos[0] + self.width / 1.5,
                                         self.pos[1] - self.height / 2))
+
+    def resize(self, wid, ht):
+        super().resize(wid, ht)
+        self.check_img = pygame.image.load(resolve_asset_path(self.tick_texture))
+        self.check_img = pygame.transform.scale(self.check_img, (self.width, self.height))
+        self.font = pygame.font.Font(FONT_PATH, int(self.height * 0.8))
+        self.text_surface = self.font.render(self.text, True, (0,0,0))

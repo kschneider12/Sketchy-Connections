@@ -16,23 +16,38 @@ class DefaultUI:
         self.draggable = draggable
         self.init_y = position[1]
         self.pos = [position[0], position[1]]
+        self.init_pos = position[2]
+        self.init_size = size[2]
         self.width = size[0]
         self.height = size[1]
+        self.img = None
+        self.img_path = img
+        self.rotate = rotate
         if img:
             self.img = pygame.image.load(resolve_asset_path(img))
-            self.img = pygame.transform.scale(self.img, size)
+            self.img = pygame.transform.scale(self.img, size[:2])
             self.img = pygame.transform.rotate(self.img, rotate)
 
     def draw(self, screen, curr_color = None):
         """draws the ui on the screen"""
         screen.blit(self.img, (self.pos[0] - self.width / 2, self.pos[1] - self.height / 2))
 
+    def resize(self, wid, ht):
+        """resizes the button ui on screen"""
+        self.pos = [int(self.init_pos[0] * wid / 100), int(self.init_pos[1] * ht / 100)]
+        self.width, self.height = self.init_size[0] * wid / 1000, self.init_size[1] * ht / 1000 * 16/10
+        self.init_y = self.pos[1]
+        if self.img:
+            self.img = pygame.image.load(resolve_asset_path(self.img_path))
+            self.img = pygame.transform.scale(self.img, (self.width, self.height))
+            self.img = pygame.transform.rotate(self.img, self.rotate)
+
 class MouseStick(DefaultUI):
     """Extending DefaultUI, this UI moves on the mouse for drawing, such as paint bucket
     or paintbrush"""
     def __init__(self, size):
         self.state = "brush"
-        DefaultUI.__init__(self, [0,0], size, resolve_asset_path("assets/textures/pen_mouse.png"), 100)
+        DefaultUI.__init__(self, [0,0, (0,0)], size, resolve_asset_path("assets/textures/pen_mouse.png"), 100)
         self.offset = -1 * self.width / 2, self.height / 2
 
     def behave(self, mouse_pos, pen_state):
@@ -61,6 +76,7 @@ class TransparentUI(DefaultUI):
     overlay for settings or options"""
     def __init__(self, position, size, color, transparency, z = 0):
         self.color = color
+        self.transparency = transparency
         DefaultUI.__init__(self, position, size, None, z)
         self.rect = pygame.Rect(self.pos[0], self.pos[1], self.width, self.height)
         self.surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA) # pylint: disable=no-member
@@ -69,6 +85,13 @@ class TransparentUI(DefaultUI):
     def draw(self, screen, curr_color=None):
         """draws the ui on the screen"""
         screen.blit(self.surface, (self.pos[0] - self.width / 2, self.pos[1] - self.height / 2))
+
+    def resize(self, wid, ht):
+        self.pos = [int(self.init_pos[0] * wid / 100), int(self.init_pos[1] * ht / 100)]
+        self.width, self.height = self.init_size[0] * wid / 1000, self.init_size[1] * ht / 1000 * 16 / 10
+        self.rect = pygame.Rect(self.pos[0], self.pos[1], self.width, self.height)
+        self.surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)  # pylint: disable=no-member
+        self.surface.fill((self.color[0], self.color[1], self.color[2], self.transparency))
 
 class TextUI(DefaultUI):
     """Extending DefaultUI, this UI is plain text on the background."""
@@ -144,6 +167,11 @@ class TextUI(DefaultUI):
         return [self.font.render(text[:17] + "-", True, self.color),
                 self.font.render(text[17:], True, self.color)]
 
+    def resize(self, wid, ht):
+        """resizes the text ui on screen"""
+        super().resize(wid, ht)
+        self.font = pygame.font.Font(asset_path("fonts", "MoreSugar-Regular.ttf"), int(self.height))
+
 class PlayerDisplay(DefaultUI):
     """Extending DefaultUI, this UI is specifically for the player listing in the lobby.
     This is its own UI due to the unique behavior of added players, as well
@@ -152,9 +180,9 @@ class PlayerDisplay(DefaultUI):
         DefaultUI.__init__(self, pos, size, "assets/textures/players_tab.png")
         self.screen_size = screen_size
         self.light = pygame.image.load(resolve_asset_path("assets/textures/player_light.png"))
-        self.light = pygame.transform.scale(self.light, (size[0] * 0.7,size[0] * 0.7))
+        self.light = pygame.transform.scale(self.light, (size[0] * 0.7, size[1] * 0.09))
         self.blue_light = pygame.image.load(resolve_asset_path("assets/textures/player_light_blue.png"))
-        self.blue_light = pygame.transform.scale(self.blue_light, (size[0] * 0.7, size[0] * 0.7))
+        self.blue_light = pygame.transform.scale(self.blue_light, (size[0] * 0.7, size[1] * 0.09))
         self.active_players = active_players
         self.abbrev = abbrev
         self.font = pygame.font.Font(asset_path("fonts", "MoreSugar-Regular.ttf"),
@@ -198,3 +226,15 @@ class PlayerDisplay(DefaultUI):
     def ns(self, x, y):
         """clone of ns in Engine, to be accessed here for scale normalization."""
         return x * self.screen_size[0] / 1000, y * self.screen_size[1] / 1000 * 16/10
+
+    def resize(self, wid, ht):
+        """resizes the player display ui on screen"""
+        self.screen_size = wid, ht
+        super().resize(wid, ht)
+        self.light = pygame.image.load(resolve_asset_path("assets/textures/player_light.png"))
+        self.light = pygame.transform.scale(self.light, (self.width * 0.7, self.height * 0.09))
+        self.blue_light = pygame.image.load(resolve_asset_path("assets/textures/player_light_blue.png"))
+        self.blue_light = pygame.transform.scale(self.blue_light, (self.width * 0.7, self.height * 0.09))
+        self.font = pygame.font.Font(asset_path("fonts", "MoreSugar-Regular.ttf"),
+                                     int(self.width * 0.7))
+

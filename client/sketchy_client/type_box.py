@@ -6,6 +6,7 @@ import pygame
 
 from .button import Button
 from .paths import asset_path
+from .paths import resolve_asset_path
 
 
 FONT_PATH = asset_path("fonts", "MoreSugar-Regular.ttf")
@@ -91,3 +92,9 @@ class TypeBox(Button):
                 (self.pos[0] + self.width / 2) - self.font.size("00")[0] - 10, # pos for corner
                 self.curr_string,
                 self.command]
+
+    def resize(self, wid, ht):
+        """resizes the button ui on screen"""
+        super().resize(wid, ht)
+        self.text_size = int(self.height * 2 / 3.3)
+        self.font = pygame.font.Font(FONT_PATH, self.text_size)

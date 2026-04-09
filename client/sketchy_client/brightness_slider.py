@@ -22,7 +22,7 @@ class BrightnessSlider(Button):
         img = 'assets/textures/brightness_bar.png'
         self.bkg = DefaultUI(position, size, 'assets/textures/brightness_box.png')
         self.bkg2 = DefaultUI(position, size, 'assets/textures/brightness_overlay.png')
-        super().__init__(position, (0.44 * size[0] * 2.5, 0.09 * size[0] * 2.5), img, funct)
+        super().__init__(position, (0.44 * size[0] * 2.5, 0.09 * size[0] * 2.5, size[2]), img, funct)
         self.bounds = [self.pos[1] + self.bkg_size[1] / 2 - self.height / 2,
                        self.pos[1] - self.bkg_size[1] / 2 + self.height / 2]
 

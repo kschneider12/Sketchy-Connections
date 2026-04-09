@@ -22,19 +22,22 @@ class Button:
         self.width = size[0]
         self.height = size[1]
         self.init_y = position[1]
+        self.init_size = size[2]
+        self.init_pos = position[2]
         image_path = resolve_asset_path(img)
         self.img = pygame.image.load(image_path)
+        self.img_path = img
         self.curr_hover = False
-        self.img = pygame.transform.scale(self.img, size)
+        self.img = pygame.transform.scale(self.img, size[:2])
         self.command = funct
         self.active = True
         self.sounds = []
         if multi_texture:
             hover_path = resolve_asset_path(img[:-4] + "_hover.png")
             self.hover_img = pygame.image.load(hover_path)
-            self.hover_img = pygame.transform.scale(self.hover_img, size)
+            self.hover_img = pygame.transform.scale(self.hover_img, size[:2])
         else:
-            self.hover_img = self.img
+            self.hover_img = None
 
     def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state, paused):
         """
@@ -57,7 +60,7 @@ class Button:
         """
         draw is how buttons are drawn on screen, depending on multiple textures or not.
         """
-        if self.curr_hover:
+        if self.curr_hover and self.hover_img:
             image = self.hover_img
         else:
             image = self.img
@@ -90,3 +93,17 @@ class Button:
             hover_path = resolve_asset_path(img[:-4] + "_hover.png")
             self.hover_img = pygame.image.load(hover_path)
             self.hover_img = pygame.transform.scale(self.hover_img, (self.width, self.height))
+
+    def resize(self, wid, ht):
+        """resizes the button ui on screen"""
+        self.pos = [int(self.init_pos[0] * wid / 100), int(self.init_pos[1] * ht / 100)]
+        self.width, self.height = self.init_size[0] * wid / 1000, self.init_size[1] * ht / 1000 * 16 / 10
+        self.init_y = self.pos[1]
+        if self.hover_img:
+            hover_path = resolve_asset_path(self.img_path[:-4] + "_hover.png")
+            self.hover_img = pygame.image.load(hover_path)
+            self.hover_img = pygame.transform.scale(self.hover_img, (self.width, self.height))
+        if self.img:
+            image_path = resolve_asset_path(self.img_path)
+            self.img = pygame.image.load(image_path)
+            self.img = pygame.transform.scale(self.img, (self.width, self.height))

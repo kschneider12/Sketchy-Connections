@@ -1,11 +1,11 @@
 # Sketchy-Connections
-CS3050 Final Project
+Built for: CS3050 Final Project
 
 James LeMahieu, Joe Liotta, Mathew Neves, Kent Schneider
 
 Welcome to Sketchy Connections!
-In this game, hop online with your friends and combine miscommunication with your lovely drawing skills! Based around the popular games Telestrations
-and Gartic Phone, Sketchy Connections is a round-based party game consisting of drawing prompts and guessing others.
+In this game, hop online with your friends and combine miscommunication with your lovely drawing skills! Inspired by the popular games 'Telestrations'
+and 'Gartic Phone', Sketchy Connections is a round-based party game consisting of drawing prompts and guessing others.
 
 ## Gameplay:
 
@@ -15,7 +15,7 @@ and Gartic Phone, Sketchy Connections is a round-based party game consisting of 
 
 -Draw your prompt, and then pass it
 
--Guess what image you recieved, and pass it again
+-Guess what image you received, and pass it again
 
 -Draw the new prompt
 

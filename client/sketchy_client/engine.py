@@ -28,8 +28,8 @@ from .draw_window import DrawingWindow, AnimationWindow
 from .color_wheel import ColorWheel
 from .choices_button import ChoicesButton
 # from draw_window import AnimationWindow
-SCREEN_LEN = pyautogui.size()[0] / 2
-SCREEN_HT = pyautogui.size()[1] / 2
+SCREEN_LEN = pyautogui.size()[0] / 0.8
+SCREEN_HT = pyautogui.size()[1] / 0.8
 
 PROMPT_TIMES = [10, 20, 30, 60]
 DRAW_TIMES = [30, 60, 120, 180, 300]
@@ -44,6 +44,11 @@ class Engine:
         self.drawing = False
 
         #pygame info
+        icon = pygame.image.load(resolve_asset_path('assets/textures/desktop_icon.png'))
+        # 3. Set the icon BEFORE creating the window
+        pygame.display.set_icon(icon)
+
+        # 4. Set the window title (optional)
         self.screen = pygame.display.set_mode((SCREEN_LEN, SCREEN_HT))
         pygame.display.set_caption("Sketchy Connections")
         self.clock = pygame.time.Clock()
@@ -418,6 +423,9 @@ class Engine:
         self.active_animations = []
         self.draw_order = self.active_buttons + self.active_drawings +\
                           self.active_ui + self.active_animations
+        self.draw_order.append(TextUI(self.np(50, 68),
+                                      self.ns(0, 20),
+                                      "", (255, 255, 255)))
         self.pause_client()
 
         SoundManager.get_instance().play_music("assets/audio/KoolKats.mp3")
@@ -599,7 +607,7 @@ class Engine:
             TextUI(self.np(50, 20.5), self.ns(1, 30),
                    "prompt, draw, guess, and repeat!", (0, 0, 0)),
             TextUI(self.np(50, 30), self.ns(1, 30),
-                   "-Games consist of 3-8 players with alternating phases.", (0, 0, 0)),
+                   "-Games consist of 3-8+ players with alternating phases.", (0, 0, 0)),
             TextUI(self.np(50, 36), self.ns(1, 30),
                    "-Watch your timer! You don't want to get cut off.", (0, 0, 0)),
             TextUI(self.np(50, 42), self.ns(1, 30),
@@ -664,7 +672,7 @@ class Engine:
             self.network.start_game()
         except NetworkClientError as exc:
             self.network_error = str(exc)
-            self.draw_order[-1] = TextUI(self.np(50, 68),
+            self.draw_order[-1] = TextUI(self.np(80, 81),
                                          self.ns(0, 20),
                                          str(exc), (255, 255, 255))
 
@@ -1052,6 +1060,9 @@ class Engine:
         pygame.image.save(data.grid.surface,
                           f"saved_drawings/screenshot_{self.network.room.room_id}"
                           f".{int(random.random() * 10000)}.png")
+
+    def fullscreen(self):
+        self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 
 #TODO FIX FREEZE
 #TODO: When a player leaves the game mid-round, it can be problematic for submissions. When they try to close, should autosubmit or do something else? Joe problem?

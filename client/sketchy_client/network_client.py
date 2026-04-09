@@ -79,6 +79,9 @@ class NetworkClient:
 
         return self._run_coroutine(self._start_game())
 
+    def restart_lobby(self) -> None:
+        return self._run_coroutine(self._send_message({"type": "restart_lobby"}))
+
     def sync(self) -> None:
         return self._run_coroutine(self._send_message({"type": "sync"}))
 

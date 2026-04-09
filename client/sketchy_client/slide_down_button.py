@@ -32,5 +32,5 @@ class SlideDownButton(Button):
                 self.dragging = False
             #return offset positioning for objects that it applies to (make an optional parameter meaning slide)
             #print((self.pos[1] - self.bounds[0]) / (self.bounds[1] - self.bounds[0]))
-        return [self.command, -1 * (self.pos[1] - self.bounds[0]) / (self.bounds[1] - self.bounds[0]) + 1]
+        return [self.command, (-1 * (self.pos[1] - self.bounds[0]) / (self.bounds[1] - self.bounds[0]) + 1) * 1.1]
 

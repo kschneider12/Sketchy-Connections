@@ -20,8 +20,7 @@ from .brightness_slider import BrightnessSlider
 from .default_ui import DefaultUI, TransparentUI, TextUI, PlayerDisplay, MouseStick
 from .sound_manager import SoundManager
 from .time_bar import TimeBar
-#from .ColorButton import ColorButton
-#from .draw_window import Grid
+from .color_button import ColorButton
 from .network_client import NetworkClient, NetworkClientError
 from .type_box import TypeBox
 from .slider_button import SliderButton
@@ -88,7 +87,7 @@ class Engine:
         self.curr_guess = None
         self.curr_prompt = None
         self.room_code_attempt = None
-        self.tool_text = "brush"
+        #self.tool_text = "brush"
         self.background = DefaultUI(self.np(50, 50),
                                      (SCREEN_LEN, SCREEN_HT),
                                      "assets/textures/background.png")
@@ -126,6 +125,7 @@ class Engine:
             if self.network_error is not None:
                 print(self.network_error)
                 self.network_error = None
+                self.network._listener_error = None
             self.frame += 1
             if self.frame > 65535:
                 self.frame = 0
@@ -142,9 +142,6 @@ class Engine:
                         case 'writing':
                             self.draw_length = self.room.draw_time
                             self.prompt_length= self.room.prompt_time
-                            #TODO REMOVE!
-                            # self.draw_length = 1
-                            # self.prompt_length = 10
                             self.switch_to_writing()
                         case 'drawing':
                             self.switch_to_draw()
@@ -244,15 +241,15 @@ class Engine:
         if not self.paused: #THIS IS BETTER THAN RECONFIGURING HOW THIS TEXT IS DRAWN!
             for data in self.type_text_draws:
                 self.draw_typing_text(data)
-        if self.scene == "drawing":
-            if self.curr_shade == [240, 240, 240] and \
-                self.curr_tool == "fill":
-                self.tool_text.text = "eraser fill"
-            elif self.curr_shade == [240, 240, 240] and \
-                    self.curr_tool == "brush":
-                self.tool_text.text = "eraser brush"
-            else:
-                self.tool_text.text = "draw " + self.curr_tool
+        #if self.scene == "drawing":
+            #if self.curr_shade == [240, 240, 240] and \
+                #self.curr_tool == "fill":
+                #self.tool_text.text = "eraser fill"
+            #elif self.curr_shade == [240, 240, 240] and \
+                    #self.curr_tool == "brush":
+                #self.tool_text.text = "eraser brush"
+            #else:
+                #self.tool_text.text = "draw " + self.curr_tool
 
     def manage_buttons(self):
         """manages all active buttons on screen, running behavior
@@ -275,11 +272,16 @@ class Engine:
                     output()
             if self.paused and not button.pause_override:
                 button.curr_hover = False
-
+        for item in self.active_results:
+            if isinstance(item, Button):
+                output = item.behave(self.mouse_pos, just_clicked,
+                                       self.keystrokes, self.mouse_buttons, self.paused)
+                if callable(output):
+                    output()
+                    item.pos = [1000000,item.pos[1]]
     def draw(self):
         """game loop for drawing screen"""
         # added by Mat for drawing window
-        #keys = pygame.key.get_pressed()
         if not self.submitted and not self.paused:
             for drawing_win in self.active_drawings:
                 drawing_win.update(
@@ -292,8 +294,8 @@ class Engine:
 
     def results(self):
         """game loop for the game over screen"""
-        for animation in self.active_animations:
-            animation.update()
+        #for animation in self.active_animations:
+            #animation.update()
         for result in self.active_results:
             if isinstance(result, AnimationWindow):
                 result.update()
@@ -335,13 +337,13 @@ class Engine:
         regardless of screen size"""
         return x * SCREEN_LEN / 1000.0, x * SCREEN_LEN / 1000.0 * 175/325.0
 
-    #TODO: Drawing only starts when you click on canvas
 
 #------------------------------------------------------------------------------------------------
 #Button Commands listed below
 #------------------------------------------------------------------------------------------------
     def switch_to_welcome(self):
         """switches the scene to welcome, initializing the UI."""
+        SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
         self.scene = "welcome"
         pygame.mouse.set_visible(True)
 
@@ -355,6 +357,8 @@ class Engine:
 
             Button(self.np(70, 70), (self.ns(115 * 2.2, 51 * 2.2)),
                    "assets/textures/join.png", self.enable_room_code),
+            Button(self.np(3, 5), (self.ns(30, 30)),
+                   "assets/textures/info_button.png", self.switch_to_info),
             Button(self.np(97, 4), (self.ns(50, 50)),
                    "assets/textures/exit.png", self.quit_game),
             TypeBox(self.np(50, 90), self.ns(1300 * 0.6, 110 * 0.6),
@@ -364,11 +368,13 @@ class Engine:
         self.active_animations = []
         self.draw_order = self.active_buttons + self.active_drawings +\
                           self.active_ui + self.active_animations
+
         self.pause_client()
         SoundManager.get_instance().play_music("assets/audio/RadioMartini.mp3")
 
     def switch_to_lobby(self):
         """switches the scene to lobby, initializing the UI."""
+        SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
         self.scene = "lobby"
         self.active_animations = []
         self.active_ui = [DefaultUI(self.np(10, 5), self.ns(130 * 1.5, 50 * 1),
@@ -420,13 +426,14 @@ class Engine:
 
     def switch_to_writing(self):
         """switches the scene to writing, initializing the UI."""
+        SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
         self.scene = "writing"
         self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), self.prompt_length),
-                          TextUI(self.np(50, 10), self.ns(100,100),
-                                 "Create a Prompt!", (0,0,0))]
+                          DefaultUI(self.np(50, 9), self.ns(358 * 2.6, 35 * 2.6),
+                                    "assets/textures/create_prompt.png")]
         self.active_buttons = [TypeBox(self.np(45,50), self.ns(1300 * 0.6, 110 * 0.6),
                                        "assets/textures/text_box_5.png",
-                                       self.set_curr_prompt, "Enter A Prompt"),
+                                       self.set_curr_prompt, "Type A Prompt!"),
                                Button(self.np(50,90), (self.ns(140 * 2.2, 51 * 2.2)),
                                       "assets/textures/submit.png", self.submit),
                                # SliderButton(self.np(20, 20), self.ns(300,30),
@@ -440,24 +447,33 @@ class Engine:
 
     def switch_to_guessing(self):
         """switches the scene to guessing, initializing the UI."""
+        SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
         self.scene = "guessing"
         pygame.mouse.set_visible(True)
         self.active_ui = [TimeBar(self.np(92,43), self.ns(60 * 1.5, 270 * 1.5), self.prompt_length),
-                          DefaultUI(self.np(36, 43), self.ns(650, 400),
-                                    "assets/textures/color_button.png")]
+                          DefaultUI(self.np(44, 44), self.ns(845 * 0.96, 455 * 0.96),
+                                    "assets/textures/back_template.png"),
+                          DefaultUI(self.np(44, 44), self.ns(845 * 0.91, 455 * 0.91),
+                                    "assets/textures/color_button.png"),
+                          DefaultUI(self.np(50, 5), self.ns(240, 50),
+                                    "assets/textures/guess_it.png")
+                          ]
 
-        self.active_buttons = [TypeBox(self.np(50, 86), self.ns(1550 * 0.6, 70 * 0.6),
+        self.active_buttons = [TypeBox(self.np(40, 89), self.ns(1200 * 0.6, 90 * 0.6),
                                        "assets/textures/text_box_5.png",
-                                       self.set_curr_guess,"Type A Response")]
+                                       self.set_curr_guess,"Make A Guess!"),
+                               Button(self.np(89, 89), (self.ns(140 * 1.4, 51 * 1.4)),
+                                      "assets/textures/submit.png", self.submit)
+                               ]
 
         pixels = []
         if self.current_entry:
-            print("WE HAVE PIXELS")
+            #print("WE HAVE PIXELS")
             assert(isinstance(self.current_entry.content, list))
             pixels = self.current_entry.content.copy()
 
         self.active_animations = [
-            AnimationWindow(self.np(36, 43), self.ns(845, 455), pixels, True)
+            AnimationWindow(self.np(44, 44), self.ns(845 * 0.9, 455 * 0.9), pixels, True)
         ]
         self.active_drawings = []
         self.draw_order = self.active_buttons + self.active_ui + \
@@ -467,22 +483,19 @@ class Engine:
     def switch_to_draw(self):
         pygame.mouse.set_visible(False)
         """switches the scene to drawing, initializing the UI."""
+        SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
         # note from Mat - this makes the drawing window displayable, not fully functional
         self.scene = "drawing"
-        self.tool_text = TextUI(self.np(60, 95), self.ns(20, 20),
-                                 "Current: " + self.curr_tool, (0, 0, 0))
         self.active_ui = [TimeBar(self.np(94,58), self.ns(60 * 1.5, 320 * 1.5), self.draw_length),
-                          TextUI(self.np(50, 10), self.ns(100, 100),
-                            "Prompt: " + self.current_entry.content, (0, 0, 0)),
-                          TextUI(self.np(60, 90), self.ns(20, 20),
-                                 "Current Tool: ", (0, 0, 0)),
-                          self.tool_text,
+                          TextUI(self.np(50, 13), self.ns(1, 65),
+                            self.current_entry.content, (0, 0, 0),
+                                 dynamic_size=SCREEN_LEN * 0.98),
                           DefaultUI(self.np(36, 53), self.nl(660),
                                 "assets/textures/color_button.png"),
+                          DefaultUI(self.np(50, 5), self.ns(220, 50),
+                                    "assets/textures/draw_it.png"),
                           MouseStick(self.ns(20, 20))]
         self.active_buttons = [
-            ColorWheel(self.np(79, 36), (self.ns(180, 180)), self.set_color),
-            BrightnessSlider(self.np(85, 69), (self.ns(1.2 * 50, 4 * 50)), self.set_brightness),
             #ColorButton(self.np(10, 80), self.ns(40, 40), self.set_color, "red"),
             PenTypeButton(self.np(75, 57), self.ns(100, 40),
                    "assets/textures/thickness_1.png", lambda: self.set_brush_thickness(1), 1),
@@ -501,6 +514,34 @@ class Engine:
                            "assets/textures/eraser_button.png"),
             Button(self.np(36, 92.5), (self.ns(140 * 1.8, 51 * 1.8)),
                   "assets/textures/submit.png", self.submit)]
+        if self.simple_colors:
+            offset = 5
+            self.curr_color = (0,0,0)
+            self.active_buttons.insert(0,ColorButton(
+                self.np(72.5, 48.5), self.ns(45, 45), self.set_color, "black"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5, 40), self.ns(45, 45), self.set_color, "green"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5, 31.5), self.ns(45, 45), self.set_color, "blue"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5+offset, 48.5), self.ns(45, 45), self.set_color, "purple"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5+offset, 40), self.ns(45, 45), self.set_color, "red"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5+offset, 31.5), self.ns(45, 45), self.set_color, "orange"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5 + offset * 2, 48.5), self.ns(45, 45), self.set_color, "yellow"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5 + offset * 2, 40), self.ns(45, 45), self.set_color, "grey"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5 + offset * 3, 31.5), self.ns(45, 45), self.set_color, "sky_blue"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5 + offset * 3, 40), self.ns(45, 45), self.set_color, "white"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5 + offset * 3, 48.5), self.ns(45, 45), self.set_color, "brown"))
+        else:
+            self.active_buttons.insert(0,ColorWheel(self.np(79, 36), (self.ns(180, 180)), self.set_color))
+            self.active_buttons.insert(1,BrightnessSlider(self.np(85, 69), (self.ns(1.2 * 50, 4 * 50)), self.set_brightness))
         # Mat changed this line
         self.active_animations = []
         self.active_drawings = [DrawingWindow(self.np(36,53), self.nl(640))]
@@ -511,13 +552,16 @@ class Engine:
 
     def switch_to_results(self):
         """switches the scene to results, initializing the UI"""
+        SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
         self.scene = "results"
         pygame.mouse.set_visible(True)
         self.active_ui = [PlayerDisplay(self.np(4, 55), self.ns(30 * 2.4, 241 * 2.4),
                                         (SCREEN_LEN, SCREEN_HT),
                                         self.network.room.players, True),
                           DefaultUI(self.np(88, 20), self.ns(520 * 2.2, 300 * 2.2),
-                                    "assets/textures/back_template.png", rotate=90)
+                                    "assets/textures/back_template.png", rotate=90),
+                          DefaultUI(self.np(13, 4), self.ns(171 * 1.2, 44 * 1.2),
+                                    "assets/textures/results.png")
                           ]
         self.active_buttons = []
         self.active_buttons.append(SlideDownButton(self.np(95, 0),
@@ -527,11 +571,8 @@ class Engine:
         if self.player.is_host:
             self.active_buttons.append(Button(self.np(25, 93), (self.ns(75 * 1.5, 51 * 1.5)),
                    "assets/textures/next.png", self.broadcast_next_result))
-            self.active_buttons.append(Button((90000,90000), (self.ns(75 * 1.5, 51 * 1.5)),
-                                              "assets/textures/play.png", self.return_to_lobby))
-        else:
-            self.active_buttons.append(Button(self.np(25, 93), (self.ns(75 * 1.5, 51 * 1.5)),
-                                              "assets/textures/play.png", self.return_to_lobby))
+        self.active_buttons.append(Button((90000,90000), (self.ns(75 * 1.5, 51 * 1.5)),
+                                          "assets/textures/lobby_return.png", self.return_to_lobby))
 
         self.active_animations = []
         self.active_drawings = []
@@ -540,6 +581,45 @@ class Engine:
         self.draw_order = sorted(self.draw_order, key=lambda elem: elem.z)
         self.pause_client()
         SoundManager.get_instance().play_music("assets/audio/BrightlyFancy.mp3")
+
+    def switch_to_info(self):
+        """switches the scene to info, initializing the UI"""
+        SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
+        SoundManager.get_instance().play_music("assets/audio/Elevator.mp3")
+        self.scene = "info"
+        self.active_animations = []
+        self.active_drawings = []
+        self.active_ui = [
+            DefaultUI(self.np(50, 41), self.ns(845 * 1.1, 455 * 1.1),
+                      "assets/textures/back_template.png"),
+            TextUI(self.np(50, 8), self.ns(1, 50),
+                   "Welcome to Sketchy Connections!", (0, 0, 0)),
+            TextUI(self.np(50, 16), self.ns(1, 30),
+                   "A game inspired by 'Telestrations' where you", (0, 0, 0)),
+            TextUI(self.np(50, 20.5), self.ns(1, 30),
+                   "prompt, draw, guess, and repeat!", (0, 0, 0)),
+            TextUI(self.np(50, 30), self.ns(1, 30),
+                   "-Games consist of 3-8 players with alternating phases.", (0, 0, 0)),
+            TextUI(self.np(50, 36), self.ns(1, 30),
+                   "-Watch your timer! You don't want to get cut off.", (0, 0, 0)),
+            TextUI(self.np(50, 42), self.ns(1, 30),
+                   "-Be creative! You don't need to be an artist to create art.", (0, 0, 0)),
+            TextUI(self.np(50, 55), self.ns(1, 30),
+                   "Need to report a bug or have a question?", (0, 0, 0)),
+            TextUI(self.np(50, 61), self.ns(1, 30),
+                   "Email support coming soon.", (0, 0, 0)),
+            TextUI(self.np(50, 73.5), self.ns(1, 20),
+                   "Many thanks from the Fun2Play Developments LLC Inc., (for now) team:", (0, 0, 0)),
+            TextUI(self.np(50, 77.5), self.ns(1, 20),
+                   "Kent Schneider, Mathew Neves, Joe Liotta, James LeMahieu", (0, 0, 0)),
+        ]
+        self.active_buttons = [
+            Button(self.np(50, 90), (self.ns(140 * 2, 51 * 2)),
+                                              "assets/textures/back.png",
+                                              self.switch_to_welcome)
+        ]
+        self.draw_order = self.active_ui + self.active_drawings + \
+                          self.active_buttons + self.active_animations
 
     def enable_room_code(self):
         """Enables UI for asking for room code"""
@@ -557,13 +637,12 @@ class Engine:
             self.active_buttons.append(TypeBox(self.np(50, 40), (self.ns(150 * 1.4, 64 * 1.4)),
                                                "assets/textures/text_box_4.png", self.set_room_code,
                                                "CODE", 4, 2))
-
             self.draw_order = self.active_buttons + self.active_drawings +\
                               self.active_ui + self.active_animations
             self.draw_order = sorted(self.draw_order, key=lambda elem: elem.z)
             self.draw_order.append(TextUI(self.np(50, 68),
-                                         self.ns(0, 20),
-                                     "", (255, 255, 255)))
+                                          self.ns(0, 20),
+                                          "", (255, 255, 255)))
 
     def disable_room_code(self):
         """Turns off the room code popup and returns
@@ -581,7 +660,13 @@ class Engine:
     def start_game(self):
         """starts the game by calling network.
         Used when play button pressed."""
-        self.network.start_game()
+        try:
+            self.network.start_game()
+        except NetworkClientError as exc:
+            self.network_error = str(exc)
+            self.draw_order[-1] = TextUI(self.np(50, 68),
+                                         self.ns(0, 20),
+                                         str(exc), (255, 255, 255))
 
     def draw_text(self, vec):
         """Draws text on screen from draw_typing_text"""
@@ -708,6 +793,8 @@ class Engine:
         if enabled:
             #self.curr_color = [240, 240, 240]
             self.curr_shade = [240, 240, 240]
+        elif self.simple_colors:
+            self.curr_shade = self.curr_color
 
     def set_name(self, name):
         """sets the name of the user. Primarily used by buttons"""
@@ -731,11 +818,8 @@ class Engine:
 
     def prompt_time_length(self, selected_value):
         """Sets timer length for prompt/guess phase. Primarily used by buttons"""
-        print("WE ARE HERE!")
         self.prompt_length = selected_value
-        print(f"Local prompt time is {self.prompt_length}. Updating...")
         self.network.set_options(self.draw_length, self.prompt_length)
-        print(f"Network prompt time is {self.network.room.prompt_time}")
 
     def draw_time_length(self, selected_value):
         """Sets timer length for draw phase. Primarily used by buttons"""
@@ -762,6 +846,7 @@ class Engine:
         elif self.scene == "drawing" and not self.submitted:
             # disable buttons and present close screen
             self.network.submit_entry(self.active_drawings[0].drawn_pixels)
+            print("PLAYER SUBMITTED")
             print(self.network.room.to_dict())
             self.submitted = True
             self.submit_ui()
@@ -778,24 +863,24 @@ class Engine:
         for button in self.active_buttons:
             button.active = False
         if self.paused:
-            index = -3
+            index = len(self.draw_order) - 3
         else:
-            index = -1
+            index = len(self.draw_order)
         self.draw_order.insert(index, TransparentUI(self.np(50, 50),
                                             self.ns(SCREEN_LEN * 2, SCREEN_HT * 2),
                                             (0, 0, 0), 150))
         if self.scene == "writing" or self.scene == "guessing":
             with open(resolve_asset_path("assets/guess_prompts.csv"), mode='r', newline='') as file:
                 text = random.choice(list(csv.reader(file)))
-            self.draw_order.insert(index, TextUI(self.np(50, 40),
+            self.draw_order.insert(index + 1, TextUI(self.np(50, 40),
                                      self.ns(0, 80),
-                                 text[0], (255, 255, 255)))
+                                 text[0], (255, 255, 255), dynamic_size=SCREEN_LEN))
         elif self.scene == "drawing":
             with open(resolve_asset_path("assets/draw_prompts.csv"), mode='r', newline='') as file:
                 text = random.choice(list(csv.reader(file)))
-            self.draw_order.insert(index, TextUI(self.np(50, 35),
+            self.draw_order.insert(index + 1, TextUI(self.np(50, 35),
                                          self.ns(0, 80),
-                                     text[0], (255, 255, 255)))
+                                     text[0], (255, 255, 255), dynamic_size=SCREEN_LEN))
 
     def slider_control(self, offset):
         """Controls the slide bar, moving items up and down
@@ -816,7 +901,8 @@ class Engine:
         self.exit = True
 
     def leave_room(self):
-        self.network.leave_room()
+        if self.scene != "info":
+            self.network.leave_room()
         self.room.phase = RoomPhase.LOBBY
         self.pause_client(True)
         self.switch_to_welcome()
@@ -835,11 +921,13 @@ class Engine:
                                                     self.set_music_volume,
                                                     self.music_volume, 10))
             if self.scene != "welcome":
-                self.active_buttons.append(Button(self.np(50, 70), (self.ns(140 * 1.8, 51 * 1.8)),
+                self.active_buttons.append(Button(self.np(50, 70),
+                                                  (self.ns(140 * 1.8, 51 * 1.8)),
                                                   "assets/textures/quit.png",
                                                   self.leave_room, z=11, pause_override=True))
             else:
-                self.active_buttons.append(Button(self.np(50, 70), (self.ns(140 * 1.8, 51 * 1.8)),
+                self.active_buttons.append(Button(self.np(50, 70),
+                                                  (self.ns(140 * 1.8, 51 * 1.8)),
                                                   "assets/textures/quit.png",
                                                   self.quit_game, z=11, pause_override=True))
 
@@ -900,16 +988,17 @@ class Engine:
     def get_next_element(self):
         """Helper function that sends the appropriate
         UI back to the show_next_result function"""
-        if self.results_shown == len(self.books[0].entries) * len(self.books) - 1 and self.player.is_host:
+        if (self.results_shown == len(self.books[0].entries) *
+                len(self.books) - 1):
             for button in self.active_buttons:
                 #swap button!
                 if button.pos == self.np(25, 93):
                     button.pos = (1000000, 1000000)
                     button.active = False
-                    for button2 in self.active_buttons:
-                        if button2.pos == (90000,90000):
-                            button2.pos = self.np(25, 93)
-                            break
+                    break
+            for button2 in self.active_buttons:
+                if button2.pos == (90000,90000):
+                    button2.pos = self.np(25, 93)
                     break
         curr_book = self.results_shown // len(self.books[0].entries)
         id = self.books[curr_book].owner_id
@@ -927,33 +1016,43 @@ class Engine:
         if data.type == "prompt":
             #print("prompt!")
             for elem in self.active_results:
-                elem.init_y -= self.ns(0, 60)[1]
+                elem.init_y -= self.ns(0, 75)[1]
             text = TextUI(self.np(35, 90), self.ns(0, 40),
                    data.content, (0, 0, 0), z=4, draggable=True,
                           animate=True, wrapping = self.ns(550,0)[0])
             self.active_results.append(text)
             self.active_results.append(DefaultUI(self.np(62, 90), self.ns(550 * 1.06, 125 * 0.9),
-                                                 "assets/textures/results_box.png", draggable=True, z=2))
-            self.results_height += self.ns(0, 80)[1]
+                                                 "assets/textures/results_box.png",
+                                                 draggable=True, z=2))
+            self.results_height += self.ns(0, 75)[1]
         elif data.type == "drawing":
             for elem in self.active_results:
-                elem.init_y -= self.ns(0, 400)[1]
+                elem.init_y -= self.ns(0, 330)[1]
             #drawing
             drawing = AnimationWindow(self.np(70, 52.2), self.ns(845 / 2, 455 / 2),
                                      data.content, draggable=True, z=4, animated = True)
             self.active_results.append(drawing)
             self.active_results.append(DefaultUI(self.np(70, 70), self.ns(845 / 1.9, 455 / 1.9),
                       "assets/textures/back_template.png", draggable=True, z=3))
-            self.results_height += self.ns(0, 400)[1]
+            self.active_results.append(Button(self.np(45, 70), self.ns(50, 50),
+                                                 "assets/textures/download.png",
+                                              lambda: self.download_image(drawing),
+                                              draggable=True, z=3))
+            self.results_height += self.ns(0, 330)[1]
         return True
 
     def return_to_lobby(self):
         """Returns the player to the lobby AFTER a game has ended"""
         self.room.phase = RoomPhase.LOBBY
         if self.player.is_host:
-            #TODO: END GAME!!!
-            #TODO: TEST: After game ended, see if players
-            # who stay in results get warped to write screen
-            # or not if host starts new game
-            pass
+            self.network.restart_lobby()
         self.switch_to_lobby()
+
+    def download_image(self, data):
+        pygame.image.save(data.grid.surface,
+                          f"saved_drawings/screenshot_{self.network.room.room_id}"
+                          f".{int(random.random() * 10000)}.png")
+
+#TODO FIX FREEZE
+#TODO: When a player leaves the game mid-round, it can be problematic for submissions. When they try to close, should autosubmit or do something else? Joe problem?
+#TODO: PLAYTEST!

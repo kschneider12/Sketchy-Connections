@@ -2,6 +2,7 @@
 Stores all types of generic UI, such as images and the player display
 """
 import pygame
+from pygame.mixer import Sound
 
 from .sound_manager import SoundManager
 from .paths import resolve_asset_path
@@ -72,13 +73,14 @@ class TransparentUI(DefaultUI):
 class TextUI(DefaultUI):
     """Extending DefaultUI, this UI is plain text on the background."""
     def __init__(self, position, size, text, color, z = 0,
-                 draggable = False, animate=False,
+                 draggable = False, animate=False, dynamic_size = 0,
                  wrapping = 0):
         self.text = text
         self.font = pygame.font.Font(asset_path("fonts", "MoreSugar-Regular.ttf"), int(size[1]))
         self.color = color
         self.wrapping = wrapping
         self.animate = (not animate) * len(self.text)
+        self.dynamic_size = dynamic_size
         DefaultUI.__init__(self, position, size, None, z, draggable=draggable)
 
     def draw(self, screen, curr_color=None):
@@ -90,6 +92,14 @@ class TextUI(DefaultUI):
             txt = self.text
 
         text_surface = self.font.render(txt, True, self.color)
+        if self.dynamic_size != 0:
+            #need to resize to size of screen!
+            while text_surface.get_width() > self.dynamic_size:
+                self.height -= 1
+                self.font = pygame.font.Font(asset_path("fonts", "MoreSugar-Regular.ttf"), int(self.height))
+                text_surface = self.font.render(txt, True, self.color)
+                if self.height == 0:
+                    break
         if self.wrapping:
             if text_surface.get_width() > self.wrapping:
                 texts = self.wrap_text(txt)
@@ -131,8 +141,8 @@ class TextUI(DefaultUI):
             for word in words[count + 1:]:
                 second_string += word + " "
             return [text_surface, self.font.render(second_string, True, self.color)]
-        return [self.font.render(text[:20] + "-", True, self.color),
-                self.font.render(text[20:], True, self.color)]
+        return [self.font.render(text[:17] + "-", True, self.color),
+                self.font.render(text[17:], True, self.color)]
 
 class PlayerDisplay(DefaultUI):
     """Extending DefaultUI, this UI is specifically for the player listing in the lobby.
@@ -153,6 +163,8 @@ class PlayerDisplay(DefaultUI):
 
     def set_active_players(self, active_players):
         """sets the local active players to the players in the lobby"""
+        if self.active_players != active_players:
+            SoundManager.get_instance().play_sfx(resolve_asset_path("assets/audio/plop.mp3"))
         self.active_players = active_players
 
     def make_blue(self, player):

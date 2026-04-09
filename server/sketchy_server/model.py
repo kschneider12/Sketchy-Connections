@@ -131,8 +131,8 @@ class Room:
         return self._create_player(name)
 
     def remove_player(self, player_id: str):
-        if self.phase == RoomPhase.PLAYING:
-            raise ValueError("Cannot remove a player while a game is in progress.")
+        # if self.phase == RoomPhase.PLAYING:
+        #     raise ValueError("Cannot remove a player while a game is in progress.")
 
         self.get_player(player_id)
         self.players = [p for p in self.players if p.id != player_id]
@@ -145,8 +145,8 @@ class Room:
             raise ValueError("Only the host can start the game.")
         if self.phase != RoomPhase.LOBBY:
             raise ValueError("Game has already started.")
-        #if len(self.players) <= 2:
-            #raise ValueError("Need at least 3 players to start.")
+        if len(self.players) <= 2:
+            raise ValueError("Need at least 3 players to start.")
 
         self.game = GameState(self.players)
         self.phase = RoomPhase.PLAYING
@@ -224,6 +224,18 @@ class RoomManager:
         if room is None:
             raise ValueError(f"Room {normalized_code} not found.")
         return room
+
+    def restart_room(self, room_code: str):
+        normalized_code = room_code.upper()
+        room = self.rooms.get(normalized_code)
+        if room is None:
+            raise ValueError(f"Room {normalized_code} not found.")
+
+        room.game = None
+        room.phase = RoomPhase.LOBBY
+        room.draw_time = 120
+        room.prompt_time = 20
+        room.book_idx = 0
 
     def join_room(self, room_code: str, player_name: str) -> tuple[Room, PlayerData]:
         room = self.get_room(room_code)

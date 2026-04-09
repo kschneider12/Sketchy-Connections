@@ -16,7 +16,7 @@ class TypeBox(Button):
     that the normal button class does not require.
     """
     def __init__(self,  position, size, img, funct, default_message = "",
-                 character_limit = 40, z = 0):
+                 character_limit = 34, z = 0):
         self.selected = False
         self.character_limit = character_limit
         self.accum = 0

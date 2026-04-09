@@ -592,6 +592,26 @@ class Engine:
         self.active_ui = [
             DefaultUI(self.np(50, 41), self.ns(845 * 1.1, 455 * 1.1),
                       "assets/textures/back_template.png"),
+            TextUI(self.np(50, 8), self.ns(1, 50),
+                   "Welcome to Sketchy Connections!", (0, 0, 0)),
+            TextUI(self.np(50, 16), self.ns(1, 30),
+                   "A game inspired by 'Telestrations' where you", (0, 0, 0)),
+            TextUI(self.np(50, 20.5), self.ns(1, 30),
+                   "prompt, draw, guess, and repeat!", (0, 0, 0)),
+            TextUI(self.np(50, 30), self.ns(1, 30),
+                   "-Games consist of 3-8 players with alternating phases.", (0, 0, 0)),
+            TextUI(self.np(50, 36), self.ns(1, 30),
+                   "-Watch your timer! You don't want to get cut off.", (0, 0, 0)),
+            TextUI(self.np(50, 42), self.ns(1, 30),
+                   "-Be creative! You don't need to be an artist to create art.", (0, 0, 0)),
+            TextUI(self.np(50, 55), self.ns(1, 30),
+                   "Need to report a bug or have a question?", (0, 0, 0)),
+            TextUI(self.np(50, 61), self.ns(1, 30),
+                   "Email support coming soon.", (0, 0, 0)),
+            TextUI(self.np(50, 73.5), self.ns(1, 20),
+                   "Many thanks from the Fun2Play Developments LLC Inc., (for now) team:", (0, 0, 0)),
+            TextUI(self.np(50, 77.5), self.ns(1, 20),
+                   "Kent Schneider, Mathew Neves, Joe Liotta, James LeMahieu", (0, 0, 0)),
         ]
         self.active_buttons = [
             Button(self.np(50, 90), (self.ns(140 * 2, 51 * 2)),
@@ -826,7 +846,8 @@ class Engine:
         elif self.scene == "drawing" and not self.submitted:
             # disable buttons and present close screen
             self.network.submit_entry(self.active_drawings[0].drawn_pixels)
-            #print(self.network.room.to_dict())
+            print("PLAYER SUBMITTED")
+            print(self.network.room.to_dict())
             self.submitted = True
             self.submit_ui()
         elif self.scene == "guessing" and not self.submitted:

@@ -241,15 +241,15 @@ class Engine:
         if not self.paused: #THIS IS BETTER THAN RECONFIGURING HOW THIS TEXT IS DRAWN!
             for data in self.type_text_draws:
                 self.draw_typing_text(data)
-        if self.scene == "drawing":
-            if self.curr_shade == [240, 240, 240] and \
-                self.curr_tool == "fill":
-                self.tool_text.text = "eraser fill"
-            elif self.curr_shade == [240, 240, 240] and \
-                    self.curr_tool == "brush":
-                self.tool_text.text = "eraser brush"
-            else:
-                self.tool_text.text = "draw " + self.curr_tool
+        #if self.scene == "drawing":
+            #if self.curr_shade == [240, 240, 240] and \
+                #self.curr_tool == "fill":
+                #self.tool_text.text = "eraser fill"
+            #elif self.curr_shade == [240, 240, 240] and \
+                    #self.curr_tool == "brush":
+                #self.tool_text.text = "eraser brush"
+            #else:
+                #self.tool_text.text = "draw " + self.curr_tool
 
     def manage_buttons(self):
         """manages all active buttons on screen, running behavior
@@ -514,8 +514,8 @@ class Engine:
                            "assets/textures/eraser_button.png"),
             Button(self.np(36, 92.5), (self.ns(140 * 1.8, 51 * 1.8)),
                   "assets/textures/submit.png", self.submit)]
-        #TODO FIX FREEZE
         if self.simple_colors:
+            offset = 5
             self.curr_color = (0,0,0)
             self.active_buttons.insert(0,ColorButton(
                 self.np(72.5, 48.5), self.ns(45, 45), self.set_color, "black"))
@@ -524,21 +524,21 @@ class Engine:
             self.active_buttons.insert(0, ColorButton(
                 self.np(72.5, 31.5), self.ns(45, 45), self.set_color, "blue"))
             self.active_buttons.insert(0, ColorButton(
-                self.np(72.5+8.5, 48.5), self.ns(45, 45), self.set_color, "purple"))
+                self.np(72.5+offset, 48.5), self.ns(45, 45), self.set_color, "purple"))
             self.active_buttons.insert(0, ColorButton(
-                self.np(72.5+8.5, 40), self.ns(45, 45), self.set_color, "red"))
+                self.np(72.5+offset, 40), self.ns(45, 45), self.set_color, "red"))
             self.active_buttons.insert(0, ColorButton(
-                self.np(72.5+8.5, 31.5), self.ns(45, 45), self.set_color, "orange"))
+                self.np(72.5+offset, 31.5), self.ns(45, 45), self.set_color, "orange"))
             self.active_buttons.insert(0, ColorButton(
-                self.np(72.5 + 17, 48.5), self.ns(45, 45), self.set_color, "yellow"))
+                self.np(72.5 + offset * 2, 48.5), self.ns(45, 45), self.set_color, "yellow"))
             self.active_buttons.insert(0, ColorButton(
-                self.np(72.5 + 17, 40), self.ns(45, 45), self.set_color, "grey"))
+                self.np(72.5 + offset * 2, 40), self.ns(45, 45), self.set_color, "grey"))
             self.active_buttons.insert(0, ColorButton(
-                self.np(72.5 + 17+8.5, 31.5), self.ns(45, 45), self.set_color, "sky_blue"))
+                self.np(72.5 + offset * 3, 31.5), self.ns(45, 45), self.set_color, "sky_blue"))
             self.active_buttons.insert(0, ColorButton(
-                self.np(72.5 + 17+8.5, 40), self.ns(45, 45), self.set_color, "white"))
+                self.np(72.5 + offset * 3, 40), self.ns(45, 45), self.set_color, "white"))
             self.active_buttons.insert(0, ColorButton(
-                self.np(72.5 + 17+8.5, 48.5), self.ns(45, 45), self.set_color, "brown"))
+                self.np(72.5 + offset * 3, 48.5), self.ns(45, 45), self.set_color, "brown"))
         else:
             self.active_buttons.insert(0,ColorWheel(self.np(79, 36), (self.ns(180, 180)), self.set_color))
             self.active_buttons.insert(1,BrightnessSlider(self.np(85, 69), (self.ns(1.2 * 50, 4 * 50)), self.set_brightness))
@@ -1036,5 +1036,6 @@ class Engine:
                           f"saved_drawings/screenshot_{self.network.room.room_id}"
                           f".{int(random.random() * 10000)}.png")
 
+#TODO FIX FREEZE
 #TODO: When a player leaves the game mid-round, it can be problematic for submissions. When they try to close, should autosubmit or do something else? Joe problem?
 #TODO: PLAYTEST!

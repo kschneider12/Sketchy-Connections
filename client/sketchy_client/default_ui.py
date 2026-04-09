@@ -141,8 +141,8 @@ class TextUI(DefaultUI):
             for word in words[count + 1:]:
                 second_string += word + " "
             return [text_surface, self.font.render(second_string, True, self.color)]
-        return [self.font.render(text[:20] + "-", True, self.color),
-                self.font.render(text[20:], True, self.color)]
+        return [self.font.render(text[:17] + "-", True, self.color),
+                self.font.render(text[17:], True, self.color)]
 
 class PlayerDisplay(DefaultUI):
     """Extending DefaultUI, this UI is specifically for the player listing in the lobby.

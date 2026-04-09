@@ -284,9 +284,9 @@ class Grid:
 
 
 class DrawingWindow:
-    """Handles user drawing input and records drawing operation"""
+    """Handle user drawing input and records drawing operation."""
     def __init__(self, center_pos, size, draggable = False):
-        """Initializes the drawing window"""
+        """Initialize the drawing window."""
         self.center = center_pos
         self.draggable = draggable
         self.size = size
@@ -331,15 +331,16 @@ class DrawingWindow:
         self.color_index = 0
 
     def update(self, mouse_pos, mouse_pressed, curr_color, brush_radius, current_tool):
-        """Updates the window based on user input in engine.py
+        """Update the window based on user input.
 
         Args:
-            mouse_pos (tuple): the row, col position of the mouse
-            mouse_pressed (bool): True if the user pressed the mouse
-            curr_color (tuple): current user color
-            brush_radius (int): radius of the brush
-            current_tool (string): current user tool
+            mouse_pos (tuple): The row, col position of the mouse.
+            mouse_pressed (bool): True if the user pressed the mouse.
+            curr_color (tuple): Current user color.
+            brush_radius (int): Radius of the brush.
+            current_tool (string): Current user tool.
         """
+        # mouse pos to grid pos
         this_x = mouse_pos[0] - self.pos[0]
         this_y = mouse_pos[1] - self.pos[1]
 
@@ -352,17 +353,20 @@ class DrawingWindow:
         # call drawing logic for all tools
         if mouse_pressed:
             if current_tool == "brush":
+                # ensures no gaps in lines
                 if self.last_pos and (this_x, this_y) != self.last_pos:
                     drawing = self.grid.draw_line_cells(
                         self.last_pos,
                         (this_x, this_y),
                         curr_color,
                         brush_radius)
+                    # set -> list to remove duplicates
                     pos = list({(r, c) for (r, c, _) in drawing})
                     self.drawn_pixels.append({"color": curr_color,
                                               "pos": pos,
                                               "tool": 0})
                 else:
+                    # handle single click
                     drawing = self.grid.draw_brush(row, col, curr_color, brush_radius)
                     pos = list({(r, c) for (r, c, _) in drawing})
                     self.drawn_pixels.append({"color": curr_color,
@@ -370,6 +374,7 @@ class DrawingWindow:
                                               "tool": 0})
                 self.last_pos = (this_x, this_y)
             elif current_tool == "fill":
+                # ensures fill triggers once per click
                 if not self.last_mouse:
                     drawing = self.grid.fill_tool(row, col, curr_color)
                     pos = [(r, col) for (r, col, _) in drawing]
@@ -382,20 +387,19 @@ class DrawingWindow:
         self.last_mouse = mouse_pressed
 
     def draw(self, screen, curr_color):
-        """Renders the drawing grid on the screen
+        """Render the drawing grid on the screen.
 
         Args:
-            screen: (pygame.Surface): the screen being displayed
-            curr_color (tuple): current user color
+            screen: (pygame.Surface): The screen being displayed.
+            curr_color (tuple): Not used but needed to match game syntax.
         """
-        # print(f"C: {curr_color}")
         self.grid.draw(screen)
 
     def color_switch(self, input_color=None):
-        """Cycles through colors or sets a specific color
+        """Cycle through colors or set a specific color.
 
         Args:
-            input_color (tuple, optional): directly sets color
+            input_color (tuple, optional): Directly sets color.
         """
         if input_color:
             self.current_color = input_color
@@ -404,10 +408,10 @@ class DrawingWindow:
         self.current_color = color
 
     def handle_clicks(self, click):
-        """Some general outlines for debugging keybinds
+        """Process keyboard events - for debugging.
 
         Args:
-            click (pygame.event.Event): the incoming user action
+            click (pygame.event.Event): The incoming user action.
         """
         if click.type == pygame.KEYDOWN:
             if click.key == pygame.K_TAB:
@@ -424,20 +428,18 @@ class DrawingWindow:
                 self.current_tool = "brush"
 
     def get_drawn_pixels(self):
-        """Gets the list of drawn pixels
+        """Get the list of drawn pixels.
 
         Returns:
-            A list of drawing actions:
-                - "color": RGB tuple
-                - "pos": list of row, col cells
+            A list of drawing actions.
         """
         return self.drawn_pixels
 
 
 class AnimationWindow:
-    """Replays drawing operations as an animation or display"""
+    """Replay drawing operations as an animation or display."""
     def __init__(self, center_pos, size, drawn_pixels, animated = False, draggable=False, z=1):
-        """Initializes the animation window"""
+        """Initialize the animation window."""
         self.center = [center_pos[0], center_pos[1]]
         self.init_y = center_pos[1]
         self.size = size
@@ -465,12 +467,15 @@ class AnimationWindow:
 
         self.total_pixels = len(drawn_pixels)
 
+        # sets good pacing
         self.pixels_per_frame = max(20, self.total_pixels // (self.fps * self.max_seconds))
         self.done = False
+
+        # should it be animated
         self.animated = animated
 
     def update(self):
-        """Updates the animation window by 'drawing' list of stored pixels"""
+        """Update the animation window by 'drawing' list of stored pixels"""
         if self.done:
             return
         self.clock.tick(self.fps)
@@ -494,21 +499,24 @@ class AnimationWindow:
             self.index += 1
 
     def draw(self, screen, curr_color):
-        """Renders the animation window on the screen
+        """Render the animation window on the screen.
 
         Args:
-            screen: (pygame.Surface): the screen being displayed
+            screen: (pygame.Surface): the screen being displayed.
+            curr_color (tuple): Not used but needed to match game syntax.
         """
-        # print(f"C: {curr_color}")
         self.grid.draw(screen)
 
 
 def get_clicked_pos(position, cell_size):
-    """Gets the position of a user click
+    """Get the position of a user click
 
     Args:
-        position (tuple): row, col position on the grid
-        cell_size (int): size of a cell on the grid
+        position (tuple): Row, col position on the grid.
+        cell_size (int): Size of a cell on the grid.
+
+    Returns:
+        A tuple of row, col position.
     """
     x, y = position
     col = x // cell_size
@@ -517,7 +525,7 @@ def get_clicked_pos(position, cell_size):
 
 
 def run_drawing(window):
-    """Runs the drawing window from this file for debugging purposes"""
+    """Run the drawing window from this file for debugging purposes."""
     pygame.font.init()
     font = pygame.font.SysFont("Consolas", 18)
 
@@ -559,12 +567,8 @@ def run_drawing(window):
     return draw_w.get_drawn_pixels()
 
 def run_animation(window, drawn_pixels):
-    """Runs the drawing window from this file for debugging purposes"""
-    anim = AnimationWindow(
-        center_pos = (600, 400),
-        size = (800, 600),
-        drawn_pixels = drawn_pixels,
-        animated = True)
+    """Run the drawing window from this file for debugging purposes"""
+    anim = AnimationWindow((600, 400), (800, 600),drawn_pixels, True)
 
     running = True
     while running:
@@ -575,7 +579,7 @@ def run_animation(window, drawn_pixels):
         anim.update()
 
         window.fill(COLORS['background'])
-        anim.draw(window, None)
+        anim.draw(window, (0,0,0))
         pygame.display.update()
 
 if __name__ == '__main__':

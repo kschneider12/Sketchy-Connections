@@ -357,6 +357,8 @@ class Engine:
 
             Button(self.np(70, 70), (self.ns(115 * 2.2, 51 * 2.2)),
                    "assets/textures/join.png", self.enable_room_code),
+            Button(self.np(3, 5), (self.ns(30, 30)),
+                   "assets/textures/info_button.png", self.switch_to_info),
             Button(self.np(97, 4), (self.ns(50, 50)),
                    "assets/textures/exit.png", self.quit_game),
             TypeBox(self.np(50, 90), self.ns(1300 * 0.6, 110 * 0.6),
@@ -517,6 +519,8 @@ class Engine:
                            "assets/textures/eraser_button.png"),
             Button(self.np(36, 92.5), (self.ns(140 * 1.8, 51 * 1.8)),
                   "assets/textures/submit.png", self.submit)]
+        #TODO FIX FREEZE
+        #TODO REMOVE BRUSH TYPE
         if self.simple_colors:
             self.curr_color = (0,0,0)
             self.active_buttons.insert(0,ColorButton(
@@ -583,6 +587,25 @@ class Engine:
         self.draw_order = sorted(self.draw_order, key=lambda elem: elem.z)
         self.pause_client()
         SoundManager.get_instance().play_music("assets/audio/BrightlyFancy.mp3")
+
+    def switch_to_info(self):
+        """switches the scene to info, initializing the UI"""
+        SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
+        SoundManager.get_instance().play_music("assets/audio/Elevator.mp3")
+        self.scene = "info"
+        self.active_animations = []
+        self.active_drawings = []
+        self.active_ui = [
+            DefaultUI(self.np(50, 41), self.ns(845 * 1.1, 455 * 1.1),
+                      "assets/textures/back_template.png"),
+        ]
+        self.active_buttons = [
+            Button(self.np(50, 90), (self.ns(140 * 2, 51 * 2)),
+                                              "assets/textures/back.png",
+                                              self.switch_to_welcome)
+        ]
+        self.draw_order = self.active_ui + self.active_drawings + \
+                          self.active_buttons + self.active_animations
 
     def enable_room_code(self):
         """Enables UI for asking for room code"""
@@ -756,7 +779,7 @@ class Engine:
         if enabled:
             #self.curr_color = [240, 240, 240]
             self.curr_shade = [240, 240, 240]
-        else:
+        elif self.simple_colors:
             self.curr_shade = self.curr_color
 
     def set_name(self, name):
@@ -863,7 +886,8 @@ class Engine:
         self.exit = True
 
     def leave_room(self):
-        self.network.leave_room()
+        if self.scene != "info":
+            self.network.leave_room()
         self.room.phase = RoomPhase.LOBBY
         self.pause_client(True)
         self.switch_to_welcome()

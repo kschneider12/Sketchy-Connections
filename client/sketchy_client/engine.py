@@ -87,7 +87,7 @@ class Engine:
         self.curr_guess = None
         self.curr_prompt = None
         self.room_code_attempt = None
-        self.tool_text = "brush"
+        #self.tool_text = "brush"
         self.background = DefaultUI(self.np(50, 50),
                                      (SCREEN_LEN, SCREEN_HT),
                                      "assets/textures/background.png")
@@ -486,15 +486,10 @@ class Engine:
         SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
         # note from Mat - this makes the drawing window displayable, not fully functional
         self.scene = "drawing"
-        self.tool_text = TextUI(self.np(60, 95), self.ns(20, 20),
-                                 "Current: " + self.curr_tool, (0, 0, 0))
         self.active_ui = [TimeBar(self.np(94,58), self.ns(60 * 1.5, 320 * 1.5), self.draw_length),
                           TextUI(self.np(50, 13), self.ns(1, 65),
                             self.current_entry.content, (0, 0, 0),
                                  dynamic_size=SCREEN_LEN * 0.98),
-                          TextUI(self.np(60, 90), self.ns(20, 20),
-                                 "Current Tool: ", (0, 0, 0)),
-                          self.tool_text,
                           DefaultUI(self.np(36, 53), self.nl(660),
                                 "assets/textures/color_button.png"),
                           DefaultUI(self.np(50, 5), self.ns(220, 50),
@@ -520,7 +515,6 @@ class Engine:
             Button(self.np(36, 92.5), (self.ns(140 * 1.8, 51 * 1.8)),
                   "assets/textures/submit.png", self.submit)]
         #TODO FIX FREEZE
-        #TODO REMOVE BRUSH TYPE
         if self.simple_colors:
             self.curr_color = (0,0,0)
             self.active_buttons.insert(0,ColorButton(

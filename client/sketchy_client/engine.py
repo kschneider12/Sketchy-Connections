@@ -1048,11 +1048,7 @@ class Engine:
         """Returns the player to the lobby AFTER a game has ended"""
         self.room.phase = RoomPhase.LOBBY
         if self.player.is_host:
-            #TODO: END GAME!!!
-            #TODO: TEST: After game ended, see if players
-            # who stay in results get warped to write screen
-            # or not if host starts new game
-            pass
+            self.network.restart_lobby()
         self.switch_to_lobby()
 
     def download_image(self, data):

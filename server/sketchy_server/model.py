@@ -225,7 +225,7 @@ class RoomManager:
             raise ValueError(f"Room {normalized_code} not found.")
         return room
 
-    def restart_room(self, room_code: str):
+    def restart_lobby(self, room_code: str):
         normalized_code = room_code.upper()
         room = self.rooms.get(normalized_code)
         if room is None:
@@ -236,6 +236,8 @@ class RoomManager:
         room.draw_time = 120
         room.prompt_time = 20
         room.book_idx = 0
+        for player in room.players:
+            player.has_submitted = False
 
     def join_room(self, room_code: str, player_name: str) -> tuple[Room, PlayerData]:
         room = self.get_room(room_code)

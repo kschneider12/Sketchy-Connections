@@ -5,6 +5,8 @@ it can also be used for any float variable modification mid-game.
 """
 from .button import Button
 from .default_ui import DefaultUI
+from .paths import resolve_asset_path
+
 
 class SliderButton(Button):
     """
@@ -17,12 +19,13 @@ class SliderButton(Button):
         self.min = mn
         self.rel_pos = [position[0], position[1]]
         self.max = mx
-        self.bkg_size = size
+        self.bkg_size = size[:2]
         self.dragging = False
         self.accum = 0
-        img = 'assets/textures/slider_ball.png'
-        self.bkg = DefaultUI(position, size, 'assets/textures/slider_bar.png')
-        super().__init__(position, (size[1], size[1]), img, funct, z=z, pause_override=True)
+        self.val = val
+        img = resolve_asset_path('assets/textures/slider_ball.png')
+        self.bkg = DefaultUI(position, size, resolve_asset_path('assets/textures/slider_bar.png'))
+        super().__init__(position, (size[1], size[1], (size[2][1], size[2][1])), img, funct, z=z, pause_override=pause_override)
         self.bounds = [self.pos[0] + self.bkg_size[0] / 2 - self.width / 2,
                        self.pos[0] - self.bkg_size[0] / 2 + self.width / 2]
 
@@ -49,6 +52,8 @@ class SliderButton(Button):
                 self.rel_pos[0] = self.bounds[0]
             if self.rel_pos[0] < self.bounds[1]:
                 self.rel_pos[0] = self.bounds[1]
+            self.val = (self.max - (self.rel_pos[0] - self.bounds[0])
+                        * (self.max - self.min) / (self.bounds[1] - self.bounds[0]))
             return [self.command, self.max - (self.rel_pos[0] - self.bounds[0])
                     * (self.max - self.min) / (self.bounds[1] - self.bounds[0])]
         return False
@@ -71,3 +76,16 @@ class SliderButton(Button):
         """
         return (abs(mouse_pos[0] - self.rel_pos[0]) <= self.width / 2
                 and abs(mouse_pos[1] - self.rel_pos[1]) <= self.height / 2)
+
+    def resize(self,wid, ht):
+        super().resize(wid,ht)
+        self.bkg.resize(wid,ht)
+        self.bkg_size = self.bkg.width, self.bkg.height
+
+        self.bounds = [self.pos[0] + self.bkg_size[0] / 2 - self.width / 2,
+                       self.pos[0] - self.bkg_size[0] / 2 + self.width / 2]
+
+        #THIS IS ISSUE!
+        self.rel_pos[0] = ((self.max - self.val) * (self.bounds[1] - self.bounds[0])
+                            / (self.max - self.min) + self.bounds[0])
+        self.rel_pos[1] =self.pos[1]

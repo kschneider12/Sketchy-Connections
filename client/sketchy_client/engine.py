@@ -28,8 +28,6 @@ from .draw_window import DrawingWindow, AnimationWindow
 from .color_wheel import ColorWheel
 from .choices_button import ChoicesButton
 # from draw_window import AnimationWindow
-SCREEN_LEN = pyautogui.size()[0] / 0.8
-SCREEN_HT = pyautogui.size()[1] / 0.8
 
 PROMPT_TIMES = [10, 20, 30, 60]
 DRAW_TIMES = [30, 60, 120, 180, 300]
@@ -42,6 +40,15 @@ class Engine:
         # flags
         self.exit = False
         self.drawing = False
+        #self.screen_len = pyautogui.size()[0] / 2
+        #self.screen_ht = pyautogui.size()[1] / 2
+        self.screen_len = 720
+        self.screen_ht = 450
+        #
+        #720x450
+        #936x585
+        #1920x1080
+        print(self.screen_len, self.screen_ht)
 
         #pygame info
         icon = pygame.image.load(resolve_asset_path('assets/textures/desktop_icon.png'))
@@ -49,7 +56,7 @@ class Engine:
         pygame.display.set_icon(icon)
 
         # 4. Set the window title (optional)
-        self.screen = pygame.display.set_mode((SCREEN_LEN, SCREEN_HT))
+        self.screen = pygame.display.set_mode((self.screen_len,self.screen_ht), pygame.RESIZABLE)
         pygame.display.set_caption("Sketchy Connections")
         self.clock = pygame.time.Clock()
 
@@ -94,9 +101,8 @@ class Engine:
         self.room_code_attempt = None
         #self.tool_text = "brush"
         self.background = DefaultUI(self.np(50, 50),
-                                     (SCREEN_LEN, SCREEN_HT),
+                                     self.ns(16, 10),
                                      "assets/textures/background.png")
-
         self.simple_colors = False
         self.prompt_length = 20
         self.draw_length = 120
@@ -124,8 +130,13 @@ class Engine:
     def run(self):
         """main game loop. Updates the game, manages inputs, buttons,
         draws UI, handles special loop cases, and maintains the game clock"""
+        self.screen_len, self.screen_ht = self.screen.get_size()
         self.switch_to_welcome()
         while True:
+            if self.screen_len != self.screen.get_size()[0] or self.screen_ht != self.screen.get_size()[1]:
+                self.screen_len, self.screen_ht = self.screen.get_size()
+                for elem in self.draw_order:
+                    elem.resize(self.screen_len, self.screen_ht)
             self.update_room()
             if self.network_error is not None:
                 print(self.network_error)
@@ -139,7 +150,7 @@ class Engine:
             self.mouse_buttons_last_frame[1] = self.mouse_buttons[1]
             self.get_inputs()
             self.manage_buttons()
-
+            #TODO FIX BACKDROP IMAGE SIZING
             if self.room.phase == RoomPhase.PLAYING:
                 if self.room.game and self.scene != self.room.game.phase:
                     self.submitted = False
@@ -329,18 +340,18 @@ class Engine:
     def np(self, x, y):
         """short for normalize position, this normalizes UI elements
         regardless of screen size"""
-        return [int(x * SCREEN_LEN / 100), int(y * SCREEN_HT / 100)]
+        return [int(x * self.screen_len / 100), int(y * self.screen_ht / 100), (x,y)]
 
     # normalize scale in relation to screen size
     def ns(self, x, y):
         """short for normalize scale, this normalizes UI elements
         regardless of screen size"""
-        return x * SCREEN_LEN / 1000, y * SCREEN_HT / 1000 * 16/10
+        return x * self.screen_len / 1000, y * self.screen_ht / 1000 * 16/10, (x,y)
 
     def nl(self, x):
         """short for normalize length, this normalizes draw window length
         regardless of screen size"""
-        return x * SCREEN_LEN / 1000.0, x * SCREEN_LEN / 1000.0 * 175/325.0
+        return x * self.screen_len / 1000.0, x * self.screen_len / 1000.0 * 175/325.0, (x, x)
 
 
 #------------------------------------------------------------------------------------------------
@@ -387,7 +398,7 @@ class Engine:
                           DefaultUI(self.np(80, 18), self.ns(169 * 2.0, 97 * 2.0),
                                     "assets/textures/title.png"),
                           PlayerDisplay(self.np(4, 55), self.ns(30 * 2.4, 241 * 2.4),
-                                        (SCREEN_LEN, SCREEN_HT), self.network.room.players),
+                                        (self.screen_len, self.screen_ht), self.network.room.players),
                           DefaultUI(self.np(35, 5), self.ns(65 * 2, 23 * 2),
                                     "assets/textures/code.png"),
                           #DefaultUI(self.np(50, 5.5), self.ns(160, 60),
@@ -497,7 +508,7 @@ class Engine:
         self.active_ui = [TimeBar(self.np(94,58), self.ns(60 * 1.5, 320 * 1.5), self.draw_length),
                           TextUI(self.np(50, 13), self.ns(1, 65),
                             self.current_entry.content, (0, 0, 0),
-                                 dynamic_size=SCREEN_LEN * 0.98),
+                                 dynamic_size=self.screen_len * 0.98),
                           DefaultUI(self.np(36, 53), self.nl(660),
                                 "assets/textures/color_button.png"),
                           DefaultUI(self.np(50, 5), self.ns(220, 50),
@@ -564,7 +575,7 @@ class Engine:
         self.scene = "results"
         pygame.mouse.set_visible(True)
         self.active_ui = [PlayerDisplay(self.np(4, 55), self.ns(30 * 2.4, 241 * 2.4),
-                                        (SCREEN_LEN, SCREEN_HT),
+                                        (self.screen_len, self.screen_ht),
                                         self.network.room.players, True),
                           DefaultUI(self.np(88, 20), self.ns(520 * 2.2, 300 * 2.2),
                                     "assets/textures/back_template.png", rotate=90),
@@ -635,7 +646,7 @@ class Engine:
             for button in self.active_buttons:
                 button.active = False
             self.active_ui.append(TransparentUI(self.np(50,50),
-                                                self.ns(SCREEN_LEN * 2,SCREEN_HT * 2),
+                                                self.ns(self.screen_len * 2,self.screen_ht * 2),
                                                 (0,0,0), 150))
             self.active_buttons.append(Button(self.np(62, 60), (self.ns(140 * 1.5, 51 * 1.5)),
                                               "assets/textures/go.png", self._join_room, z=2))
@@ -875,20 +886,20 @@ class Engine:
         else:
             index = len(self.draw_order)
         self.draw_order.insert(index, TransparentUI(self.np(50, 50),
-                                            self.ns(SCREEN_LEN * 2, SCREEN_HT * 2),
+                                            self.ns(self.screen_len * 2, self.screen_ht * 2),
                                             (0, 0, 0), 150))
         if self.scene == "writing" or self.scene == "guessing":
             with open(resolve_asset_path("assets/guess_prompts.csv"), mode='r', newline='') as file:
                 text = random.choice(list(csv.reader(file)))
             self.draw_order.insert(index + 1, TextUI(self.np(50, 40),
                                      self.ns(0, 80),
-                                 text[0], (255, 255, 255), dynamic_size=SCREEN_LEN))
+                                 text[0], (255, 255, 255), dynamic_size=self.screen_len))
         elif self.scene == "drawing":
             with open(resolve_asset_path("assets/draw_prompts.csv"), mode='r', newline='') as file:
                 text = random.choice(list(csv.reader(file)))
             self.draw_order.insert(index + 1, TextUI(self.np(50, 35),
                                          self.ns(0, 80),
-                                     text[0], (255, 255, 255), dynamic_size=SCREEN_LEN))
+                                     text[0], (255, 255, 255), dynamic_size=self.screen_len))
 
     def slider_control(self, offset):
         """Controls the slide bar, moving items up and down
@@ -923,11 +934,11 @@ class Engine:
             self.active_buttons.append(SliderButton(self.np(30, 50),
                                                     self.ns(200,30),0, 1,
                                                     self.set_sound_effects_volume,
-                                                    self.sfx_volume, 10))
+                                                    self.sfx_volume, 10, True))
             self.active_buttons.append(SliderButton(self.np(70, 50),
                                                     self.ns(200, 30), 0,1,
                                                     self.set_music_volume,
-                                                    self.music_volume, 10))
+                                                    self.music_volume, 10, True))
             if self.scene != "welcome":
                 self.active_buttons.append(Button(self.np(50, 70),
                                                   (self.ns(140 * 1.8, 51 * 1.8)),
@@ -940,7 +951,7 @@ class Engine:
                                                   self.quit_game, z=11, pause_override=True))
 
             self.draw_order.append(TransparentUI(self.np(50, 50),
-                          self.ns(SCREEN_LEN * 5, SCREEN_HT * 5),
+                          self.ns(self.screen_len * 5, self.screen_ht * 5),
                           (0, 0, 0), 100, z=9))
             self.draw_order.append(DefaultUI(self.np(50, 50),
                                                  self.ns(520 * 1.5, 300 * 1.5),
@@ -973,7 +984,7 @@ class Engine:
                           self.active_ui + self.active_animations + self.active_results
         if self.paused:
             self.draw_order.append(TransparentUI(self.np(50, 50),
-                                                 self.ns(SCREEN_LEN * 5, SCREEN_HT * 5),
+                                                 self.ns(self.screen_len * 5, self.screen_ht * 5),
                                                  (0, 0, 0), 100, z=8))
             self.draw_order.append(DefaultUI(self.np(50, 50),
                                              self.ns(520 * 1.5, 300 * 1.5),
@@ -1061,8 +1072,6 @@ class Engine:
                           f"saved_drawings/screenshot_{self.network.room.room_id}"
                           f".{int(random.random() * 10000)}.png")
 
-    def fullscreen(self):
-        self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 
 #TODO FIX FREEZE
 #TODO: When a player leaves the game mid-round, it can be problematic for submissions. When they try to close, should autosubmit or do something else? Joe problem?

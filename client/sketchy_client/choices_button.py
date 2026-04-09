@@ -23,10 +23,10 @@ class ChoicesButton(Button):
             self.curr_choice = start_choice
 
         super().__init__(pos, size, 'assets/textures/text_box_4.png', funct, False)
-        self.left = Button((pos[0] + size[0] / 1.2, pos[1]),
-                           (size[1],size[1]), 'assets/textures/arrow.png', True)
-        self.right = Button((pos[0] - size[0] / 1.2, pos[1]),
-                            (size[1],size[1]), 'assets/textures/arrow.png', True)
+        self.left = Button((pos[0] + size[0] / 1.2, pos[1], (pos[2][0] + size[2][0] / 1.2, pos[2][1])),
+                           (size[1],size[1], (size[2][1], size[2][1])), 'assets/textures/arrow.png', True)
+        self.right = Button((pos[0] - size[0] / 1.2, pos[1], (pos[2][0] - size[2][0] / 1.2, pos[2][1])),
+                            (size[1],size[1], (size[2][1], size[2][1])), 'assets/textures/arrow.png', True)
         self.left.img = pygame.transform.rotate(self.left.img, 180)
         self.left.hover_img = pygame.transform.rotate(self.left.hover_img, 180)
         self.font = pygame.font.Font(FONT_PATH, int(self.height * 0.7))
@@ -62,3 +62,14 @@ class ChoicesButton(Button):
         scale = self.font.size(text)
         text_surface = self.font.render(text, True, (0, 0, 0))
         screen.blit(text_surface, (self.pos[0] - scale[0] / 2, self.pos[1] - scale[1] / 2))
+
+    def resize(self, wid, ht):
+        """resizes the button ui on screen"""
+        super().resize(wid, ht)
+        self.left = Button((self.pos[0] + self.width / 1.2, self.pos[1], (0,0)),
+                           (self.height, self.height, (0,0)), 'assets/textures/arrow.png', True)
+        self.right = Button((self.pos[0] - self.width / 1.2, self.pos[1], (0,0)),
+                            (self.height, self.height, (0,0)), 'assets/textures/arrow.png', True)
+        self.left.img = pygame.transform.rotate(self.left.img, 180)
+        self.left.hover_img = pygame.transform.rotate(self.left.hover_img, 180)
+        self.font = pygame.font.Font(FONT_PATH, int(self.height * 0.7))

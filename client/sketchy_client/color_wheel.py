@@ -7,6 +7,8 @@ import pygame
 
 from .button import Button
 from .default_ui import DefaultUI
+from .paths import resolve_asset_path
+
 
 class ColorWheel(Button):
     """
@@ -19,8 +21,8 @@ class ColorWheel(Button):
         self.dragging = False
         self.color = [255,255,255]
         img = 'assets/textures/slider_ball.png'
-        self.bkg2 = DefaultUI(position, size, 'assets/textures/colorwheel_bkg.png')
-        super().__init__(position, (size[0] / 20, size[1] / 20), img, funct)
+        self.bkg2 = DefaultUI(position, size, resolve_asset_path('assets/textures/colorwheel_bkg.png'))
+        super().__init__(position, (size[0] / 20, size[1] / 20, size[2]), img, funct)
 
     def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state, paused):
         """
@@ -67,6 +69,7 @@ class ColorWheel(Button):
         Overrides Button.draw, including to draw the ball and background together.
         """
         self.bkg2.draw(screen)
+        #screen.blit(self.img, self.pos[:2])
         if self.curr_hover or self.dragging:
             image = self.hover_img
         else:
@@ -93,3 +96,33 @@ class ColorWheel(Button):
     def get_angle(self):
         """returns the angle of the mouse to the center of the button"""
         return math.atan2(-1 * (self.pos[1] - self.rel_pos[1]), self.pos[0] - self.rel_pos[0])
+
+    def resize(self, wid, ht):
+        #store angle from center, and radius? (For ball position?)
+        angle = self.get_angle()
+        rad = self.get_rad(self.rel_pos) / self.bkg_size[0] * 2
+        print(f"RAD BEFORE IS {rad}")
+
+        self.bkg2.resize(wid, ht)
+        self.bkg_size = self.bkg2.width, self.bkg2.height
+        print(self.pos)
+        self.pos = self.bkg2.pos
+        print(self.pos)
+        self.width, self.height = self.init_size[0] * wid / 1000, self.init_size[1] * ht / 1000 * 16 / 10
+        self.width /= 20
+        self.height /= 20
+        self.init_y = self.pos[1]
+        hover_path = resolve_asset_path(self.img_path[:-4] + "_hover.png")
+        self.hover_img = pygame.image.load(hover_path)
+        self.hover_img = pygame.transform.scale(self.hover_img, (self.width, self.height))
+        image_path = resolve_asset_path(self.img_path)
+        self.img = pygame.image.load(image_path)
+        self.img = pygame.transform.scale(self.img, (self.width, self.height))
+        #need to calculate position from color?
+
+        #unnormalize radius
+        rad = rad * self.bkg_size[0] / 2
+        self.rel_pos = [self.pos[0] - math.cos(angle) * rad, self.pos[1] + math.sin(angle) * rad]
+        #rad = self.get_rad(self.rel_pos) / self.bkg_size[0] * 2
+        print(f"RAD AFTER IS {rad}")
+

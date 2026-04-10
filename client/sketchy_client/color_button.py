@@ -71,4 +71,3 @@ class ColorButton(Button):
         self.img_select = pygame.image.load(
             resolve_asset_path('assets/textures/color_button_select.png'))
         self.img_select = pygame.transform.scale(self.img_select, (self.width, self.height))
-

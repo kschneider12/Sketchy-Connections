@@ -1,8 +1,14 @@
+"""
+SliderDownButton file
+"""
 import pygame
 from .button import Button
 from .paths import resolve_asset_path
 
 class SlideDownButton(Button):
+    """This button is the slider for results. It can slide up
+    and down, and returns the value 0-1 of its position, such
+    that engine can reposition all objects it applies to."""
     def __init__(self, pos, y_bounds, size, funct, z=1):
         y_bounds2 = [y_bounds[0][1], y_bounds[1][1]]
         img = 'assets/textures/slide_down_bar.png'
@@ -33,13 +39,16 @@ class SlideDownButton(Button):
 
             if not mouse_state[0]:
                 self.dragging = False
-            #return offset positioning for objects that it applies to (make an optional parameter meaning slide)
+            #return offset positioning for objects that it applies to
+            # (make an optional parameter meaning slide)
             #print((self.pos[1] - self.bounds[0]) / (self.bounds[1] - self.bounds[0]))
-        return [self.command, (-1 * (self.pos[1] - self.bounds[0]) / (self.bounds[1] - self.bounds[0]) + 1) * 1.0]
+        return [self.command, (-1 * (self.pos[1] - self.bounds[0]) /
+                               (self.bounds[1] - self.bounds[0]) + 1) * 1.0]
 
     def resize(self, wid, ht):
         rel_pos = (self.pos[1] - self.bounds[0]) / (self.bounds[1] - self.bounds[0])
-        self.width, self.height = self.init_size[0] * wid / 1000, self.init_size[1] * ht / 1000 * 16 / 10
+        self.width, self.height = (self.init_size[0] * wid / 1000,
+                                   self.init_size[1] * ht / 1000 * 16 / 10)
         self.pos[0] = int(self.init_pos[0] * wid / 100)
 
         hover_path = resolve_asset_path(self.img_path[:-4] + "_hover.png")
@@ -52,4 +61,3 @@ class SlideDownButton(Button):
         new_bounds = self.init_y_bounds[0] * ht / 100, self.init_y_bounds[1] * ht / 100
         self.bounds = [new_bounds[0] + self.height / 2, new_bounds[1] - self.height / 2]
         self.pos[1] = rel_pos * (self.bounds[1] - self.bounds[0]) + self.bounds[0]
-

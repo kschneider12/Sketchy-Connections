@@ -4,6 +4,7 @@ import pygame.mixer
 from .paths import resolve_asset_path
 
 class SoundManager:
+    """SoundManager organizes all sounds and plays them accordingly"""
     _instance = None
 
     def __init__(self):
@@ -48,7 +49,7 @@ class SoundManager:
 
     @staticmethod
     def get_instance():
+        """Returns sound manager instance"""
         if SoundManager._instance is None:
             SoundManager._instance = SoundManager()
         return SoundManager._instance
-

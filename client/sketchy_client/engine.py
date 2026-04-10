@@ -4,10 +4,10 @@ elements for the player. All other elements pass through
 Engine, as it is the connector between frontend and
 backend
 """
-import pygame
-import pyautogui
+
 import csv
 import random
+import pygame
 from pygame.constants import K_KP_ENTER # pylint: disable=no-name-in-module
 
 from sketchy_shared.types import PlayerData, RoomPhase, RoomData, BookData, EntryData, EntryType
@@ -40,8 +40,6 @@ class Engine:
         # flags
         self.exit = False
         self.drawing = False
-        #self.screen_len = pyautogui.size()[0] / 2
-        #self.screen_ht = pyautogui.size()[1] / 2
         self.screen_len = 720
         self.screen_ht = 450
         #pygame info
@@ -50,7 +48,8 @@ class Engine:
         pygame.display.set_icon(icon)
 
         # 4. Set the window title (optional)
-        self.screen = pygame.display.set_mode((self.screen_len,self.screen_ht), pygame.RESIZABLE)
+        self.screen = pygame.display.set_mode(
+            (self.screen_len,self.screen_ht), pygame.RESIZABLE) # pylint: disable=no-member
         pygame.display.set_caption("Sketchy Connections")
         self.clock = pygame.time.Clock()
 
@@ -127,7 +126,8 @@ class Engine:
         self.screen_len, self.screen_ht = self.screen.get_size()
         self.switch_to_welcome()
         while True:
-            if self.screen_len != self.screen.get_size()[0] or self.screen_ht != self.screen.get_size()[1]:
+            if (self.screen_len != self.screen.get_size()[0] or
+                    self.screen_ht != self.screen.get_size()[1]):
                 self.results_height /= self.screen_ht
                 self.screen_len, self.screen_ht = self.screen.get_size()
                 self.results_height *= self.screen_ht
@@ -182,6 +182,7 @@ class Engine:
             self.clock.tick(60)
 
     def update_room(self):
+        """Updates the room with the current values"""
         self.room = self.network.room
 
         if self.room.game:
@@ -222,7 +223,7 @@ class Engine:
                     self.mouse_buttons[0] = False
                 elif event.button == 3:
                     self.mouse_buttons[1] = False
-            elif event.type == pygame.MOUSEWHEEL:
+            elif event.type == pygame.MOUSEWHEEL: # pylint: disable=no-member
                 self.mouse_buttons[2] = event.y
 
             # added by Mat for drawing window
@@ -338,7 +339,8 @@ class Engine:
     def np(self, x, y):
         """short for normalize position, this normalizes UI elements
         regardless of screen size"""
-        return [int(x * self.screen_len / 100), int(y * self.screen_ht / 100), (x,y), self.screen_ht]
+        return [int(x * self.screen_len / 100),
+                int(y * self.screen_ht / 100), (x,y), self.screen_ht]
 
     # normalize scale in relation to screen size
     def ns(self, x, y):
@@ -349,7 +351,9 @@ class Engine:
     def nl(self, x):
         """short for normalize length, this normalizes draw window length
         regardless of screen size"""
-        return x * self.screen_len / 1000.0, x * self.screen_len / 1000.0 * 175/325.0, (x, x * 175/325.0)
+        return (x * self.screen_len / 1000.0,
+                x * self.screen_len / 1000.0 * 175/325.0,
+                (x, x * 175/325.0))
 
 
 #------------------------------------------------------------------------------------------------
@@ -395,7 +399,8 @@ class Engine:
                           DefaultUI(self.np(80, 18), self.ns(169 * 2.0, 97 * 2.0),
                                     "assets/textures/title.png"),
                           PlayerDisplay(self.np(4, 55), self.ns(30 * 2.4, 241 * 2.4),
-                                        (self.screen_len, self.screen_ht), self.network.room.players),
+                                        (self.screen_len, self.screen_ht),
+                                        self.network.room.players),
                           DefaultUI(self.np(35, 5), self.ns(65 * 2, 23 * 2),
                                     "assets/textures/code.png"),
                           #DefaultUI(self.np(50, 5.5), self.ns(160, 60),
@@ -485,7 +490,7 @@ class Engine:
         pixels = []
         if self.current_entry:
             #print("WE HAVE PIXELS")
-            assert(isinstance(self.current_entry.content, list))
+            assert isinstance(self.current_entry.content, list)
             pixels = self.current_entry.content.copy()
 
         self.active_animations = [
@@ -497,10 +502,9 @@ class Engine:
         self.pause_client()
 
     def switch_to_draw(self):
-        pygame.mouse.set_visible(False)
         """switches the scene to drawing, initializing the UI."""
+        pygame.mouse.set_visible(False)
         SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
-        # note from Mat - this makes the drawing window displayable, not fully functional
         self.scene = "drawing"
         self.active_ui = [TimeBar(self.np(94,58), self.ns(60 * 1.5, 320 * 1.5), self.draw_length),
                           TextUI(self.np(50, 13), self.ns(1, 65),
@@ -556,8 +560,12 @@ class Engine:
             self.active_buttons.insert(0, ColorButton(
                 self.np(72.5 + offset * 3, 48.5), self.ns(45, 45), self.set_color, "brown"))
         else:
-            self.active_buttons.insert(0,ColorWheel(self.np(79, 36), (self.ns(180, 180)), self.set_color))
-            self.active_buttons.insert(1,BrightnessSlider(self.np(85, 69), (self.ns(1.2 * 50, 4 * 50)), self.set_brightness))
+            self.active_buttons.insert(0,ColorWheel(self.np(79, 36),
+                                                    (self.ns(180, 180)), self.set_color))
+            self.active_buttons.insert(1,
+                                       BrightnessSlider(self.np(85, 69),
+                                                        (self.ns(1.2 * 50, 4 * 50)),
+                                                        self.set_brightness))
         # Mat changed this line
         self.active_animations = []
         self.active_drawings = [DrawingWindow(self.np(36,53), self.nl(640))]
@@ -625,7 +633,8 @@ class Engine:
             TextUI(self.np(50, 61), self.ns(1, 30),
                    "Email support coming soon.", (0, 0, 0)),
             TextUI(self.np(50, 73.5), self.ns(1, 20),
-                   "Many thanks from the Fun2Play Developments LLC Inc., (for now) team:", (0, 0, 0)),
+                   "Many thanks from the Fun2Play Developments LLC Inc., (for now) team:",
+                   (0, 0, 0)),
             TextUI(self.np(50, 77.5), self.ns(1, 20),
                    "Kent Schneider, Mathew Neves, Joe Liotta, James LeMahieu", (0, 0, 0)),
         ]
@@ -783,10 +792,6 @@ class Engine:
             self.curr_color[1] * val,
             self.curr_color[2] * val]
 
-    def check_box_test(self, val):
-        """temporary test empty function"""
-        return
-
     def set_brush_thickness(self, num):
         """sets the brush thickness while drawing. Primarily used by buttons"""
         self.curr_brush = num
@@ -882,7 +887,7 @@ class Engine:
         self.draw_order.insert(index, TransparentUI(self.np(50, 50),
                                             self.ns(self.screen_len * 2, self.screen_ht * 2),
                                             (0, 0, 0), 150))
-        if self.scene == "writing" or self.scene == "guessing":
+        if self.scene in ("writing", "guessing"):
             with open(resolve_asset_path("assets/guess_prompts.csv"), mode='r', newline='') as file:
                 text = random.choice(list(csv.reader(file)))
             self.draw_order.insert(index + 1, TextUI(self.np(50, 40),
@@ -905,12 +910,7 @@ class Engine:
         #print(self.results_height / self.screen_ht) # 0.248 -> 0.408 -> 0.496
         #print(results_window_ht[1] / self.screen_ht) # 0.9
         mult =  self.results_height - results_window_ht[1]
-        if mult < 0:
-            mult = 0
-        #print("DATA:")
-        #print(mult)
-        #print(offset)
-        #print(offset * mult)
+        mult = max(mult, 0)
         for element in self.draw_order:
             if not isinstance(element, SlideDownButton) and element.draggable:
                 element.pos[1] = (element.init_y + offset * mult)
@@ -921,6 +921,7 @@ class Engine:
         self.exit = True
 
     def leave_room(self):
+        """leaves the room"""
         if self.scene != "info":
             self.network.leave_room()
         self.room.phase = RoomPhase.LOBBY
@@ -1023,9 +1024,9 @@ class Engine:
                     button2.init_pos = self.np(25, 93)[2]
                     break
         curr_book = self.results_shown // len(self.books[0].entries)
-        id = self.books[curr_book].owner_id
+        id_ = self.books[curr_book].owner_id
         for player in self.room.players:
-            if player.id == id:
+            if player.id == id_:
                 self.curr_book_id = player.id
 
         data = self.books[curr_book].entries[self.results_shown % len(self.books[0].entries)]
@@ -1075,7 +1076,8 @@ class Engine:
 
     def download_image(self, data):
         pygame.image.save(data.grid.surface,
-                          f"saved_drawings/screenshot_{self.network.room.room_id}"
+                          f"saved_drawings/screenshot_"
+                          f"{self.network.room.room_id}"
                           f".{int(random.random() * 10000)}.png")
 
 

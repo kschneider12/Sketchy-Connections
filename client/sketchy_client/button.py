@@ -14,7 +14,8 @@ class Button:
     what function it is connected to, and if it has a different texture when it is
     hovered over.
     """
-    def __init__(self, position, size, img, funct, multi_texture = True, z = 0, draggable = False, pause_override = False):
+    def __init__(self, position, size, img, funct, multi_texture = True,
+                 z = 0, draggable = False, pause_override = False):
         self.pos = position
         self.pause_override = pause_override
         self.z = z
@@ -56,10 +57,10 @@ class Button:
         return False
 
     def draw(self, screen, curr_color):
-        self.sounds = []
         """
         draw is how buttons are drawn on screen, depending on multiple textures or not.
         """
+        self.sounds = []
         if self.curr_hover and self.hover_img:
             image = self.hover_img
         else:
@@ -97,7 +98,8 @@ class Button:
     def resize(self, wid, ht):
         """resizes the button ui on screen"""
         self.pos = [int(self.init_pos[0] * wid / 100), int(self.init_pos[1] * ht / 100)]
-        self.width, self.height = self.init_size[0] * wid / 1000, self.init_size[1] * ht / 1000 * 16 / 10
+        self.width, self.height = (self.init_size[0] * wid / 1000,
+                                   self.init_size[1] * ht / 1000 * 16 / 10)
         self.init_y = self.pos[1]
         if self.hover_img:
             hover_path = resolve_asset_path(self.img_path[:-4] + "_hover.png")

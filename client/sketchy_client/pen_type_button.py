@@ -7,6 +7,8 @@ from .paths import resolve_asset_path
 from .button import Button
 
 class PenTypeButton(Button):
+    """This returns the type of pen the user uses, and is its own
+    class due to its behavior and communication with other buttons"""
     def __init__(self, position, size, img, funct, selection):
         super().__init__(position,size,img,funct)
         self.selection = selection

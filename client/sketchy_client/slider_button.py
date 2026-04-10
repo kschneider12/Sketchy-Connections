@@ -25,7 +25,8 @@ class SliderButton(Button):
         self.val = val
         img = resolve_asset_path('assets/textures/slider_ball.png')
         self.bkg = DefaultUI(position, size, resolve_asset_path('assets/textures/slider_bar.png'))
-        super().__init__(position, (size[1], size[1], (size[2][1], size[2][1])), img, funct, z=z, pause_override=pause_override)
+        super().__init__(position, (size[1], size[1], (size[2][1], size[2][1])),
+                         img, funct, z=z, pause_override=pause_override)
         self.bounds = [self.pos[0] + self.bkg_size[0] / 2 - self.width / 2,
                        self.pos[0] - self.bkg_size[0] / 2 + self.width / 2]
 

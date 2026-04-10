@@ -21,7 +21,8 @@ class ColorWheel(Button):
         self.dragging = False
         self.color = [255,255,255]
         img = 'assets/textures/slider_ball.png'
-        self.bkg2 = DefaultUI(position, size, resolve_asset_path('assets/textures/colorwheel_bkg.png'))
+        self.bkg2 = DefaultUI(position, size, resolve_asset_path
+        ('assets/textures/colorwheel_bkg.png'))
         super().__init__(position, (size[0] / 20, size[1] / 20, size[2]), img, funct)
 
     def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state, paused):
@@ -104,7 +105,8 @@ class ColorWheel(Button):
         self.bkg2.resize(wid, ht)
         self.bkg_size = self.bkg2.width, self.bkg2.height
         self.pos = self.bkg2.pos
-        self.width, self.height = self.init_size[0] * wid / 1000, self.init_size[1] * ht / 1000 * 16 / 10
+        self.width, self.height = (self.init_size[0] * wid / 1000,
+                                   self.init_size[1] * ht / 1000 * 16 / 10)
         self.width /= 20
         self.height /= 20
         self.init_y = self.pos[1]

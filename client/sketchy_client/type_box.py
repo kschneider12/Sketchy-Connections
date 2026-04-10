@@ -6,8 +6,6 @@ import pygame
 
 from .button import Button
 from .paths import asset_path
-from .paths import resolve_asset_path
-
 
 FONT_PATH = asset_path("fonts", "MoreSugar-Regular.ttf")
 

@@ -3,8 +3,8 @@ TimeBar is a child of DefaultUI, but has its own file due to its complexity.
 It tracks time in many phases of the game, and counts down, returning True when the
 time runs out.
 """
-import pygame
 import time as t
+import pygame
 
 from .default_ui import DefaultUI
 from. sound_manager import SoundManager
@@ -37,16 +37,17 @@ class TimeBar(DefaultUI):
                          self.pos[1] - self.height / 1.95 + (self.start_time - self.time)
                          * (self.height / self.start_time * 0.964))
 
-        color = (255 - int(255 * self.time / self.start_time), int(255 * self.time / self.start_time), 0)
+        color = (255 - int(255 * self.time / self.start_time),
+                 int(255 * self.time / self.start_time), 0)
         for val in color:
             if val < 0 or val > 255:
                 color = (0,0,0)
-        #pygame.draw.rect(screen, color,
-                         #pygame.Rect(self.pos[0] - self.width / 2.17, self.bar_pos[1] + self.height * 0.02,
-                                     #self.width * 9/10, self.height - self.bar_pos[1] + self.height / 4.2))
         pygame.draw.rect(screen, color,
-                         pygame.Rect(self.pos[0] - self.width / 2.17, self.bar_pos[1] + self.bar_img.get_height() / 2.0,
-                                     self.width * 9 / 10, ((self.pos[1] + self.height / 2.0) - self.bar_pos[1]) - self.bar_img.get_height()))
+                         pygame.Rect(self.pos[0] - self.width / 2.17, self.bar_pos[1]
+                                     + self.bar_img.get_height() / 2.0,
+                                     self.width * 9 / 10,
+                                     ((self.pos[1] + self.height / 2.0) - self.bar_pos[1])
+                                     - self.bar_img.get_height()))
         screen.blit(self.bar_img, self.bar_pos)
         screen.blit(self.img, (self.pos[0] - self.width / 2, self.pos[1] - self.height / 2))
 
@@ -74,4 +75,3 @@ class TimeBar(DefaultUI):
         width, height = self.init_size[0] * wid / 1000, self.init_size[1] * ht / 1000 * 16 / 10
         self.bar_img = pygame.image.load(resolve_asset_path("assets/textures/time_line.png"))
         self.bar_img = pygame.transform.scale(self.bar_img, (width * 9 / 10, height * 1 / 25))
-

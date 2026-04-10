@@ -85,7 +85,6 @@ class SliderButton(Button):
         self.bounds = [self.pos[0] + self.bkg_size[0] / 2 - self.width / 2,
                        self.pos[0] - self.bkg_size[0] / 2 + self.width / 2]
 
-        #THIS IS ISSUE!
         self.rel_pos[0] = ((self.max - self.val) * (self.bounds[1] - self.bounds[0])
                             / (self.max - self.min) + self.bounds[0])
         self.rel_pos[1] =self.pos[1]

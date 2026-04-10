@@ -445,9 +445,9 @@ class DrawingWindow:
         """
         return self.drawn_pixels
 
-    def resize(self, len, ht):
-        pos = [int(self.init_pos[0] * len / 100), int(self.init_pos[1] * ht / 100)]
-        size = self.init_size[0] * len / 1000.0, self.init_size[0] * len / 1000.0 * 175 / 325.0
+    def resize(self, wid, ht):
+        pos = [int(self.init_pos[0] * wid / 100), int(self.init_pos[1] * ht / 100)]
+        size = self.init_size[0] * wid / 1000.0, self.init_size[0] * wid / 1000.0 * 175 / 325.0
         self.center = pos
         self.size = size
 
@@ -473,7 +473,9 @@ class AnimationWindow:
         """Initialize the animation window."""
         self.center = [center_pos[0], center_pos[1]]
         self.init_y = center_pos[1]
-        self.size = size
+        self.size = size[:2]
+        self.init_size = size[2]
+        self.init_pos = center_pos[2]
         self.draggable = draggable
         self.z = z
 
@@ -537,6 +539,33 @@ class AnimationWindow:
             curr_color (tuple): Not used but needed to match game syntax.
         """
         self.grid.draw(screen)
+
+    def resize(self, wid, ht):
+        """resizes the animation window based on new dimensions
+         Args:
+            wid ,ht : New dimensions of screen for scaling
+        """
+        pos = [int(self.init_pos[0] * wid / 100), int(self.init_pos[1] * ht / 100)]
+        size = [self.init_size[0] * wid / 1000.0, self.init_size[0] * wid / 1000.0 * 175 / 325.0]
+        self.center = pos
+        self.size = size
+
+        self.cell_width = size[0] / GRID_WIDTH
+        self.cell_height = size[1] / GRID_HEIGHT
+        self.cell_size = min(self.cell_width, self.cell_height)
+
+        self.pixel_width = int(self.cell_size * GRID_WIDTH)
+        self.pixel_height = int(self.cell_size * GRID_HEIGHT)
+
+        self.pos = [
+            self.center[0] - self.pixel_width / 2,
+            self.center[1] - self.pixel_height / 2
+        ]
+        self.init_y = pos[1]
+        self.grid.surface = pygame.transform.scale(self.grid.surface, self.size)
+        self.grid = Grid(self.pos, self.cell_size, self.grid.cells, self.grid.surface)
+
+
 
 
 def get_clicked_pos(position, cell_size):

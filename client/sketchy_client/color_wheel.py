@@ -101,13 +101,9 @@ class ColorWheel(Button):
         #store angle from center, and radius? (For ball position?)
         angle = self.get_angle()
         rad = self.get_rad(self.rel_pos) / self.bkg_size[0] * 2
-        print(f"RAD BEFORE IS {rad}")
-
         self.bkg2.resize(wid, ht)
         self.bkg_size = self.bkg2.width, self.bkg2.height
-        print(self.pos)
         self.pos = self.bkg2.pos
-        print(self.pos)
         self.width, self.height = self.init_size[0] * wid / 1000, self.init_size[1] * ht / 1000 * 16 / 10
         self.width /= 20
         self.height /= 20
@@ -124,5 +120,3 @@ class ColorWheel(Button):
         rad = rad * self.bkg_size[0] / 2
         self.rel_pos = [self.pos[0] - math.cos(angle) * rad, self.pos[1] + math.sin(angle) * rad]
         #rad = self.get_rad(self.rel_pos) / self.bkg_size[0] * 2
-        print(f"RAD AFTER IS {rad}")
-

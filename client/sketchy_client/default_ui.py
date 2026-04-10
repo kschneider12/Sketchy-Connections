@@ -11,16 +11,18 @@ from .paths import asset_path
 class DefaultUI:
     """The parent and building block for UI- stores positioning and
     can draw to the screen appropriately"""
-    def __init__(self, position, size, img, z = 0, draggable = False, rotate=0):
+    def __init__(self, position, size, img, z = 0, draggable = False, rotate=0, nl=False):
         self.z = z
         self.draggable = draggable
         self.init_y = position[1]
+        self.init_y_norm = position[2][1]
         self.pos = [position[0], position[1]]
         self.init_pos = position[2]
         self.init_size = size[2]
         self.width = size[0]
         self.height = size[1]
         self.img = None
+        self.nl = nl
         self.img_path = img
         self.rotate = rotate
         if img:
@@ -33,21 +35,30 @@ class DefaultUI:
         screen.blit(self.img, (self.pos[0] - self.width / 2, self.pos[1] - self.height / 2))
 
     def resize(self, wid, ht):
-        """resizes the button ui on screen"""
+        """resizes the default ui on screen"""
         self.pos = [int(self.init_pos[0] * wid / 100), int(self.init_pos[1] * ht / 100)]
-        self.width, self.height = self.init_size[0] * wid / 1000, self.init_size[1] * ht / 1000 * 16/10
-        self.init_y = self.pos[1]
+        if self.draggable:
+            #print(f'ITEM: {self.img_path}')
+            #print(self.init_y)
+            #print(self.init_y_norm)
+            self.init_y = (self.init_y_norm * ht / 100)
+            #print(self.init_y)
+        if not self.nl:
+            self.width, self.height = self.init_size[0] * wid / 1000, self.init_size[1] * ht / 1000 * 16/10
+        else:
+            self.width, self.height = self.init_size[0] * wid / 1000.0, self.init_size[0] * wid / 1000.0 * 175 / 325.0
         if self.img:
             self.img = pygame.image.load(resolve_asset_path(self.img_path))
             self.img = pygame.transform.scale(self.img, (self.width, self.height))
             self.img = pygame.transform.rotate(self.img, self.rotate)
+
 
 class MouseStick(DefaultUI):
     """Extending DefaultUI, this UI moves on the mouse for drawing, such as paint bucket
     or paintbrush"""
     def __init__(self, size):
         self.state = "brush"
-        DefaultUI.__init__(self, [0,0, (0,0)], size, resolve_asset_path("assets/textures/pen_mouse.png"), 100)
+        DefaultUI.__init__(self, [0,0, (0,0), 0], size, resolve_asset_path("assets/textures/pen_mouse.png"), 100)
         self.offset = -1 * self.width / 2, self.height / 2
 
     def behave(self, mouse_pos, pen_state):
@@ -87,6 +98,7 @@ class TransparentUI(DefaultUI):
         screen.blit(self.surface, (self.pos[0] - self.width / 2, self.pos[1] - self.height / 2))
 
     def resize(self, wid, ht):
+        """resizes transparent ui on the screen"""
         self.pos = [int(self.init_pos[0] * wid / 100), int(self.init_pos[1] * ht / 100)]
         self.width, self.height = self.init_size[0] * wid / 1000, self.init_size[1] * ht / 1000 * 16 / 10
         self.rect = pygame.Rect(self.pos[0], self.pos[1], self.width, self.height)
@@ -139,27 +151,21 @@ class TextUI(DefaultUI):
                                         self.pos[1] - self.height / 2))
 
     def wrap_text(self, text):
+        """wraps the text to fit screen"""
         words = text.split()
         text_surface = self.font.render(text, True, self.color)
         can_split = True
         count = len(words)
-        #print(f'WORDS: {words}')
-        new_string = ""
         while text_surface.get_width() > self.wrapping:
             new_string = ""
             for word in words[:count]:
                 new_string += word + " "
             text_surface = self.font.render(new_string, True, self.color)
-            #print(text_surface.get_width() > self.wrapping)
-            #print(text_surface.get_width())
-            #print(self.wrapping)
             count -= 1
             if count == 0:
                 can_split = False
-                #print("Can't split the text")
                 break
         if can_split:
-            #print("SUCCESSFUL SPLIT!")
             second_string = ""
             for word in words[count + 1:]:
                 second_string += word + " "
@@ -196,6 +202,7 @@ class PlayerDisplay(DefaultUI):
         self.active_players = active_players
 
     def make_blue(self, player):
+        """sets current player to have a blue icon"""
         self.blue_player = player
 
     def draw(self, screen, curr_color=None):

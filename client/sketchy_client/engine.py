@@ -44,12 +44,6 @@ class Engine:
         #self.screen_ht = pyautogui.size()[1] / 2
         self.screen_len = 720
         self.screen_ht = 450
-        #
-        #720x450
-        #936x585
-        #1920x1080
-        print(self.screen_len, self.screen_ht)
-
         #pygame info
         icon = pygame.image.load(resolve_asset_path('assets/textures/desktop_icon.png'))
         # 3. Set the icon BEFORE creating the window
@@ -101,7 +95,7 @@ class Engine:
         self.room_code_attempt = None
         #self.tool_text = "brush"
         self.background = DefaultUI(self.np(50, 50),
-                                     self.ns(16, 10),
+                                     self.ns(self.screen_len * 1.39,self.screen_ht * 1.39),
                                      "assets/textures/background.png")
         self.simple_colors = False
         self.prompt_length = 20
@@ -134,9 +128,14 @@ class Engine:
         self.switch_to_welcome()
         while True:
             if self.screen_len != self.screen.get_size()[0] or self.screen_ht != self.screen.get_size()[1]:
+                self.results_height /= self.screen_ht
                 self.screen_len, self.screen_ht = self.screen.get_size()
+                self.results_height *= self.screen_ht
                 for elem in self.draw_order:
                     elem.resize(self.screen_len, self.screen_ht)
+                    if isinstance(elem, TextUI) and elem.wrapping != 0:
+                        elem.wrapping = self.ns(550, 0)[0]
+                self.background.resize(self.screen_len, self.screen_ht)
             self.update_room()
             if self.network_error is not None:
                 print(self.network_error)
@@ -150,7 +149,6 @@ class Engine:
             self.mouse_buttons_last_frame[1] = self.mouse_buttons[1]
             self.get_inputs()
             self.manage_buttons()
-            #TODO FIX BACKDROP IMAGE SIZING
             if self.room.phase == RoomPhase.PLAYING:
                 if self.room.game and self.scene != self.room.game.phase:
                     self.submitted = False
@@ -241,7 +239,7 @@ class Engine:
         """UI manager that draws UI to the screen. Also
         handles TimeBar, as this is where the UI TimeBar is
         accessed every frame."""
-        self.screen.fill((50, 100, 100))
+        #self.screen.fill((50, 100, 100))
         self.background.draw(self.screen)
         for elem in self.draw_order:
             if isinstance(elem, TimeBar):
@@ -340,7 +338,7 @@ class Engine:
     def np(self, x, y):
         """short for normalize position, this normalizes UI elements
         regardless of screen size"""
-        return [int(x * self.screen_len / 100), int(y * self.screen_ht / 100), (x,y)]
+        return [int(x * self.screen_len / 100), int(y * self.screen_ht / 100), (x,y), self.screen_ht]
 
     # normalize scale in relation to screen size
     def ns(self, x, y):
@@ -351,7 +349,7 @@ class Engine:
     def nl(self, x):
         """short for normalize length, this normalizes draw window length
         regardless of screen size"""
-        return x * self.screen_len / 1000.0, x * self.screen_len / 1000.0 * 175/325.0, (x, x)
+        return x * self.screen_len / 1000.0, x * self.screen_len / 1000.0 * 175/325.0, (x, x * 175/325.0)
 
 
 #------------------------------------------------------------------------------------------------
@@ -379,7 +377,6 @@ class Engine:
                    "assets/textures/exit.png", self.quit_game),
             TypeBox(self.np(50, 90), self.ns(1300 * 0.6, 110 * 0.6),
                     "assets/textures/text_box_5.png", self.set_name,"Enter A Name",15)]
-        #SlideDownButton(self.np(90, 0), (self.np(0, 20), self.np(0,80)), self.ns(10,50), self.slider_control)
         self.active_drawings = []
         self.active_animations = []
         self.draw_order = self.active_buttons + self.active_drawings +\
@@ -470,10 +467,10 @@ class Engine:
         self.scene = "guessing"
         pygame.mouse.set_visible(True)
         self.active_ui = [TimeBar(self.np(92,43), self.ns(60 * 1.5, 270 * 1.5), self.prompt_length),
-                          DefaultUI(self.np(44, 44), self.ns(845 * 0.96, 455 * 0.96),
+                          DefaultUI(self.np(44, 45), self.ns(850 * 0.96, 455 * 0.96),
                                     "assets/textures/back_template.png"),
-                          DefaultUI(self.np(44, 44), self.ns(845 * 0.91, 455 * 0.91),
-                                    "assets/textures/color_button.png"),
+                          DefaultUI(self.np(44, 45), self.ns(845 * 0.85, 455 * 0.85),
+                                    "assets/textures/color_button.png", nl=True),
                           DefaultUI(self.np(50, 5), self.ns(240, 50),
                                     "assets/textures/guess_it.png")
                           ]
@@ -492,7 +489,7 @@ class Engine:
             pixels = self.current_entry.content.copy()
 
         self.active_animations = [
-            AnimationWindow(self.np(44, 44), self.ns(845 * 0.9, 455 * 0.9), pixels, True)
+            AnimationWindow(self.np(44, 45), self.ns(845 * 0.84, 455 * 0.84), pixels, False)
         ]
         self.active_drawings = []
         self.draw_order = self.active_buttons + self.active_ui + \
@@ -510,7 +507,7 @@ class Engine:
                             self.current_entry.content, (0, 0, 0),
                                  dynamic_size=self.screen_len * 0.98),
                           DefaultUI(self.np(36, 53), self.nl(660),
-                                "assets/textures/color_button.png"),
+                                "assets/textures/color_button.png", nl=True),
                           DefaultUI(self.np(50, 5), self.ns(220, 50),
                                     "assets/textures/draw_it.png"),
                           MouseStick(self.ns(20, 20))]
@@ -577,20 +574,20 @@ class Engine:
         self.active_ui = [PlayerDisplay(self.np(4, 55), self.ns(30 * 2.4, 241 * 2.4),
                                         (self.screen_len, self.screen_ht),
                                         self.network.room.players, True),
-                          DefaultUI(self.np(88, 20), self.ns(520 * 2.2, 300 * 2.2),
-                                    "assets/textures/back_template.png", rotate=90),
+                          DefaultUI(self.np(64, 20), self.ns(300 * 2.2, 520 * 2.2),
+                                    "assets/textures/back_template_vertical.png"),
                           DefaultUI(self.np(13, 4), self.ns(171 * 1.2, 44 * 1.2),
                                     "assets/textures/results.png")
                           ]
         self.active_buttons = []
         self.active_buttons.append(SlideDownButton(self.np(95, 0),
-                                         (self.np(0, 5),
-                                                   self.np(0,95)),
+                                         [self.np(0, 5),
+                                                   self.np(0,95)],
                                                    self.ns(20,150), self.slider_control, z=2))
         if self.player.is_host:
             self.active_buttons.append(Button(self.np(25, 93), (self.ns(75 * 1.5, 51 * 1.5)),
                    "assets/textures/next.png", self.broadcast_next_result))
-        self.active_buttons.append(Button((90000,90000), (self.ns(75 * 1.5, 51 * 1.5)),
+        self.active_buttons.append(Button((self.np(90000,90000)), (self.ns(75 * 1.5, 51 * 1.5)),
                                           "assets/textures/lobby_return.png", self.return_to_lobby))
 
         self.active_animations = []
@@ -794,18 +791,15 @@ class Engine:
         """sets the brush thickness while drawing. Primarily used by buttons"""
         self.curr_brush = num
         self.curr_tool = "brush"
-        # print("Brush thickness:", self.curr_brush)
 
     def set_fill_tool(self):
         """sets the tool to fill. Primarily used by buttons"""
         self.curr_brush = 0
         self.curr_tool = "fill"
-        # print("Current tool:", self.curr_tool)
 
     def set_brush_tool(self):
         """Sets tool to brush"""
         self.curr_tool = "brush"
-        # print("Current tool:", self.curr_tool)
 
     def set_eraser(self, enabled):
         """Sets the current color to eraser values. Primarily used by buttons"""
@@ -906,10 +900,17 @@ class Engine:
         based on the offset from the UI element"""
         # compare results height to the height of the window: A constant for now.
         # The excess height is
-        results_window_ht = self.ns(0, 600)
+        results_window_ht = self.np(0, 90)
+        #print("VALS")
+        #print(self.results_height / self.screen_ht) # 0.248 -> 0.408 -> 0.496
+        #print(results_window_ht[1] / self.screen_ht) # 0.9
         mult =  self.results_height - results_window_ht[1]
         if mult < 0:
             mult = 0
+        #print("DATA:")
+        #print(mult)
+        #print(offset)
+        #print(offset * mult)
         for element in self.draw_order:
             if not isinstance(element, SlideDownButton) and element.draggable:
                 element.pos[1] = (element.init_y + offset * mult)
@@ -996,12 +997,12 @@ class Engine:
         self.draw_order = sorted(self.draw_order, key=lambda elem: elem.z)
         if (self.results_shown % len(self.books[0].entries)) == 0:
             for button in self.active_buttons:
-                if (button.pos == self.np(25, 93) and self.player.is_host and
+                if (button.img_path == "assets/textures/next.png" and self.player.is_host and
                         self.results_shown != (len(self.books[0].entries) * len(self.books))):
                     button.replace_texture("assets/textures/next_book.png")
-        elif (self.results_shown % len(self.books[0].entries)) == 1 and self.player.is_host:
+        elif (self.results_shown % len(self.books[0].entries)) > 0 and self.player.is_host:
             for button in self.active_buttons:
-                if button.pos == self.np(25, 93):
+                if button.img_path == "assets/textures/next.png":
                     button.replace_texture("assets/textures/next.png")
 
     def get_next_element(self):
@@ -1011,13 +1012,15 @@ class Engine:
                 len(self.books) - 1):
             for button in self.active_buttons:
                 #swap button!
-                if button.pos == self.np(25, 93):
-                    button.pos = (1000000, 1000000)
+                if button.img_path == "assets/textures/next.png":
+                    button.pos = self.np(1000000, 1000000)
+                    button.init_pos = self.np(1000000, 1000000)[2]
                     button.active = False
                     break
             for button2 in self.active_buttons:
-                if button2.pos == (90000,90000):
+                if button2.img_path == "assets/textures/lobby_return.png":
                     button2.pos = self.np(25, 93)
+                    button2.init_pos = self.np(25, 93)[2]
                     break
         curr_book = self.results_shown // len(self.books[0].entries)
         id = self.books[curr_book].owner_id
@@ -1033,9 +1036,10 @@ class Engine:
             self.active_results = []
 
         if data.type == "prompt":
-            #print("prompt!")
+            scale = 16
             for elem in self.active_results:
-                elem.init_y -= self.ns(0, 75)[1]
+                elem.init_y -= self.np(0, scale)[1]
+                elem.init_y_norm -= self.np(0, scale)[2][1]
             text = TextUI(self.np(35, 90), self.ns(0, 40),
                    data.content, (0, 0, 0), z=4, draggable=True,
                           animate=True, wrapping = self.ns(550,0)[0])
@@ -1043,21 +1047,23 @@ class Engine:
             self.active_results.append(DefaultUI(self.np(62, 90), self.ns(550 * 1.06, 125 * 0.9),
                                                  "assets/textures/results_box.png",
                                                  draggable=True, z=2))
-            self.results_height += self.ns(0, 75)[1]
+            self.results_height += self.np(0, scale)[1]
         elif data.type == "drawing":
+            scale = 55
             for elem in self.active_results:
-                elem.init_y -= self.ns(0, 330)[1]
+                elem.init_y -= self.np(0, scale)[1]
+                elem.init_y_norm -= self.np(0, scale)[2][1]
             #drawing
-            drawing = AnimationWindow(self.np(70, 52.2), self.ns(845 / 2, 455 / 2),
-                                     data.content, draggable=True, z=4, animated = True)
-            self.active_results.append(drawing)
+            #drawing = AnimationWindow(self.np(70, 52.2), self.ns(845 / 2, 455 / 2),
+                                     #data.content, draggable=True, z=4, animated = True)
+            #self.active_results.append(drawing)
             self.active_results.append(DefaultUI(self.np(70, 70), self.ns(845 / 1.9, 455 / 1.9),
                       "assets/textures/back_template.png", draggable=True, z=3))
-            self.active_results.append(Button(self.np(45, 70), self.ns(50, 50),
-                                                 "assets/textures/download.png",
-                                              lambda: self.download_image(drawing),
-                                              draggable=True, z=3))
-            self.results_height += self.ns(0, 330)[1]
+            #self.active_results.append(Button(self.np(45, 70), self.ns(50, 50),
+                                                 #"assets/textures/download.png",
+                                              #lambda: self.download_image(drawing),
+                                              #draggable=True, z=3))
+            self.results_height += self.np(0, scale)[1]
         return True
 
     def return_to_lobby(self):
@@ -1075,4 +1081,6 @@ class Engine:
 
 #TODO FIX FREEZE
 #TODO: When a player leaves the game mid-round, it can be problematic for submissions. When they try to close, should autosubmit or do something else? Joe problem?
+#TODO: When players leave lobby after game ends, host can still start round, and gets stuck after first scene
+#TODO: Host can't join game if they try to join first without enough players.
 #TODO: PLAYTEST!

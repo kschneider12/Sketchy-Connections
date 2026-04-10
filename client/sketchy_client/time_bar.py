@@ -25,7 +25,7 @@ class TimeBar(DefaultUI):
         self.returned = False
         super().__init__(position, size, img)
         self.bar_img = pygame.image.load(resolve_asset_path("assets/textures/time_line.png"))
-        self.bar_img = pygame.transform.scale(self.bar_img, (size[0] * 9/10, size[0] * 2/10))
+        self.bar_img = pygame.transform.scale(self.bar_img, (size[0] * 9/10, size[1] * 1/25))
 
 
     def draw(self, screen, curr_color = None):
@@ -71,3 +71,7 @@ class TimeBar(DefaultUI):
     def resize(self, wid, ht):
         """resizes the timebar"""
         super().resize(wid,ht)
+        width, height = self.init_size[0] * wid / 1000, self.init_size[1] * ht / 1000 * 16 / 10
+        self.bar_img = pygame.image.load(resolve_asset_path("assets/textures/time_line.png"))
+        self.bar_img = pygame.transform.scale(self.bar_img, (width * 9 / 10, height * 1 / 25))
+

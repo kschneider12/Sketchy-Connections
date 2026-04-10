@@ -123,7 +123,8 @@ class Grid:
         """
         if cell_data:
             return [
-                [GridCell(row, col, self.cell_size, cell_data[row][col].color) for col in range(GRID_WIDTH)]
+                [GridCell(row, col, self.cell_size,
+                          cell_data[row][col].color) for col in range(GRID_WIDTH)]
                 for row in range(GRID_HEIGHT)
             ]
         return [
@@ -446,8 +447,15 @@ class DrawingWindow:
         return self.drawn_pixels
 
     def resize(self, wid, ht):
+        """Resize the drawing window.
+
+        Args:
+            length (int): The length of the drawing window.
+            ht (int): The height of the drawing window.
+        """
         pos = [int(self.init_pos[0] * wid / 100), int(self.init_pos[1] * ht / 100)]
-        size = self.init_size[0] * wid / 1000.0, self.init_size[0] * wid / 1000.0 * 175 / 325.0
+        size = (self.init_size[0] * wid / 1000.0,
+                self.init_size[0] * wid / 1000.0 * 175 / 325.0)
         self.center = pos
         self.size = size
 
@@ -545,8 +553,10 @@ class AnimationWindow:
          Args:
             wid ,ht : New dimensions of screen for scaling
         """
-        pos = [int(self.init_pos[0] * wid / 100), int(self.init_pos[1] * ht / 100)]
-        size = [self.init_size[0] * wid / 1000.0, self.init_size[0] * wid / 1000.0 * 175 / 325.0]
+        pos = [int(self.init_pos[0] * wid / 100),
+               int(self.init_pos[1] * ht / 100)]
+        size = [self.init_size[0] * wid / 1000.0,
+                self.init_size[0] * wid / 1000.0 * 175 / 325.0]
         self.center = pos
         self.size = size
 

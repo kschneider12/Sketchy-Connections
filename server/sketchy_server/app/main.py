@@ -358,7 +358,7 @@ async def handle_client_message(
 
     if message_type == "restart_lobby":
         async with runtime.lock:
-            runtime.rooms.restart_room(room_code)
+            runtime.rooms.restart_lobby(room_code)
         await runtime.broadcast_room_state(room_code)
         return False
 

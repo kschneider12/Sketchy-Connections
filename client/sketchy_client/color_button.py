@@ -33,7 +33,7 @@ class ColorButton(Button):
         super().__init__(position, size, img, funct)
         self.img_select = pygame.image.load(
             resolve_asset_path('assets/textures/color_button_select.png'))
-        self.img_select = pygame.transform.scale(self.img_select, size)
+        self.img_select = pygame.transform.scale(self.img_select, size[:2])
 
     def behave(self, mouse_pos, just_clicked, keystrokes, mouse_state, paused):
         """
@@ -63,3 +63,12 @@ class ColorButton(Button):
                                      self.pos[1] - self.height / 2,
                                      self.width, self.height))
         screen.blit(image, (self.pos[0] - self.width / 2, self.pos[1] - self.height / 2))
+
+    def resize(self, wid, ht):
+        """Overrides Button.resize, including the
+        selection and color behavior"""
+        super().resize(wid, ht)
+        self.img_select = pygame.image.load(
+            resolve_asset_path('assets/textures/color_button_select.png'))
+        self.img_select = pygame.transform.scale(self.img_select, (self.width, self.height))
+

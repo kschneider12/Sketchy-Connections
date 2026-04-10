@@ -1083,4 +1083,5 @@ class Engine:
 #TODO: When a player leaves the game mid-round, it can be problematic for submissions. When they try to close, should autosubmit or do something else? Joe problem?
 #TODO: When players leave lobby after game ends, host can still start round, and gets stuck after first scene
 #TODO: Host can't join game if they try to join first without enough players.
+#TODO: Add color button server side implementation
 #TODO: PLAYTEST!

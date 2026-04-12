@@ -23,6 +23,7 @@ class Button:
         self.width = size[0]
         self.height = size[1]
         self.init_y = position[1]
+        self.init_y_norm = position[2][1]
         self.init_size = size[2]
         self.init_pos = position[2]
         image_path = resolve_asset_path(img)
@@ -101,6 +102,8 @@ class Button:
         self.width, self.height = (self.init_size[0] * wid / 1000,
                                    self.init_size[1] * ht / 1000 * 16 / 10)
         self.init_y = self.pos[1]
+        if self.draggable:
+            self.init_y = self.init_y_norm * ht / 100
         if self.hover_img:
             hover_path = resolve_asset_path(self.img_path[:-4] + "_hover.png")
             self.hover_img = pygame.image.load(hover_path)

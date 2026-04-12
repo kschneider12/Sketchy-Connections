@@ -481,6 +481,7 @@ class AnimationWindow:
         """Initialize the animation window."""
         self.center = [center_pos[0], center_pos[1]]
         self.init_y = center_pos[1]
+        self.init_y_norm = center_pos[2][1]
         self.size = size[:2]
         self.init_size = size[2]
         self.init_pos = center_pos[2]
@@ -572,6 +573,8 @@ class AnimationWindow:
             self.center[1] - self.pixel_height / 2
         ]
         self.init_y = pos[1]
+        if self.draggable:
+            self.init_y = self.init_y_norm * ht / 100
         self.grid.surface = pygame.transform.scale(self.grid.surface, self.size)
         self.grid = Grid(self.pos, self.cell_size, self.grid.cells, self.grid.surface)
 

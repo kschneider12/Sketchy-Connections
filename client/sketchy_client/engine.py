@@ -578,6 +578,9 @@ class Engine:
         """switches the scene to results, initializing the UI"""
         SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
         self.scene = "results"
+        self.results_shown = 0
+        self.active_results = []
+        self.results_height = 0
         pygame.mouse.set_visible(True)
         self.active_ui = [PlayerDisplay(self.np(4, 55), self.ns(30 * 2.4, 241 * 2.4),
                                         (self.screen_len, self.screen_ht),
@@ -685,13 +688,15 @@ class Engine:
     def start_game(self):
         """starts the game by calling network.
         Used when play button pressed."""
+        if len(self.room.players) < 3:
+            self.draw_order[-1] = TextUI(self.np(80, 81),
+                                         self.ns(0, 20),
+                                         "Need 3 Players to Start", (255, 255, 255))
+            return
         try:
             self.network.start_game()
         except NetworkClientError as exc:
             self.network_error = str(exc)
-            self.draw_order[-1] = TextUI(self.np(80, 81),
-                                         self.ns(0, 20),
-                                         str(exc), (255, 255, 255))
 
     def draw_text(self, vec):
         """Draws text on screen from draw_typing_text"""
@@ -1055,15 +1060,15 @@ class Engine:
                 elem.init_y -= self.np(0, scale)[1]
                 elem.init_y_norm -= self.np(0, scale)[2][1]
             #drawing
-            #drawing = AnimationWindow(self.np(70, 52.2), self.ns(845 / 2, 455 / 2),
-                                     #data.content, draggable=True, z=4, animated = True)
-            #self.active_results.append(drawing)
+            drawing = AnimationWindow(self.np(70, 52.2), self.ns(845 / 2, 455 / 2),
+                                     data.content, draggable=True, z=4, animated = True)
+            self.active_results.append(drawing)
             self.active_results.append(DefaultUI(self.np(70, 70), self.ns(845 / 1.9, 455 / 1.9),
                       "assets/textures/back_template.png", draggable=True, z=3))
-            #self.active_results.append(Button(self.np(45, 70), self.ns(50, 50),
-                                                 #"assets/textures/download.png",
-                                              #lambda: self.download_image(drawing),
-                                              #draggable=True, z=3))
+            self.active_results.append(Button(self.np(45, 70), self.ns(50, 50),
+                                                 "assets/textures/download.png",
+                                              lambda: self.download_image(drawing),
+                                              draggable=True, z=3))
             self.results_height += self.np(0, scale)[1]
         return True
 

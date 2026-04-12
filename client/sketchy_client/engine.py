@@ -538,27 +538,29 @@ class Engine:
             offset = 5
             self.curr_color = (0,0,0)
             self.active_buttons.insert(0,ColorButton(
-                self.np(72.5, 48.5), self.ns(45, 45), self.set_color, "black"))
+                self.np(72.5, 48.5), self.ns(45, 45), self.set_color, "purple"))
             self.active_buttons.insert(0, ColorButton(
-                self.np(72.5, 40), self.ns(45, 45), self.set_color, "green"))
+                self.np(72.5, 40), self.ns(45, 45), self.set_color, "blue"))
             self.active_buttons.insert(0, ColorButton(
-                self.np(72.5, 31.5), self.ns(45, 45), self.set_color, "blue"))
+                self.np(72.5, 31.5), self.ns(45, 45), self.set_color, "sky_blue"))
             self.active_buttons.insert(0, ColorButton(
-                self.np(72.5+offset, 48.5), self.ns(45, 45), self.set_color, "purple"))
+                self.np(72.5+offset, 48.5), self.ns(45, 45), self.set_color, "red"))
             self.active_buttons.insert(0, ColorButton(
-                self.np(72.5+offset, 40), self.ns(45, 45), self.set_color, "red"))
+                self.np(72.5+offset, 40), self.ns(45, 45), self.set_color, "orange"))
             self.active_buttons.insert(0, ColorButton(
-                self.np(72.5+offset, 31.5), self.ns(45, 45), self.set_color, "orange"))
+                self.np(72.5+offset, 31.5), self.ns(45, 45), self.set_color, "yellow"))
             self.active_buttons.insert(0, ColorButton(
-                self.np(72.5 + offset * 2, 48.5), self.ns(45, 45), self.set_color, "yellow"))
+                self.np(72.5 + offset * 2, 48.5), self.ns(45, 45), self.set_color, "brown"))
             self.active_buttons.insert(0, ColorButton(
-                self.np(72.5 + offset * 2, 40), self.ns(45, 45), self.set_color, "grey"))
+                self.np(72.5 + offset * 2, 31.5), self.ns(45, 45), self.set_color, "green"))
             self.active_buttons.insert(0, ColorButton(
-                self.np(72.5 + offset * 3, 31.5), self.ns(45, 45), self.set_color, "sky_blue"))
+                self.np(72.5 + offset * 2, 40), self.ns(45, 45), self.set_color, "dark_green"))
             self.active_buttons.insert(0, ColorButton(
-                self.np(72.5 + offset * 3, 40), self.ns(45, 45), self.set_color, "white"))
+                self.np(72.5 + offset * 3, 31.5), self.ns(45, 45), self.set_color, "white"))
             self.active_buttons.insert(0, ColorButton(
-                self.np(72.5 + offset * 3, 48.5), self.ns(45, 45), self.set_color, "brown"))
+                self.np(72.5 + offset * 3, 40), self.ns(45, 45), self.set_color, "grey"))
+            self.active_buttons.insert(0, ColorButton(
+                self.np(72.5 + offset * 3, 48.5), self.ns(45, 45), self.set_color, "black"))
         else:
             self.active_buttons.insert(0,ColorWheel(self.np(79, 36),
                                                     (self.ns(180, 180)), self.set_color))

@@ -124,6 +124,7 @@ class Room:
         self.draw_time: int = 120
         self.prompt_time: int = 20
         self.book_idx: int = 0
+        self.simple_colors: bool = False
 
     def add_player(self, name: str) -> PlayerData:
         if self.phase != RoomPhase.LOBBY:
@@ -196,6 +197,7 @@ class Room:
             draw_time=self.draw_time,
             prompt_time=self.prompt_time,
             book_idx=self.book_idx,
+            simple_colors=self.simple_colors,
         )
 
     def to_dict(self, player_id: str | None = None) -> dict:
@@ -236,6 +238,7 @@ class RoomManager:
         room.draw_time = 120
         room.prompt_time = 20
         room.book_idx = 0
+        room.simple_colors = False
         for player in room.players:
             player.has_submitted = False
 

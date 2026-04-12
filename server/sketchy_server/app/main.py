@@ -370,6 +370,17 @@ async def handle_client_message(
         await runtime.broadcast_room_state(room_code)
         return False
 
+    if message_type == "set_simple_colors":
+        simple_colors = message.get("simple_colors")
+        if not isinstance(simple_colors, bool):
+            raise ValueError("simple_colors must be a boolean.")
+        async with runtime.lock:
+            room = runtime.rooms.get_room(room_code)
+            room.simple_colors = simple_colors
+
+        await runtime.broadcast_room_state(room_code)
+        return False
+
     if message_type == "set_options":
         draw_time = parse_positive_int_field(message, "draw_time")
         prompt_time = parse_positive_int_field(message, "prompt_time")

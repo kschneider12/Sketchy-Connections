@@ -184,6 +184,7 @@ class Engine:
     def update_room(self):
         """Updates the room with the current values"""
         self.room = self.network.room
+        self.simple_colors = self.room.simple_colors
 
         if self.room.game:
             if self.room.game.current_prompt:
@@ -412,7 +413,7 @@ class Engine:
                 Button(self.np(80, 90), (self.ns(115 * 1.8, 51 * 1.8)),
                        "assets/textures/play.png", self.start_game),
                 CheckboxButton(self.np(70, 76), self.ns(40, 40),
-                               self.simple_color_select, "Simple Colors", False),
+                               self.simple_color_select, "Simple Colors", self.simple_colors),
                 ChoicesButton(self.np(79.5, 55), self.ns(90, 40),
                               self.prompt_time_length, PROMPT_TIMES, 20),
                 ChoicesButton(self.np(79.5,68), self.ns(90,40),
@@ -838,8 +839,12 @@ class Engine:
         self.room_code_attempt = code.upper()
 
     def simple_color_select(self, enabled):
-        """Sets simple_colors to true"""
-        self.simple_colors = True
+        """Sets simple_colors setting and syncs it to the room."""
+        self.simple_colors = enabled
+        try:
+            self.network.set_simple_colors(enabled)
+        except NetworkClientError as exc:
+            self.network_error = str(exc)
 
     def prompt_time_length(self, selected_value):
         """Sets timer length for prompt/guess phase. Primarily used by buttons"""

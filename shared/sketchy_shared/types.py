@@ -169,6 +169,7 @@ class RoomData:
     draw_time: int = 120
     prompt_time: int = 20
     book_idx: int = 0
+    simple_colors: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize the data for sending"""
@@ -181,6 +182,7 @@ class RoomData:
             "draw_time": self.draw_time,
             "prompt_time": self.prompt_time,
             "book_idx": self.book_idx,
+            "simple_colors": self.simple_colors,
         }
 
     @classmethod
@@ -195,7 +197,8 @@ class RoomData:
             game=GameStateData.from_dict(game) if isinstance(game, dict) else None,
             draw_time=int(data["draw_time"]),
             prompt_time=int(data["prompt_time"]),
-            book_idx=int(data["book_idx"])
+            book_idx=int(data["book_idx"]),
+            simple_colors=bool(data["simple_colors"]),
         )
 
 

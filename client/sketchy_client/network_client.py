@@ -91,6 +91,9 @@ class NetworkClient:
     def set_options(self, draw_time: int, prompt_time: int) -> None:
         return self._run_coroutine(self._set_options(draw_time, prompt_time))
 
+    def set_simple_colors(self, simple_colors: bool) -> None:
+        return self._run_coroutine(self._set_simple_colors(simple_colors))
+
     def incr_book(self) -> None:
         return self._run_coroutine(self._send_message({"type": "incr_book"}))
 
@@ -259,6 +262,12 @@ class NetworkClient:
             "type": "set_options",
             "draw_time": str(draw_time),
             "prompt_time": str(prompt_time),
+        })
+
+    async def _set_simple_colors(self, simple_colors: bool) -> None:
+        await self._send_message({
+            "type": "set_simple_colors",
+            "simple_colors": bool(simple_colors),
         })
 
     async def _request_json(

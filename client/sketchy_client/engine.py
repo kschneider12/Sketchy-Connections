@@ -156,6 +156,7 @@ class Engine:
                         case 'writing':
                             self.draw_length = self.room.draw_time
                             self.prompt_length= self.room.prompt_time
+                            self.simple_colors = self.room.simple_colors
                             self.switch_to_writing()
                         case 'drawing':
                             self.switch_to_draw()

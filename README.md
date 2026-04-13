@@ -72,3 +72,6 @@ docker build -f server/Dockerfile -t sketchy-server .
 docker run --rm -p 8000:8000 sketchy-server
 ```
 
+## Known Bugs:
+
+On some occasions, the server can freeze after submission, preventing the game from stepping forward to the next phase

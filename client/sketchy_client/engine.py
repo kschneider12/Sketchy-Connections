@@ -800,6 +800,10 @@ class Engine:
             self.curr_color[0] * val,
             self.curr_color[1] * val,
             self.curr_color[2] * val]
+        if (self.curr_shade[0] not in range(0, 255)
+                or self.curr_shade[1] not in range(0, 255)
+                or self.curr_shade[2] not in range(0, 255)):
+            self.curr_shade = [0, 0, 0]
 
     def set_brush_thickness(self, num):
         """sets the brush thickness while drawing. Primarily used by buttons"""

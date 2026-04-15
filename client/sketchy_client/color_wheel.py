@@ -76,7 +76,11 @@ class ColorWheel(Button):
         else:
             image = self.img
         screen.blit(image, (self.rel_pos[0] - self.width / 2, self.rel_pos[1] - self.height / 2))
-        pygame.draw.rect(screen, self.color, pygame.Rect(self.pos[0] / 2, self.pos[1], 50, 50))
+        try:
+            pygame.draw.rect(screen, self.color, pygame.Rect(self.pos[0] / 2, self.pos[1], 50, 50))
+        except:
+            pygame.draw.rect(screen, (255,255,255), pygame.Rect(self.pos[0] / 2, self.pos[1], 50, 50))
+
 
 
     def hovering(self, mouse_pos):

@@ -495,8 +495,8 @@ class AnimationWindow:
         self.z = z
 
         # needed with new drawn_pixels structure
-        self.curr_color = None
-        self.curr_rad = None
+        self.curr_color = COLORS['black_pen']
+        self.curr_rad = 1
 
         self.cell_width = size[0] / GRID_WIDTH
         self.cell_height = size[1] / GRID_HEIGHT

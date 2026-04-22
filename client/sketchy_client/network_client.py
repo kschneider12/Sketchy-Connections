@@ -33,7 +33,7 @@ class NetworkClient:
     ``_run_coroutine`` registers an event to be triggered
     """
 
-    def __init__(self, base_url: str = "https://api.sketchy-connections.com/", *, request_timeout: float = 100.0):
+    def __init__(self, base_url: str = "https://api.sketchy-connections.com/", *, request_timeout: float = 100.0, retry_count: int = 10):
         self._base_url = base_url.rstrip("/")
         self._request_timeout = request_timeout
 
@@ -50,6 +50,10 @@ class NetworkClient:
         self._ready = threading.Event()
         self._shutdown_complete = False
         self._closed = False
+
+        self._retry_count = retry_count
+        self._retries = 0
+        self._path: str | None = None
 
         self._thread = threading.Thread(
             target=self._run_loop,
@@ -323,15 +327,15 @@ class NetworkClient:
 
         try:
             self._websocket = await session.ws_connect(websocket_url)
+            self._path = websocket_path
             self._listener_error = None
 
         except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
             raise NetworkClientError(f"WebSocket connection failed: {exc}") from exc
 
     async def _listen_to_websocket(self) -> None:
-        websocket = self._require_websocket()
-
         try:
+            websocket = await self._require_websocket()
             async for message in websocket:
                 if message.type is aiohttp.WSMsgType.TEXT:
                     payload = message.json()
@@ -378,8 +382,8 @@ class NetworkClient:
             await websocket.close()
 
     async def _send_message(self, data: Any) -> None:
-        websocket = self._require_websocket()
         try:
+            websocket = await self._require_websocket()
             await websocket.send_json(data)
         except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
             await self._stop_websocket_listener()
@@ -408,10 +412,19 @@ class NetworkClient:
 
         await self._send_message({"type": "sync"})
 
-    def _require_websocket(self) -> aiohttp.ClientWebSocketResponse:
+    async def _require_websocket(self) -> aiohttp.ClientWebSocketResponse:
         self._raise_listener_error()
         if self._websocket is None or self._websocket.closed:
-            # TODO: This happened in testing upon submit!
+            # Rety connection certain number of times before throwing
+            while self._retries < self._retry_count and self._path is not None:
+                try:
+                    await self._connect_websocket(self._path)
+                    self._listener_error = None
+                    return self._websocket
+                except:
+                    self._retries += 1
+                    await asyncio.sleep(5)
+
             raise NetworkClientError("WebSocket connection is not available.")
         return self._websocket
 

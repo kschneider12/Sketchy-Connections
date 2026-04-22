@@ -366,32 +366,28 @@ class DrawingWindow:
             if current_tool == "brush":
                 # ensures no gaps in lines
                 if self.last_pos and (this_x, this_y) != self.last_pos:
-                    drawing = self.grid.draw_line_cells(
+                    self.drawn_pixels.append({"tool": "brush", "start": self.last_pos,
+                                              "end": (this_x, this_y), "color": curr_color,
+                                              "radius": self.brush_radius})
+                    self.grid.draw_line_cells(
                         self.last_pos,
                         (this_x, this_y),
                         curr_color,
                         brush_radius)
-                    # set -> list to remove duplicates
-                    pos = list({(r, c) for (r, c, _) in drawing})
-                    self.drawn_pixels.append({"color": curr_color,
-                                              "pos": pos,
-                                              "tool": 0})
+                    self.last_pos = this_x, this_y
                 else:
                     # handle single click
-                    drawing = self.grid.draw_brush(row, col, curr_color, brush_radius)
-                    pos = list({(r, c) for (r, c, _) in drawing})
-                    self.drawn_pixels.append({"color": curr_color,
-                                              "pos": pos,
-                                              "tool": 0})
-                self.last_pos = (this_x, this_y)
+                    self.drawn_pixels.append({"tool": "brush", "start": (this_x, this_y),
+                                              "end": (this_x, this_y), "color": curr_color,
+                                              "radius": self.brush_radius})
+                    self.grid.draw_brush(row, col, curr_color, brush_radius)
+                    self.last_pos = this_x, this_y
             elif current_tool == "fill":
                 # ensures fill triggers once per click
                 if not self.last_mouse:
-                    drawing = self.grid.fill_tool(row, col, curr_color)
-                    pos = [(r, col) for (r, col, _) in drawing]
-                    self.drawn_pixels.append({"color": curr_color,
-                                              "pos": pos,
-                                              "tool": 1})
+                    self.drawn_pixels.append({"tool": "fill", "pos": (row, col),
+                                              "color": curr_color})
+                    self.grid.fill_tool(row, col, curr_color)
         else:
             self.last_pos = None
 
@@ -504,7 +500,7 @@ class AnimationWindow:
         self.drawn_pixels = drawn_pixels
         self.index = 0
         self.fps = 24
-        self.max_seconds = 3
+        self.max_seconds = 5
         self.clock = pygame.time.Clock()
 
         self.total_pixels = len(drawn_pixels)
@@ -520,24 +516,30 @@ class AnimationWindow:
         """Update the animation window by 'drawing' list of stored pixels"""
         if self.done:
             return
-        self.clock.tick(self.fps)
-        if self.animated:
-            p = self.pixels_per_frame
-        else:
-            p = self.total_pixels
-        for i in range(p):
+
+        actions_left = self.pixels_per_frame if self.animated \
+            else len(self.drawn_pixels)
+
+        for i in range(actions_left):
             if self.index >= len(self.drawn_pixels):
                 self.done = True
                 break
 
             action = self.drawn_pixels[self.index]
-            color = action["color"]
-            pos = action["pos"]
-            tool = action["tool"]
 
-            for row, col in pos:
-                self. grid.set_pixel(row, col, color)
-
+            if action["tool"] == "brush":
+                self.grid.draw_line_cells(
+                    action["start"],
+                    action["end"],
+                    action["color"],
+                    action["radius"]
+                )
+            elif action["tool"] == "fill":
+                self.grid.fill_tool(
+                    action["pos"][0],
+                    action["pos"][1],
+                    action["color"]
+                )
             self.index += 1
 
     def draw(self, screen, curr_color):
@@ -602,7 +604,7 @@ def run_drawing(window):
     pygame.font.init()
     font = pygame.font.SysFont("Consolas", 18)
 
-    draw_w = DrawingWindow((600, 400), (845, 455))
+    draw_w = DrawingWindow((600, 400, (50, 50)), (845, 455, (70, 70)))
 
     run = True
     while run:
@@ -641,7 +643,7 @@ def run_drawing(window):
 
 def run_animation(window, drawn_pixels):
     """Run the drawing window from this file for debugging purposes"""
-    anim = AnimationWindow((600, 400), (800, 600),drawn_pixels, True)
+    anim = AnimationWindow((600, 400, (50, 50)), (800, 600, (70, 70)),drawn_pixels, True)
 
     running = True
     while running:

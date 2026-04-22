@@ -32,11 +32,11 @@ class ColorWheel(Button):
         """
         if not paused or self.pause_override:
             self.curr_hover = self.hovering(mouse_pos)
-            if self.get_rad(mouse_pos) <= self.bkg_size[0] / 2 and just_clicked[0]:
+            if self.get_rad(mouse_pos) <= 0.5 and just_clicked[0]:
                 self.dragging = True
             if self.dragging:
                 self.rel_pos = [mouse_pos[0], mouse_pos[1]]
-            if self.get_rad(self.rel_pos) > self.bkg_size[0] / 2:
+            if self.get_rad(self.rel_pos) > 0.5:
                 self.set_rad_pos()
             if mouse_state[0] == 0 and self.dragging:
                 self.dragging = False
@@ -57,11 +57,12 @@ class ColorWheel(Button):
                     self.color = [rel_angle * 255/60, 0, 255]
                 case 5:
                     self.color = [255, 0, 255 - rel_angle * 255 / 60]
-            rad = self.get_rad(self.rel_pos)
+            rad = 1 - self.get_rad(self.rel_pos) * 2
             #normalize from 0 to 1
-            rad = 1 - rad / self.bkg_size[0] * 2
+            #rad = 1 - rad / self.bkg_size[0] * 2
             for i in range(3):
                 self.color[i] += int((255 - self.color[i]) * rad)
+            #self.color = [255,255,255]
             return [self.command, self.color]
         return False
 
@@ -90,7 +91,8 @@ class ColorWheel(Button):
 
     def get_rad(self, param):
         """returns the radius of the button"""
-        return math.sqrt(abs(self.pos[0] - param[0]) ** 2 + abs(self.pos[1] - param[1]) ** 2)
+        #print(math.sqrt(((self.pos[0] - param[0]) / self.bkg_size[0]) ** 2 + (((self.pos[1] - param[1]) / self.bkg_size[1]) ** 2)))
+        return math.sqrt(((self.pos[0] - param[0]) / self.bkg_size[0]) ** 2 + (((self.pos[1] - param[1]) / self.bkg_size[1]) ** 2))
 
     def set_rad_pos(self):
         """sets the ball to the edge of the circle if the mouse drags it outside"""
@@ -105,7 +107,7 @@ class ColorWheel(Button):
     def resize(self, wid, ht):
         #store angle from center, and radius? (For ball position?)
         angle = self.get_angle()
-        rad = self.get_rad(self.rel_pos) / self.bkg_size[0] * 2
+        rad = self.get_rad(self.rel_pos)
         self.bkg2.resize(wid, ht)
         self.bkg_size = self.bkg2.width, self.bkg2.height
         self.pos = self.bkg2.pos
@@ -123,6 +125,5 @@ class ColorWheel(Button):
         #need to calculate position from color?
 
         #unnormalize radius
-        rad = rad * self.bkg_size[0] / 2
-        self.rel_pos = [self.pos[0] - math.cos(angle) * rad, self.pos[1] + math.sin(angle) * rad]
+        self.rel_pos = [self.pos[0] - math.cos(angle) * rad * self.bkg_size[0], self.pos[1] + math.sin(angle) * rad* self.bkg_size[1]]
         #rad = self.get_rad(self.rel_pos) / self.bkg_size[0] * 2

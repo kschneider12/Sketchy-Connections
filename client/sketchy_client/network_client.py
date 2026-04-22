@@ -324,6 +324,7 @@ class NetworkClient:
         try:
             self._websocket = await session.ws_connect(websocket_url)
             self._listener_error = None
+
         except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
             raise NetworkClientError(f"WebSocket connection failed: {exc}") from exc
 
@@ -410,6 +411,7 @@ class NetworkClient:
     def _require_websocket(self) -> aiohttp.ClientWebSocketResponse:
         self._raise_listener_error()
         if self._websocket is None or self._websocket.closed:
+            # TODO: This happened in testing upon submit!
             raise NetworkClientError("WebSocket connection is not available.")
         return self._websocket
 

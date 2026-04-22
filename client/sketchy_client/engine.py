@@ -1083,6 +1083,7 @@ class Engine:
     def return_to_lobby(self):
         """Returns the player to the lobby AFTER a game has ended"""
         self.room.phase = RoomPhase.LOBBY
+        self.curr_book_id = None
         if self.player.is_host:
             self.network.restart_lobby()
         self.switch_to_lobby()

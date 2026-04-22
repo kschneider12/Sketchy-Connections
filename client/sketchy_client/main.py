@@ -4,10 +4,18 @@
 """
 Main file for the program
 """
+import sys
+import os
 import pygame
+if hasattr(sys, '_MEIPASS'):
+    BASE_DIR = sys._MEIPASS
+else:
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from .engine import Engine
+sys.path.append(os.path.join(BASE_DIR, "client"))
+sys.path.append(os.path.join(BASE_DIR, "shared"))
 
+from sketchy_client.engine import Engine
 def main():
     """
     main function that holds and begins Engine
@@ -23,6 +31,23 @@ def main():
 if __name__ == '__main__':
     main()
 
+    '''
+    MAC:
+    pyinstaller --onefile --windowed \
+    --paths client \
+    --paths shared \
+    --add-data "client/assets:assets" \
+    --icon=client/assets/textures/desktop_icon.icns \
+    client/sketchy_client/main.py
+    
+    WINDOWS:
+    pyinstaller --onefile --windowed ^
+    --icon=client\assets\textures\desktop_icon.ico ^
+    --paths client ^
+    --paths shared ^
+    --add-data "client/assets;assets" ^
+    client\sketchy_client\main.py
+    '''
     '''
     PYGAME DOCUMENTATION:
     

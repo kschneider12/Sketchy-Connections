@@ -369,17 +369,17 @@ class DrawingWindow:
         # call drawing logic for all tools
         if mouse_pressed:
             if curr_color != self.color_state:
-                self.drawn_pixels.append({"type": "color_change", "val": curr_color})
+                self.drawn_pixels.append({"type": "color_change", "val": curr_color}) #TODO HERE
                 self.color_state = curr_color
 
             if brush_radius != self.radius_state:
-                self.drawn_pixels.append({"type": "rad_change", "val": brush_radius})
+                self.drawn_pixels.append({"type": "rad_change", "val": brush_radius}) #TODO HERE
                 self.radius_state = brush_radius
 
             if current_tool == "brush":
                 # ensures no gaps in lines
                 if self.last_pos and (this_x, this_y) != self.last_pos:
-                    self.drawn_pixels.append({"type": "brush", "start":
+                    self.drawn_pixels.append({"type": "brush", "start": #TODO UP HERE!
                         self.last_pos, "end": (this_x, this_y)})
                     self.grid.draw_line_cells(
                         self.last_pos,
@@ -389,14 +389,14 @@ class DrawingWindow:
                     self.last_pos = this_x, this_y
                 else:
                     # handle single click
-                    self.drawn_pixels.append({"type": "brush", "start": (this_x, this_y),
+                    self.drawn_pixels.append({"type": "brush", "start": (this_x, this_y), #TODO: HERE TOO
                                               "end": (this_x, this_y)})
                     self.grid.draw_brush(row, col, curr_color, brush_radius)
                     self.last_pos = this_x, this_y
             elif current_tool == "fill":
                 # ensures fill triggers once per click
                 if not self.last_mouse:
-                    self.drawn_pixels.append({"type": "fill", "position": (row, col)})
+                    self.drawn_pixels.append({"type": "fill", "position": (row, col)}) #TODO AND HERE
                     self.grid.fill_tool(row, col, curr_color)
         else:
             self.last_pos = None
@@ -541,13 +541,13 @@ class AnimationWindow:
 
             action = self.drawn_pixels[self.index]
 
-            if action["type"] == "color_change":
+            if action["type"] == "color_change": #TODO if between 5 and 255^3 + 5
                 self.curr_color = action["val"]
 
-            elif action["type"] == "rad_change":
+            elif action["type"] == "rad_change": # TODO: if between 0 and 4
                 self.curr_rad = action["val"]
 
-            elif action["type"] == "brush":
+            elif action["type"] == "brush": # TODO: elif isinstance(action, tuple), if size 0, fill
                 self.grid.draw_line_cells(
                     action["start"],
                     action["end"],

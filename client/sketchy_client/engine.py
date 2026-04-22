@@ -494,7 +494,7 @@ class Engine:
             #print("WE HAVE PIXELS")
             assert isinstance(self.current_entry.content, list)
             pixels = self.current_entry.content.copy()
-
+            print(pixels)
         self.active_animations = [
             AnimationWindow(self.np(44, 45), self.ns(845 * 0.84, 455 * 0.84), pixels, False)
         ]
@@ -1093,11 +1093,3 @@ class Engine:
                           f"saved_drawings/screenshot_"
                           f"{self.network.room.room_id}"
                           f".{int(random.random() * 10000)}.png")
-
-
-#TODO FIX FREEZE
-#TODO: When a player leaves the game mid-round, it can be problematic for submissions. When they try to close, should autosubmit or do something else? Joe problem?
-#TODO: When players leave lobby after game ends, host can still start round, and gets stuck after first scene
-#TODO: Host can't join game if they try to join first without enough players.
-#TODO: Add color button server side implementation
-#TODO: PLAYTEST!

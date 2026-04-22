@@ -341,6 +341,11 @@ class DrawingWindow:
         ]
         self.color_index = 0
 
+        # allows for storing last action, instead of sending it repeatedly
+        self.color_state = None
+        self.radius_state = None
+        self.tool_state = None
+
     def update(self, mouse_pos, mouse_pressed, curr_color, brush_radius, current_tool):
         """Update the window based on user input.
 
@@ -363,12 +368,19 @@ class DrawingWindow:
 
         # call drawing logic for all tools
         if mouse_pressed:
+            if curr_color != self.color_state:
+                self.drawn_pixels.append({"type": "color_change", "val": curr_color})
+                self.color_state = curr_color
+
+            if brush_radius != self.radius_state:
+                self.drawn_pixels.append({"type": "rad_change", "val": brush_radius})
+                self.radius_state = brush_radius
+
             if current_tool == "brush":
                 # ensures no gaps in lines
                 if self.last_pos and (this_x, this_y) != self.last_pos:
-                    self.drawn_pixels.append({"tool": "brush", "start": self.last_pos,
-                                              "end": (this_x, this_y), "color": curr_color,
-                                              "radius": self.brush_radius})
+                    self.drawn_pixels.append({"type": "brush", "start":
+                        self.last_pos, "end": (this_x, this_y)})
                     self.grid.draw_line_cells(
                         self.last_pos,
                         (this_x, this_y),
@@ -377,16 +389,14 @@ class DrawingWindow:
                     self.last_pos = this_x, this_y
                 else:
                     # handle single click
-                    self.drawn_pixels.append({"tool": "brush", "start": (this_x, this_y),
-                                              "end": (this_x, this_y), "color": curr_color,
-                                              "radius": self.brush_radius})
+                    self.drawn_pixels.append({"type": "brush", "start": (this_x, this_y),
+                                              "end": (this_x, this_y)})
                     self.grid.draw_brush(row, col, curr_color, brush_radius)
                     self.last_pos = this_x, this_y
             elif current_tool == "fill":
                 # ensures fill triggers once per click
                 if not self.last_mouse:
-                    self.drawn_pixels.append({"tool": "fill", "pos": (row, col),
-                                              "color": curr_color})
+                    self.drawn_pixels.append({"type": "fill", "position": (row, col)})
                     self.grid.fill_tool(row, col, curr_color)
         else:
             self.last_pos = None
@@ -484,6 +494,10 @@ class AnimationWindow:
         self.draggable = draggable
         self.z = z
 
+        # needed with new drawn_pixels structure
+        self.curr_color = None
+        self.curr_rad = None
+
         self.cell_width = size[0] / GRID_WIDTH
         self.cell_height = size[1] / GRID_HEIGHT
         self.cell_size = min(self.cell_width, self.cell_height)
@@ -527,19 +541,27 @@ class AnimationWindow:
 
             action = self.drawn_pixels[self.index]
 
-            if action["tool"] == "brush":
+            if action["type"] == "color_change":
+                self.curr_color = action["val"]
+
+            elif action["type"] == "rad_change":
+                self.curr_rad = action["val"]
+
+            elif action["type"] == "brush":
                 self.grid.draw_line_cells(
                     action["start"],
                     action["end"],
-                    action["color"],
-                    action["radius"]
+                    self.curr_color,
+                    self.curr_rad
                 )
-            elif action["tool"] == "fill":
+
+            elif action["type"] == "fill":
                 self.grid.fill_tool(
-                    action["pos"][0],
-                    action["pos"][1],
-                    action["color"]
+                    action["position"][0],
+                    action["position"][1],
+                    self.curr_color
                 )
+
             self.index += 1
 
     def draw(self, screen, curr_color):

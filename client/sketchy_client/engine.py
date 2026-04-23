@@ -476,7 +476,7 @@ class Engine:
         self.active_ui = [TimeBar(self.np(92,43), self.ns(60 * 1.5, 270 * 1.5), self.prompt_length),
                           DefaultUI(self.np(44, 45), self.ns(850 * 0.96, 455 * 0.96),
                                     "assets/textures/back_template.png"),
-                          DefaultUI(self.np(44, 45), self.ns(845 * 0.85, 455 * 0.85),
+                          DefaultUI(self.np(44, 45), self.nl(845 * 0.85),
                                     "assets/textures/color_button.png", nl=True),
                           DefaultUI(self.np(50, 5), self.ns(240, 50),
                                     "assets/textures/guess_it.png")

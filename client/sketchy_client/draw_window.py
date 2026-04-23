@@ -203,7 +203,7 @@ class Grid:
 
         return drawn_pixels
 
-    def draw_line_cells(self, start, end, color, radius=2):
+    def draw_line_cells(self, start, end, color, radius=2, normalized=False):
         #TODO: NEED TO TAKE IN ROW AND COL AND DO MATH ON THAT TOO!
         """Create a smooth line between two pixel positions.
 
@@ -231,9 +231,10 @@ class Grid:
             t = i / steps if steps != 0 else 0
             x = x1 + t * (x2 - x1)
             y = y1 + t * (y2 - y1)
-            row = y / self.cell_size
-            col = x / self.cell_size
-            drawn_pixels += self.draw_brush(row, col, color, radius)
+            if not normalized:
+                y = y / self.cell_size
+                x = x / self.cell_size
+            drawn_pixels += self.draw_brush(y, x, color, radius)
 
         return drawn_pixels
 
@@ -556,7 +557,8 @@ class AnimationWindow:
                     action["start"],
                     action["end"],
                     self.curr_color,
-                    self.curr_rad
+                    self.curr_rad,
+                    normalized=True
                 )
 
             elif action["type"] == "fill":

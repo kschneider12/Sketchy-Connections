@@ -204,7 +204,6 @@ class Grid:
         return drawn_pixels
 
     def draw_line_cells(self, start, end, color, radius=2, normalized=False):
-        #TODO: NEED TO TAKE IN ROW AND COL AND DO MATH ON THAT TOO!
         """Create a smooth line between two pixel positions.
 
         Args:
@@ -239,7 +238,6 @@ class Grid:
         return drawn_pixels
 
     def fill_tool(self, start_row, start_col, new_color):
-        # TODO: NEED TO TAKE IN ROW AND COL AND DO MATH ON THAT TOO!
         """Perform a flood fill starting from a cell.
 
         Args:
@@ -350,6 +348,14 @@ class DrawingWindow:
         self.tool_state = None
 
     def convert_to_local(self, x, y):
+        """Convert screen coordinates to local coordinates.
+
+        Args:
+            x (int): The screen x coordinate.
+            y (int): The screen y coordinate.
+        Returns:
+            Tuple of the local coordinates.
+        """
         return int(x / self.grid.cell_size), int(y / self.grid.cell_size)
 
     def update(self, mouse_pos, mouse_pressed, curr_color, brush_radius, current_tool):
@@ -375,18 +381,19 @@ class DrawingWindow:
         # call drawing logic for all tools
         if mouse_pressed:
             if curr_color != self.color_state:
-                self.drawn_pixels.append({"type": "color_change", "val": curr_color}) #TODO HERE
+                self.drawn_pixels.append((-1, curr_color))
                 self.color_state = curr_color
 
             if brush_radius != self.radius_state:
-                self.drawn_pixels.append({"type": "rad_change", "val": brush_radius}) #TODO HERE
+                self.drawn_pixels.append((0, brush_radius))
                 self.radius_state = brush_radius
 
             if current_tool == "brush":
                 # ensures no gaps in lines
                 if self.last_pos and (row, col) != self.last_pos:
-                    self.drawn_pixels.append({"type": "brush", "start": #TODO UP HERE!
-                        self.convert_to_local(self.last_pos[0], self.last_pos[1]), "end": (col, row)}) #TODO switch to this_x, this_y
+                    self.drawn_pixels.append((1,
+                        self.convert_to_local(self.last_pos[0],
+                                              self.last_pos[1]), (col, row)))
                     self.grid.draw_line_cells(
                         self.last_pos,
                         (this_x, this_y),
@@ -394,14 +401,14 @@ class DrawingWindow:
                         brush_radius)
                 else:
                     # handle single click
-                    self.drawn_pixels.append({"type": "brush", "start": (col, row), #TODO: HERE TOO
-                                              "end": (col, row)}) #TODO switch to this_x, this_y
+                    self.drawn_pixels.append((1, (col, row),
+                                              (col, row)))
                     self.grid.draw_brush(row, col, curr_color, brush_radius)
                 self.last_pos = this_x, this_y
             elif current_tool == "fill":
                 # ensures fill triggers once per click
                 if not self.last_mouse:
-                    self.drawn_pixels.append({"type": "fill", "position": (col, row)}) #TODO AND HERE
+                    self.drawn_pixels.append((2, (col, row)))
                     self.grid.fill_tool(row, col, curr_color)
         else:
             self.last_pos = None
@@ -545,26 +552,27 @@ class AnimationWindow:
                 break
 
             action = self.drawn_pixels[self.index]
+            op_code = action[0]
 
-            if action["type"] == "color_change": #TODO if between 5 and 255^3 + 5
-                self.curr_color = action["val"]
+            if op_code == -1: # color change
+                self.curr_color = action[1]
 
-            elif action["type"] == "rad_change": # TODO: if between 0 and 4
-                self.curr_rad = action["val"]
+            elif op_code == 0: # radius change
+                self.curr_rad = action[1]
 
-            elif action["type"] == "brush": # TODO: elif isinstance(action, tuple), if size 0, fill
-                self.grid.draw_line_cells( #TODO UPDATE THIS FUNCTION
-                    action["start"],
-                    action["end"],
+            elif op_code == 1: # brush stroke
+                self.grid.draw_line_cells(
+                    action[1],
+                    action[2],
                     self.curr_color,
                     self.curr_rad,
                     normalized=True
                 )
 
-            elif action["type"] == "fill":
-                self.grid.fill_tool( #TODO UPDATE THIS FUNCTION
-                    action["position"][0],
-                    action["position"][1],
+            elif op_code == 2: # fill
+                self.grid.fill_tool(
+                    action[1][1],
+                    action[1][0],
                     self.curr_color
                 )
 

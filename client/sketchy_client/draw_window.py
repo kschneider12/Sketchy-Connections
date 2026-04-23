@@ -204,6 +204,7 @@ class Grid:
         return drawn_pixels
 
     def draw_line_cells(self, start, end, color, radius=2):
+        #TODO: NEED TO TAKE IN ROW AND COL AND DO MATH ON THAT TOO!
         """Create a smooth line between two pixel positions.
 
         Args:
@@ -237,6 +238,7 @@ class Grid:
         return drawn_pixels
 
     def fill_tool(self, start_row, start_col, new_color):
+        # TODO: NEED TO TAKE IN ROW AND COL AND DO MATH ON THAT TOO!
         """Perform a flood fill starting from a cell.
 
         Args:
@@ -346,6 +348,9 @@ class DrawingWindow:
         self.radius_state = None
         self.tool_state = None
 
+    def convert_to_local(self, x, y):
+        return int(x / self.grid.cell_size), int(y / self.grid.cell_size)
+
     def update(self, mouse_pos, mouse_pressed, curr_color, brush_radius, current_tool):
         """Update the window based on user input.
 
@@ -360,11 +365,11 @@ class DrawingWindow:
         this_x = mouse_pos[0] - self.pos[0]
         this_y = mouse_pos[1] - self.pos[1]
 
-        if this_x < 0 or this_y < 0:
+        if this_x < 0 or this_x > self.size[0] or this_y < 0 or this_y > self.size[1]:
+            self.last_pos = None
             return
 
-        row = int(this_y / self.grid.cell_size)
-        col = int(this_x / self.grid.cell_size)
+        col, row = self.convert_to_local(this_x, this_y)
 
         # call drawing logic for all tools
         if mouse_pressed:
@@ -378,25 +383,24 @@ class DrawingWindow:
 
             if current_tool == "brush":
                 # ensures no gaps in lines
-                if self.last_pos and (this_x, this_y) != self.last_pos:
+                if self.last_pos and (row, col) != self.last_pos:
                     self.drawn_pixels.append({"type": "brush", "start": #TODO UP HERE!
-                        self.last_pos, "end": (this_x, this_y)})
+                        self.convert_to_local(self.last_pos[0], self.last_pos[1]), "end": (col, row)}) #TODO switch to this_x, this_y
                     self.grid.draw_line_cells(
                         self.last_pos,
                         (this_x, this_y),
                         curr_color,
                         brush_radius)
-                    self.last_pos = this_x, this_y
                 else:
                     # handle single click
-                    self.drawn_pixels.append({"type": "brush", "start": (this_x, this_y), #TODO: HERE TOO
-                                              "end": (this_x, this_y)})
+                    self.drawn_pixels.append({"type": "brush", "start": (col, row), #TODO: HERE TOO
+                                              "end": (col, row)}) #TODO switch to this_x, this_y
                     self.grid.draw_brush(row, col, curr_color, brush_radius)
-                    self.last_pos = this_x, this_y
+                self.last_pos = this_x, this_y
             elif current_tool == "fill":
                 # ensures fill triggers once per click
                 if not self.last_mouse:
-                    self.drawn_pixels.append({"type": "fill", "position": (row, col)}) #TODO AND HERE
+                    self.drawn_pixels.append({"type": "fill", "position": (col, row)}) #TODO AND HERE
                     self.grid.fill_tool(row, col, curr_color)
         else:
             self.last_pos = None
@@ -548,7 +552,7 @@ class AnimationWindow:
                 self.curr_rad = action["val"]
 
             elif action["type"] == "brush": # TODO: elif isinstance(action, tuple), if size 0, fill
-                self.grid.draw_line_cells(
+                self.grid.draw_line_cells( #TODO UPDATE THIS FUNCTION
                     action["start"],
                     action["end"],
                     self.curr_color,
@@ -556,7 +560,7 @@ class AnimationWindow:
                 )
 
             elif action["type"] == "fill":
-                self.grid.fill_tool(
+                self.grid.fill_tool( #TODO UPDATE THIS FUNCTION
                     action["position"][0],
                     action["position"][1],
                     self.curr_color

@@ -617,8 +617,6 @@ class AnimationWindow:
         self.grid = Grid(self.pos, self.cell_size, self.grid.cells, self.grid.surface)
 
 
-
-
 def get_clicked_pos(position, cell_size):
     """Get the position of a user click
 

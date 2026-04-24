@@ -492,6 +492,14 @@ class DrawingWindow:
         self.grid.surface = pygame.transform.scale(self.grid.surface, self.size)
         self.grid = Grid(self.pos, self.cell_size, self.grid.cells, self.grid.surface)
 
+    def get_color(self, mouse_pos):
+        this_x = mouse_pos[0] - self.pos[0]
+        this_y = mouse_pos[1] - self.pos[1]
+        col, row = self.convert_to_local(this_x, this_y)
+        if col < 0 or col >= GRID_WIDTH or row < 0 or row >= GRID_HEIGHT:
+            return 240, 240, 240
+        return self.grid.cells[row][col].color
+
 
 class AnimationWindow:
     """Replay drawing operations as an animation or display."""

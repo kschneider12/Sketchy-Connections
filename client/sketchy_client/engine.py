@@ -82,7 +82,7 @@ class Engine:
         self.active_results = []
         self.frame = 0
         self.curr_color = [120,250,250]
-        self.curr_shade = [0,0,0]
+        self.curr_shade = (0,0,0)
         self.brightness = 1
         self.curr_brush = 1
         self.brush_index = 0
@@ -300,6 +300,8 @@ class Engine:
         """game loop for drawing screen"""
         # added by Mat for drawing window
         if not self.submitted and not self.paused:
+            if not self.simple_colors and self.mouse_buttons[1]:
+                self.pick_color()
             for drawing_win in self.active_drawings:
                 drawing_win.update(
                     self.mouse_pos,
@@ -496,7 +498,7 @@ class Engine:
             #print("WE HAVE PIXELS")
             assert isinstance(self.current_entry.content, list)
             pixels = self.current_entry.content.copy()
-            print(pixels)
+            #print(pixels)
         self.active_animations = [
             AnimationWindow(self.np(44, 45), self.ns(845 * 0.84, 455 * 0.84), pixels, False)
         ]
@@ -798,10 +800,10 @@ class Engine:
         """sets brightness of the RGB value while drawing.
         Utilized by BrightnessSlider object exclusively"""
         self.brightness = val
-        self.curr_shade = [
+        self.curr_shade = (
             self.curr_color[0] * val,
             self.curr_color[1] * val,
-            self.curr_color[2] * val]
+            self.curr_color[2] * val)
 
     def set_brush_thickness(self, num):
         """sets the brush thickness while drawing. Primarily used by buttons"""
@@ -821,7 +823,7 @@ class Engine:
         """Sets the current color to eraser values. Primarily used by buttons"""
         if enabled:
             #self.curr_color = [240, 240, 240]
-            self.curr_shade = [240, 240, 240]
+            self.curr_shade = (240, 240, 240)
         elif self.simple_colors:
             self.curr_shade = self.curr_color
 
@@ -861,7 +863,7 @@ class Engine:
 
     def get_pen_state(self):
         """returns the pen state"""
-        if self.curr_shade == [240, 240, 240]:
+        if self.curr_shade == (240, 240, 240):
             return "eraser"
         return self.curr_tool
 
@@ -879,8 +881,8 @@ class Engine:
         elif self.scene == "drawing" and not self.submitted:
             # disable buttons and present close screen
             self.network.submit_entry(self.active_drawings[0].drawn_pixels)
-            print("PLAYER SUBMITTED")
-            print(self.network.room.to_dict())
+            #print("PLAYER SUBMITTED")
+            #print(self.network.room.to_dict())
             self.submitted = True
             self.submit_ui()
         elif self.scene == "guessing" and not self.submitted:
@@ -1090,7 +1092,24 @@ class Engine:
         self.switch_to_lobby()
 
     def download_image(self, data):
+        """Downloads image from results screen"""
         pygame.image.save(data.grid.surface,
                           f"saved_drawings/screenshot_"
                           f"{self.network.room.room_id}"
                           f".{int(random.random() * 10000)}.png")
+
+    def pick_color(self):
+        """picks the color of the mouse position"""
+        if self.active_drawings:
+            color = self.active_drawings[0].get_color(self.mouse_pos)
+            if color != (240,240,240):
+                self.curr_shade = [int(color[0]), int(color[1]), int(color[2])]
+                if isinstance(self.active_buttons[1], BrightnessSlider):
+                    color = self.active_buttons[1].set_color(color)
+                if isinstance(self.active_buttons[0], ColorWheel):
+                    #WHAT COLOR is brightest given this darker version of it?
+                    self.active_buttons[0].set_color(color)
+
+                    #self.curr_color[0] * val,
+                    #self.curr_color[1] * val,
+                    #self.curr_color[2] * val]

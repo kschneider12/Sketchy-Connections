@@ -43,15 +43,31 @@ class BrightnessSlider(Button):
                 self.dragging = True
             if self.dragging:
                 self.rel_pos[1] = mouse_pos[1]
-            if mouse_state[0] == 0 and self.dragging:
-                self.dragging = False
             if self.rel_pos[1] > self.bounds[0]:
                 self.rel_pos[1] = self.bounds[0]
             if self.rel_pos[1] < self.bounds[1]:
                 self.rel_pos[1] = self.bounds[1]
+            if mouse_state[0] == 0 and self.dragging:
+                self.dragging = False
         return [self.command, 1 - ((self.max - (self.rel_pos[1] - self.bounds[1])
                                     * (self.max - self.min) / (
                     self.bounds[1] - self.bounds[0])) - 1)]
+
+    def set_color(self, color):
+        m = max(color)
+        if m != 0:
+            k = 255 / m
+            bright_col = (
+                int(color[0] * k),
+                int(color[1] * k),
+                int(color[2] * k)
+            )
+        else:
+            bright_col = (255,255,255)
+        num = max(color) / 255
+        y = self.bounds[0] + num * (self.bounds[1] - self.bounds[0])
+        self.rel_pos[1] = y
+        return bright_col
 
     def draw(self, screen, curr_color):
         """Overrides the draw function, including the bar and its positioning"""

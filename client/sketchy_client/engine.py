@@ -416,9 +416,9 @@ class Engine:
                 CheckboxButton(self.np(70, 76), self.ns(40, 40),
                                self.simple_color_select, "Simple Colors", self.simple_colors),
                 ChoicesButton(self.np(79.5, 55), self.ns(90, 40),
-                              self.prompt_time_length, PROMPT_TIMES, 20),
+                              self.prompt_time_length, PROMPT_TIMES, self.prompt_length),
                 ChoicesButton(self.np(79.5,68), self.ns(90,40),
-                                  self.draw_time_length, DRAW_TIMES, 120)
+                                  self.draw_time_length, DRAW_TIMES, self.draw_length),
 
             ]
             self.active_ui.append(DefaultUI(self.np(80, 41), self.ns(240, 49),

@@ -1088,9 +1088,10 @@ class Engine:
             self.active_results.append(drawing)
             self.active_results.append(DefaultUI(self.np(70, 70), self.ns(845 / 1.9, 455 / 1.9),
                       "assets/textures/back_template.png", draggable=True, z=3))
+            index = len(self.active_results)
             self.active_results.append(Button(self.np(45, 70), self.ns(50, 50),
                                                  "assets/textures/download.png",
-                                              lambda: self.download_image(drawing),
+                                              lambda: self.download_image(drawing, index),
                                               draggable=True, z=3))
             self.results_height += self.np(0, scale)[1]
         return True
@@ -1102,7 +1103,7 @@ class Engine:
             self.network.restart_lobby()
         self.switch_to_lobby()
 
-    def download_image(self, data):
+    def download_image(self, data, index):
         """Downloads image from results screen"""
         if getattr(sys, 'frozen', False):
             application_path = os.path.dirname(sys.executable)
@@ -1112,11 +1113,24 @@ class Engine:
             #set application path to root of where exec is...
         else:
             application_path = os.path.dirname(os.path.abspath(__file__))
-        #pygame.image.save(data.grid.surface,
-                          #f"{application_path}/"
-                          #f"{self.network.room.room_id}-{self.curr_book_id}"
-                          #f".{int(random.random() * 1000)}.png")
-        pygame.display.set_caption(f"{application_path}")
+
+        end_name = (f"{self.network.room.room_id}-{self.curr_book_id}"
+                          f".{int(random.random() * 1000)}.png")
+        elem = self.active_results[index - 4]
+        #print(elem)
+        if isinstance(elem, TextUI):
+            name = elem.text
+            end_name = ""
+            for i, letter in enumerate(name):
+                if i == 0 or name[i - 1] == " ":
+                    end_name += letter.upper()
+                if letter != " ":
+                    end_name += letter
+                end_name += letter.lower()
+            end_name += f'.{int(random.random() * 100)}.png'
+
+        pygame.image.save(data.grid.surface,
+                          f"{application_path}/{end_name}")
 
 
 

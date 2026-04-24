@@ -386,7 +386,7 @@ class Engine:
             Button(self.np(97, 4), (self.ns(50, 50)),
                    "assets/textures/exit.png", self.quit_game),
             TypeBox(self.np(50, 90), self.ns(1300 * 0.6, 110 * 0.6),
-                    "assets/textures/text_box_5.png", self.set_name,"Enter A Name",15)]
+                    "assets/textures/text_box_5.png", self.set_name,"Enter A Name",25)]
         self.active_drawings = []
         self.active_animations = []
         self.draw_order = self.active_buttons + self.active_drawings +\
@@ -1106,12 +1106,15 @@ class Engine:
             application_path = os.path.dirname(sys.executable)
             if application_path[-5:] == "MacOS":
                 application_path = application_path[:-45]
+            #if application_path is windows...
+            #set application path to root of where exec is...
         else:
             application_path = os.path.dirname(os.path.abspath(__file__))
-        pygame.image.save(data.grid.surface,
-                          f"{application_path}/"
-                          f"{self.network.room.room_id}-{self.curr_book_id}"
-                          f".{int(random.random() * 1000)}.png")
+        #pygame.image.save(data.grid.surface,
+                          #f"{application_path}/"
+                          #f"{self.network.room.room_id}-{self.curr_book_id}"
+                          #f".{int(random.random() * 1000)}.png")
+        pygame.display.set_caption(f"{application_path}")
 
 
 

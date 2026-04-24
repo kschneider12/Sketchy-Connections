@@ -959,6 +959,7 @@ class Engine:
         if (not self.paused and pause) or (self.paused and not pause):
             pygame.mouse.set_visible(True)
             self.paused = True
+            SoundManager.get_instance().play_sfx("assets/audio/paper_slide.mp3")
             self.active_buttons.append(SliderButton(self.np(30, 50),
                                                     self.ns(200,30),0, 1,
                                                     self.set_sound_effects_volume,
@@ -988,6 +989,7 @@ class Engine:
 
         elif self.paused and pause:
             self.paused = False
+            SoundManager.get_instance().play_sfx("assets/audio/paper_slide2.mp3")
             self.active_buttons.pop()
             self.active_buttons.pop()
             self.active_buttons.pop()

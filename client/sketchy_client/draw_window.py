@@ -372,9 +372,9 @@ class DrawingWindow:
         this_x = mouse_pos[0] - self.pos[0]
         this_y = mouse_pos[1] - self.pos[1]
 
-        if this_x < 0 or this_x > self.size[0] or this_y < 0 or this_y > self.size[1]:
-            self.last_pos = None
-            return
+        #if this_x < 0 or this_x > self.size[0] or this_y < 0 or this_y > self.size[1]:
+            #self.last_pos = None
+            #return
 
         col, row = self.convert_to_local(this_x, this_y)
 

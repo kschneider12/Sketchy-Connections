@@ -451,6 +451,8 @@ class Engine:
         """switches the scene to writing, initializing the UI."""
         SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
         self.scene = "writing"
+        #reset book id for end phase
+        self.curr_book_id = None
         self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), self.prompt_length),
                           DefaultUI(self.np(50, 9), self.ns(358 * 2.6, 35 * 2.6),
                                     "assets/textures/create_prompt.png")]
@@ -1083,7 +1085,6 @@ class Engine:
     def return_to_lobby(self):
         """Returns the player to the lobby AFTER a game has ended"""
         self.room.phase = RoomPhase.LOBBY
-        self.curr_book_id = None
         if self.player.is_host:
             self.network.restart_lobby()
         self.switch_to_lobby()

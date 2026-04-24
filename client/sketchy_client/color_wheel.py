@@ -22,7 +22,7 @@ class ColorWheel(Button):
         self.color = [255,255,255]
         self.rad = 0
         self.angle = 0
-        self.saved_positions = {}
+        self.saved_positions = {(255,255,255): self.rel_pos}
         img = 'assets/textures/slider_ball.png'
         self.bkg2 = DefaultUI(position, size, resolve_asset_path
         ('assets/textures/colorwheel_bkg.png'))
@@ -63,7 +63,6 @@ class ColorWheel(Button):
             #rad = 1 - rad / self.bkg_size[0] * 2
             for i in range(3):
                 self.color[i] += int((255 - self.color[i]) * rad)
-
             if mouse_state[0] == 0 and self.dragging:
                 # save color and position
                 self.saved_positions[(int(self.color[0]),
@@ -71,14 +70,19 @@ class ColorWheel(Button):
                                       int(self.color[2]))] = self.rel_pos
                 self.dragging = False
 
-            return [self.command, self.color]
+            return [self.command, [int(self.color[0]),
+                                      int(self.color[1]),
+                                      int(self.color[2])]]
         return False
 
     def set_color(self, color):
+        #print(color)
+        #print(self.saved_positions)
         for col, val in self.saved_positions.items():
             if (col[0] in range(color[0]-2, color[0]+2) and
                 col[1] in range(color[1]-2, color[1]+2) and
                 col[2] in range(color[2]-2, color[2]+2)):
+                #print("HERE!")
                 corr_val = [0,0,0]
                 for elem in range(len(col)):
                     for c in range(color[elem]-2, color[elem]+2):

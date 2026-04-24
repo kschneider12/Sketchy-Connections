@@ -64,6 +64,8 @@ class BrightnessSlider(Button):
             )
         else:
             bright_col = (255,255,255)
+        if bright_col[0] == bright_col[1] == bright_col[2]:
+            bright_col = (255, 255, 255)
         num = max(color) / 255
         y = self.bounds[0] + num * (self.bounds[1] - self.bounds[0])
         self.rel_pos[1] = y

@@ -480,7 +480,7 @@ class Engine:
         self.active_ui = [TimeBar(self.np(92,43), self.ns(60 * 1.5, 270 * 1.5), self.prompt_length),
                           DefaultUI(self.np(44, 45), self.ns(850 * 0.96, 455 * 0.96),
                                     "assets/textures/back_template.png"),
-                          DefaultUI(self.np(44, 45), self.nl(845 * 0.85),
+                          DefaultUI(self.np(44, 45), self.nl(845 * 0.83),
                                     "assets/textures/color_button.png", nl=True),
                           DefaultUI(self.np(50, 5), self.ns(240, 50),
                                     "assets/textures/guess_it.png")
@@ -500,7 +500,7 @@ class Engine:
             pixels = self.current_entry.content.copy()
             #print(pixels)
         self.active_animations = [
-            AnimationWindow(self.np(44, 45), self.ns(845 * 0.84, 455 * 0.84), pixels, False)
+            AnimationWindow(self.np(44, 45), self.nl(845 * 0.82), pixels, False)
         ]
         self.active_drawings = []
         self.draw_order = self.active_buttons + self.active_ui + \
@@ -512,6 +512,13 @@ class Engine:
         pygame.mouse.set_visible(False)
         SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
         self.scene = "drawing"
+        self.curr_color = [120, 250, 250]
+        self.curr_shade = (0, 0, 0)
+        self.brightness = 1
+        self.curr_brush = 1
+        self.brush_index = 0
+        self.curr_tool = "brush"
+        self.tool_index = 0
         self.active_ui = [TimeBar(self.np(94,58), self.ns(60 * 1.5, 320 * 1.5), self.draw_length),
                           TextUI(self.np(50, 13), self.ns(1, 65),
                             self.current_entry.content, (0, 0, 0),

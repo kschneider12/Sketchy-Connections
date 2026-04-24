@@ -1114,23 +1114,14 @@ class Engine:
         else:
             application_path = os.path.dirname(os.path.abspath(__file__))
 
-        end_name = (f"{self.network.room.room_id}-{self.curr_book_id}"
+        name = (f"{self.network.room.room_id}-{self.curr_book_id}"
                           f".{int(random.random() * 1000)}.png")
         elem = self.active_results[index - 4]
-        #print(elem)
         if isinstance(elem, TextUI):
-            name = elem.text
-            end_name = ""
-            for i, letter in enumerate(name):
-                if i == 0 or name[i - 1] == " ":
-                    end_name += letter.upper()
-                if letter != " ":
-                    end_name += letter
-                end_name += letter.lower()
-            end_name += f'.{int(random.random() * 100)}.png'
+            name = elem.text + f'.{int(random.random() * 100)}.png'
 
         pygame.image.save(data.grid.surface,
-                          f"{application_path}/{end_name}")
+                          f"{application_path}/{name}")
 
 
 

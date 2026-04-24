@@ -8,6 +8,8 @@ backend
 import csv
 import random
 import pygame
+import os
+import sys
 from pygame.constants import K_KP_ENTER # pylint: disable=no-name-in-module
 
 from sketchy_shared.types import PlayerData, RoomPhase, RoomData, BookData, EntryData, EntryType
@@ -1100,10 +1102,18 @@ class Engine:
 
     def download_image(self, data):
         """Downloads image from results screen"""
+        if getattr(sys, 'frozen', False):
+            application_path = os.path.dirname(sys.executable)
+            if application_path[-5:] == "MacOS":
+                application_path = application_path[:-45]
+        else:
+            application_path = os.path.dirname(os.path.abspath(__file__))
         pygame.image.save(data.grid.surface,
-                          f"saved_drawings/screenshot_"
-                          f"{self.network.room.room_id}"
-                          f".{int(random.random() * 10000)}.png")
+                          f"{application_path}/"
+                          f"{self.network.room.room_id}-{self.curr_book_id}"
+                          f".{int(random.random() * 1000)}.png")
+
+
 
     def pick_color(self):
         """picks the color of the mouse position"""

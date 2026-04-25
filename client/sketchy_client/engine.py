@@ -84,7 +84,7 @@ class Engine:
         self.active_results = []
         self.frame = 0
         self.curr_color = [120,250,250]
-        self.curr_shade = (0,0,0)
+        self.curr_shade = [0,0,0]
         self.brightness = 1
         self.curr_brush = 1
         self.brush_index = 0
@@ -750,6 +750,8 @@ class Engine:
 
         self.room = self.network.room
         self.player = self.network.player
+        self.prompt_length = 20
+        self.draw_length = 120
 
         print(f"ROOM STARTED BY {self.player.name} ({self.room.room_id})")
         self.switch_to_lobby()

@@ -381,7 +381,6 @@ class DrawingWindow:
         # call drawing logic for all tools
         if mouse_pressed:
             if curr_color != self.color_state:
-                print(curr_color)
                 self.drawn_pixels.append((-1, curr_color))
                 self.color_state = curr_color
 
@@ -514,7 +513,6 @@ class AnimationWindow:
         self.init_pos = center_pos[2]
         self.draggable = draggable
         self.z = z
-        print(drawn_pixels)
 
         # needed with new drawn_pixels structure
         self.curr_color = COLORS['black_pen']

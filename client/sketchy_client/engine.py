@@ -809,10 +809,10 @@ class Engine:
         """sets brightness of the RGB value while drawing.
         Utilized by BrightnessSlider object exclusively"""
         self.brightness = val
-        self.curr_shade = (
+        self.curr_shade = [
             self.curr_color[0] * val,
             self.curr_color[1] * val,
-            self.curr_color[2] * val)
+            self.curr_color[2] * val]
 
     def set_brush_thickness(self, num):
         """sets the brush thickness while drawing. Primarily used by buttons"""
@@ -834,7 +834,7 @@ class Engine:
             #self.curr_color = [240, 240, 240]
             self.curr_shade = (240, 240, 240)
         elif self.simple_colors:
-            self.curr_shade = self.curr_color
+            self.curr_shade = (self.curr_color[0], self.curr_color[1], self.curr_color[2])
 
     def set_name(self, name):
         """sets the name of the user. Primarily used by buttons"""

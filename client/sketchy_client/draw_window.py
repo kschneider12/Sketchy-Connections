@@ -31,19 +31,19 @@ GRID_HEIGHT = 175 # height of the grid used by engine.py
 
 # for debugging and basic usage purposes
 COLORS = {
-    'background': (240, 240, 240),
-    'black_pen' : (0, 0, 0),
-    'green_pen': (0, 255, 0),
-    'blue_pen': (0, 0, 255),
-    'purple_pen': (128, 0, 128),
-    'red_pen': (255, 0, 0),
-    'orange_pen': (255, 128, 0),
-    'yellow_pen': (255, 255, 0),
-    'grey_pen': (128, 128, 128),
-    'sky_blue_pen': (135, 206, 235),
-    'brown_pen': (139, 69, 19),
-    'white_pen': (255, 255, 255),
-    'eraser': (240, 240, 240)
+    'background': [240, 240, 240],
+    'black_pen' : [0, 0, 0],
+    'green_pen': [0, 255, 0],
+    'blue_pen': [0, 0, 255],
+    'purple_pen': [128, 0, 128],
+    'red_pen': [255, 0, 0],
+    'orange_pen': [255, 128, 0],
+    'yellow_pen': [255, 255, 0],
+    'grey_pen': [128, 128, 128],
+    'sky_blue_pen': [135, 206, 235],
+    'brown_pen': [139, 69, 19],
+    'white_pen': [255, 255, 255],
+    'eraser': [240, 240, 240]
 }
 
 class GridCell:
@@ -381,6 +381,7 @@ class DrawingWindow:
         # call drawing logic for all tools
         if mouse_pressed:
             if curr_color != self.color_state:
+                print(curr_color)
                 self.drawn_pixels.append((-1, curr_color))
                 self.color_state = curr_color
 
@@ -390,7 +391,7 @@ class DrawingWindow:
 
             if current_tool == "brush":
                 # ensures no gaps in lines
-                if self.last_pos and (row, col) != self.last_pos:
+                if self.last_pos and (col, row) != self.last_pos:
                     self.drawn_pixels.append((1,
                         self.convert_to_local(self.last_pos[0],
                                               self.last_pos[1]), (col, row)))
@@ -497,7 +498,7 @@ class DrawingWindow:
         this_y = mouse_pos[1] - self.pos[1]
         col, row = self.convert_to_local(this_x, this_y)
         if col < 0 or col >= GRID_WIDTH or row < 0 or row >= GRID_HEIGHT:
-            return 240, 240, 240
+            return [240, 240, 240]
         return self.grid.cells[row][col].color
 
 
@@ -513,6 +514,7 @@ class AnimationWindow:
         self.init_pos = center_pos[2]
         self.draggable = draggable
         self.z = z
+        print(drawn_pixels)
 
         # needed with new drawn_pixels structure
         self.curr_color = COLORS['black_pen']

@@ -1110,7 +1110,7 @@ class Engine:
         if getattr(sys, 'frozen', False):
             application_path = os.path.dirname(sys.executable)
             if application_path[-5:] == "MacOS":
-                application_path = application_path[:-45]
+                application_path = application_path[:-39]
             #if application_path is windows...
             #set application path to root of where exec is...
         else:

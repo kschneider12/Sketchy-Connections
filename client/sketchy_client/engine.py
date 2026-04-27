@@ -370,6 +370,7 @@ class Engine:
         SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
         self.scene = "welcome"
         pygame.mouse.set_visible(True)
+        self.active_results = []
 
         self.active_ui = [DefaultUI(self.np(50, 30), self.ns(169 * 3.5, 97 * 3.5),
                                     "assets/textures/title.png")]
@@ -400,6 +401,7 @@ class Engine:
         SoundManager.get_instance().play_sfx("assets/audio/woosh.mp3")
         self.scene = "lobby"
         self.active_animations = []
+        self.active_results = []
         self.active_ui = [DefaultUI(self.np(10, 5), self.ns(130 * 1.5, 50 * 1),
                                     "assets/textures/players.png"),
                           DefaultUI(self.np(80, 18), self.ns(169 * 2.0, 97 * 2.0),
@@ -457,6 +459,7 @@ class Engine:
         self.scene = "writing"
         #reset book id for end phase
         self.curr_book_id = None
+        self.active_results = []
         self.active_ui = [TimeBar(self.np(92,50), self.ns(60 * 1.5, 270 * 1.5), self.prompt_length),
                           DefaultUI(self.np(50, 9), self.ns(358 * 2.6, 35 * 2.6),
                                     "assets/textures/create_prompt.png")]
@@ -834,7 +837,7 @@ class Engine:
         """Sets the current color to eraser values. Primarily used by buttons"""
         if enabled:
             #self.curr_color = [240, 240, 240]
-            self.curr_shade = (240, 240, 240)
+            self.curr_shade = [240, 240, 240]
         elif self.simple_colors:
             self.curr_shade = (self.curr_color[0], self.curr_color[1], self.curr_color[2])
 
@@ -1115,10 +1118,10 @@ class Engine:
             #set application path to root of where exec is...
         else:
             application_path = os.path.dirname(os.path.abspath(__file__))
-
         name = (f"{self.network.room.room_id}-{self.curr_book_id}"
                           f".{int(random.random() * 1000)}.png")
         elem = self.active_results[index - 4]
+        print(f'saved {name}')
         if isinstance(elem, TextUI):
             name = elem.text + f'.{int(random.random() * 100)}.png'
 
@@ -1131,7 +1134,7 @@ class Engine:
         """picks the color of the mouse position"""
         if self.active_drawings:
             color = self.active_drawings[0].get_color(self.mouse_pos)
-            if color != (240,240,240):
+            if color != [240,240,240]:
                 self.curr_shade = [int(color[0]), int(color[1]), int(color[2])]
                 if isinstance(self.active_buttons[1], BrightnessSlider):
                     color = self.active_buttons[1].set_color(color)

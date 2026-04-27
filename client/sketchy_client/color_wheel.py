@@ -58,6 +58,8 @@ class ColorWheel(Button):
                     self.color = [rel_angle * 255/60, 0, 255]
                 case 5:
                     self.color = [255, 0, 255 - rel_angle * 255 / 60]
+            if angle == 360:
+                self.color = [255, 0, 0]
             rad = 1 - self.get_rad(self.rel_pos) * 2
             #normalize from 0 to 1
             #rad = 1 - rad / self.bkg_size[0] * 2

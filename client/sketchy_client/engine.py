@@ -1004,6 +1004,9 @@ class Engine:
 
     def broadcast_next_result(self):
         """Ran by the host, this broadcasts to show the next result"""
+        if self.results_shown != self.room.book_idx and len(self.room.players) > 5:
+            #play a sounds
+            return
         self.network.incr_book()
 
     def show_next_result(self):

@@ -1006,6 +1006,7 @@ class Engine:
         """Ran by the host, this broadcasts to show the next result"""
         if self.results_shown != self.room.book_idx and len(self.room.players) > 5:
             #play a sounds
+            SoundManager.get_instance().play_sfx("assets/audio/buzz.mp3")
             return
         self.network.incr_book()
 

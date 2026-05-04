@@ -7,7 +7,7 @@ dependencies = [
     "aiohttp>=3.13.3",
     "cython>=3.2.4",
     "pyautogui>=0.9.54",
-    "pygame>=2.6.1",
+    "pygame-ce>=2.5.7",
     "sketchy-shared",
 ]
 
